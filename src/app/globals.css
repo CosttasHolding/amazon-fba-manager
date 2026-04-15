@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --background: 220 20% 97%;
+        --foreground: 220 30% 10%;
+        --card: 0 0% 100%;
+        --card-foreground: 220 30% 10%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 220 30% 10%;
+        --primary: 230 80% 56%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 220 15% 93%;
+        --secondary-foreground: 220 30% 20%;
+        --muted: 220 15% 93%;
+        --muted-foreground: 220 10% 50%;
+        --accent: 230 80% 56%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 72% 51%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 220 15% 90%;
+        --input: 220 15% 90%;
+        --ring: 230 80% 56%;
+        --radius: 0.75rem;
+
+        --sidebar-bg: 0 0% 100%;
+        --sidebar-border: 220 15% 92%;
+        --sidebar-hover: 230 80% 97%;
+        --sidebar-active: 230 80% 94%;
+        --sidebar-text: 220 10% 45%;
+        --sidebar-text-hover: 230 80% 50%;
+        --sidebar-icon: 220 10% 60%;
+        --sidebar-icon-hover: 230 80% 50%;
+
+        --metric-green: 152 60% 42%;
+        --metric-green-bg: 152 60% 96%;
+        --metric-blue: 230 80% 56%;
+        --metric-blue-bg: 230 80% 96%;
+        --metric-purple: 270 60% 56%;
+        --metric-purple-bg: 270 60% 96%;
+        --metric-amber: 38 90% 50%;
+        --metric-amber-bg: 38 90% 96%;
+        --subtle-bg: 220 20% 96%;
+        --glow-primary: 230 80% 56%;
+    }
+
+    .dark {
+        --background: 228 25% 8%;
+        --foreground: 220 20% 92%;
+        --card: 228 22% 12%;
+        --card-foreground: 220 20% 92%;
+        --popover: 228 22% 12%;
+        --popover-foreground: 220 20% 92%;
+        --primary: 230 80% 62%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 228 20% 18%;
+        --secondary-foreground: 220 20% 85%;
+        --muted: 228 20% 18%;
+        --muted-foreground: 220 15% 55%;
+        --accent: 230 80% 62%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 62% 50%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 228 18% 18%;
+        --input: 228 18% 18%;
+        --ring: 230 80% 62%;
+
+        --sidebar-bg: 228 25% 10%;
+        --sidebar-border: 228 18% 16%;
+        --sidebar-hover: 230 30% 16%;
+        --sidebar-active: 230 40% 18%;
+        --sidebar-text: 220 15% 55%;
+        --sidebar-text-hover: 230 80% 72%;
+        --sidebar-icon: 220 15% 45%;
+        --sidebar-icon-hover: 230 80% 72%;
+
+        --metric-green: 152 55% 55%;
+        --metric-green-bg: 152 40% 12%;
+        --metric-blue: 230 80% 65%;
+        --metric-blue-bg: 230 40% 12%;
+        --metric-purple: 270 55% 65%;
+        --metric-purple-bg: 270 40% 12%;
+        --metric-amber: 38 80% 60%;
+        --metric-amber-bg: 38 40% 12%;
+        --subtle-bg: 228 20% 14%;
+        --glow-primary: 230 80% 62%;
+    }
+
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground antialiased;
+    }
+}
+
+@layer utilities {
+    .glass {
+        @apply bg-white/70 backdrop-blur-xl;
+    }
+
+    .glass-card {
+        @apply bg-white/80 backdrop-blur-lg border;
+    }
+
+    .glow-sm {
+        box-shadow: 0 0 20px -5px hsl(var(--glow-primary) / 0.15);
+    }
+
+    .glow-md {
+        box-shadow: 0 0 30px -5px hsl(var(--glow-primary) / 0.2);
+    }
+
+    .hover-lift {
+        @apply transition-all duration-300;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .text-gradient {
+        background: linear-gradient(to right, hsl(var(--primary)), hsl(270, 80%, 60%));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+}
