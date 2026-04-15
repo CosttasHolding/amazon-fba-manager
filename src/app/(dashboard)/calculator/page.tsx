@@ -1,1 +1,168 @@
-'use client';import{useState}from'react';import{Card,CardContent,CardHeader,CardTitle}from'@/components/ui/card';import{Input}from'@/components/ui/input';import{Label}from'@/components/ui/label';import{Button}from'@/components/ui/button';import{fmt,fmtPct}from'@/lib/utils';export default function CalculatorPage(){const[unitCost,setUnitCost]=useState(0);const[salePrice,setSalePrice]=useState(0);const[weightKg,setWeightKg]=useState(1);const[result,setResult]=useState<any>(null);const calculate=async()=>{const res=await fetch('/api/calculator',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unitCost,salePrice,weightKg})});const data=await res.json();setResult(data)};return <div className="max-w-2xl"><h1 className="text-3xl font-bold mb-6">Calculadora FBA</h1><Card><CardHeader><CardTitle>Calcular Ganancia y ROI</CardTitle></CardHeader><CardContent className="space-y-4"><div><Label>Costo Unitario</Label><Input type="number" step="0.01" value={unitCost} onChange={e=>setUnitCost(parseFloat(e.target.value)||0)}/></div><div><Label>Precio de Venta</Label><Input type="number" step="0.01" value={salePrice} onChange={e=>setSalePrice(parseFloat(e.target.value)||0)}/></div><div><Label>Peso (kg)</Label><Input type="number" step="0.01" value={weightKg} onChange={e=>setWeightKg(parseFloat(e.target.value)||1)}/></div><Button onClick={calculate}>Calcular</Button>{result&&<div className="mt-6 p-4 bg-slate-50 rounded space-y-2"><p>Tarifa Referencia: {fmt(result.referralFee)}</p><p>Tarifa FBA: {fmt(result.fbaFee)}</p><p>Total Tarifas: {fmt(result.totalFees)}</p><p className="text-xl font-bold text-emerald-600">Ganancia Neta: {fmt(result.netProfit)}</p><p className="text-xl font-bold text-blue-600">ROI: {fmtPct(result.roi)}</p></div>}</CardContent></Card></div>}
+'use client';
+
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { fmt, fmtPct } from '@/lib/utils';
+import { Calculator, DollarSign, TrendingUp, Percent } from 'lucide-react';
+
+export default function CalculatorPage() {
+    const [unitCost, setUnitCost] = useState('');
+    const [salePrice, setSalePrice] = useState('');
+    const [weightKg, setWeightKg] = useState('');
+    const [result, setResult] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
+
+    const calculate = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/calculator', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    unitCost: parseFloat(unitCost) || 0,
+                    salePrice: parseFloat(salePrice) || 0,
+                    weightKg: parseFloat(weightKg) || 1,
+                }),
+            });
+            const data = await res.json();
+            setResult(data);
+        } catch {
+            setResult(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const roiColorClass = (roi: number) =>
+        roi >= 30 ? 'text-[hsl(var(--metric-green))]' :
+            roi >= 15 ? 'text-amber-500' : 'text-red-500';
+
+    const profitColorClass = (p: number) =>
+        p > 0 ? 'text-[hsl(var(--metric-green))]' : 'text-red-500';
+
+    return (
+        <div className="max-w-2xl space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold text-foreground">Calculadora FBA</h1>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                    Calcula ganancia, ROI y tarifas de Amazon
+                </p>
+            </div>
+
+            <Card>
+                <CardHeader className="pb-4">
+                    <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+                        Datos del Producto
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <Label className="text-xs">Costo Unitario</Label>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={unitCost}
+                                onChange={(e) => setUnitCost(e.target.value)}
+                                className="mt-1"
+                            />
+                        </div>
+                        <div>
+                            <Label className="text-xs">Precio de Venta</Label>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={salePrice}
+                                onChange={(e) => setSalePrice(e.target.value)}
+                                className="mt-1"
+                            />
+                        </div>
+                        <div>
+                            <Label className="text-xs">Peso (kg)</Label>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                placeholder="1.00"
+                                value={weightKg}
+                                onChange={(e) => setWeightKg(e.target.value)}
+                                className="mt-1"
+                            />
+                        </div>
+                    </div>
+                    <Button onClick={calculate} disabled={loading} className="w-full sm:w-auto">
+                        <Calculator className="w-4 h-4 mr-2" />
+                        {loading ? 'Calculando...' : 'Calcular'}
+                    </Button>
+                </CardContent>
+            </Card>
+
+            {result && (
+                <>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <Card>
+                            <CardContent className="pt-6 text-center">
+                                <div className="w-10 h-10 rounded-lg bg-[hsl(var(--metric-green-bg))] flex items-center justify-center mx-auto mb-2">
+                                    <DollarSign className="w-5 h-5 text-[hsl(var(--metric-green))]" />
+                                </div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider">Ganancia Neta</p>
+                                <p className={`text-2xl font-bold mt-1 ${profitColorClass(result.netProfit)}`}>
+                                    {fmt(result.netProfit)}
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardContent className="pt-6 text-center">
+                                <div className="w-10 h-10 rounded-lg bg-[hsl(var(--metric-blue-bg))] flex items-center justify-center mx-auto mb-2">
+                                    <TrendingUp className="w-5 h-5 text-[hsl(var(--metric-blue))]" />
+                                </div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider">ROI</p>
+                                <p className={`text-2xl font-bold mt-1 ${roiColorClass(result.roi)}`}>
+                                    {fmtPct(result.roi)}
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card className="col-span-2 md:col-span-1">
+                            <CardContent className="pt-6 text-center">
+                                <div className="w-10 h-10 rounded-lg bg-[hsl(var(--metric-purple-bg))] flex items-center justify-center mx-auto mb-2">
+                                    <Percent className="w-5 h-5 text-[hsl(var(--metric-purple))]" />
+                                </div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider">Margen</p>
+                                <p className="text-2xl font-bold mt-1 text-[hsl(var(--metric-purple))]">
+                                    {(parseFloat(salePrice) || 0) > 0 ? fmtPct((result.netProfit / parseFloat(salePrice)) * 100) : '0.0%'}
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <Card>
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+                                Desglose de Tarifas
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {[
+                                ['Tarifa Referencia (15%)', result.referralFee],
+                                ['Tarifa FBA', result.fbaFee],
+                            ].map(([label, value]) => (
+                                <div key={label as string} className="flex justify-between">
+                                    <span className="text-muted-foreground">{label as string}</span>
+                                    <span className="font-medium text-foreground">{fmt(value as number)}</span>
+                                </div>
+                            ))}
+                            <div className="flex justify-between border-t border-border pt-3">
+                                <span className="font-semibold text-foreground">Total Tarifas</span>
+                                <span className="font-bold text-foreground">{fmt(result.totalFees)}</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </>
+            )}
+        </div>
+    );
+}

@@ -8,12 +8,8 @@ export async function GET(
 ) {
     try {
         const supabase = await createClient();
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user)
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { data, error } = await supabase
             .from('products_with_inventory')
@@ -23,7 +19,6 @@ export async function GET(
             .single();
 
         if (error) throw error;
-
         return NextResponse.json({ data });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 404 });
@@ -36,17 +31,12 @@ export async function PUT(
 ) {
     try {
         const supabase = await createClient();
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user)
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const body = await req.json();
         const validated = productSchema.parse(body);
 
-        // Convertir camelCase a snake_case para Supabase
         const dbData = {
             sku: validated.sku,
             asin: validated.asin || null,
@@ -76,7 +66,6 @@ export async function PUT(
             .single();
 
         if (error) throw error;
-
         return NextResponse.json({ data });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 400 });
@@ -89,12 +78,8 @@ export async function DELETE(
 ) {
     try {
         const supabase = await createClient();
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user)
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { error } = await supabase
             .from('products')
@@ -103,7 +88,6 @@ export async function DELETE(
             .eq('user_id', user.id);
 
         if (error) throw error;
-
         return NextResponse.json({ success: true });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
