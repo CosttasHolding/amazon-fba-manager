@@ -1,103 +1,153 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { fmt, fmtPct } from '@/lib/utils';
-import { DashboardMetrics } from '@/types';
-import { Package, TrendingUp, DollarSign, AlertTriangle } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { fmt, fmtPct } from "@/lib/utils";
+import { DashboardMetrics } from "@/types";
+import { Package, TrendingUp, DollarSign, AlertTriangle } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { KpiCard } from "@/components/ui/kpi-card";
+import { DataTableWrapper, tableHeaderClass, tableRowClass, tableCellClass } from "@/components/ui/data-table-wrapper";
 
 export default function DashboardPage() {
-    const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-    const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetch('/api/dashboard')
-            .then((r) => r.json())
-            .then((d) => {
-                setMetrics(d.metrics);
-                setLoading(false);
-            });
-    }, []);
+  useEffect(() => {
+    fetch("/api/dashboard")
+      .then((r) => r.json())
+      .then((d) => {
+        setMetrics(d.metrics);
+        setLoading(false);
+      });
+  }, []);
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm text-muted-foreground">Cargando métricas...</p>
-                </div>
-            </div>
-        );
-    }
-
-    const cards = [
-        {
-            label: 'Productos Activos',
-            value: metrics?.active_products || 0,
-            sub: `de ${metrics?.total_products || 0} total`,
-            icon: Package,
-            color: 'text-[hsl(var(--metric-blue))]',
-            bg: 'bg-[hsl(var(--metric-blue-bg))]',
-        },
-        {
-            label: 'ROI Promedio',
-            value: fmtPct(metrics?.avg_roi || 0),
-            sub: 'retorno de inversión',
-            icon: TrendingUp,
-            color: 'text-[hsl(var(--metric-green))]',
-            bg: 'bg-[hsl(var(--metric-green-bg))]',
-        },
-        {
-            label: 'Ganancia Potencial',
-            value: fmt(metrics?.total_potential_profit || 0),
-            sub: 'por unidad vendida',
-            icon: DollarSign,
-            color: 'text-[hsl(var(--metric-purple))]',
-            bg: 'bg-[hsl(var(--metric-purple-bg))]',
-        },
-        {
-            label: 'Alertas de Stock',
-            value: (metrics?.low_stock_count || 0) + (metrics?.out_of_stock_count || 0),
-            sub: `${metrics?.low_stock_count || 0} bajo, ${metrics?.out_of_stock_count || 0} sin stock`,
-            icon: AlertTriangle,
-            color: 'text-[hsl(var(--metric-amber))]',
-            bg: 'bg-[hsl(var(--metric-amber-bg))]',
-        },
-    ];
-
+  if (loading) {
     return (
-        <div>
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                    Resumen de tu negocio Amazon FBA
-                </p>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-                {cards.map((card) => (
-                    <Card key={card.label} className="hover-lift">
-                        <CardContent className="p-4 sm:p-5">
-                            <div className="flex items-start justify-between">
-                                <div className="space-y-1.5 sm:space-y-2 min-w-0 flex-1">
-                                    <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-muted-foreground truncate">
-                                        {card.label}
-                                    </p>
-                                    <p className={`text-lg sm:text-2xl font-bold ${card.color}`}>
-                                        {card.value}
-                                    </p>
-                                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">
-                                        {card.sub}
-                                    </p>
-                                </div>
-                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl ${card.bg} flex items-center justify-center flex-shrink-0 ml-2`}>
-                                    <card.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${card.color}`} />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground">Cargando métricas...</p>
         </div>
+      </div>
     );
+  }
+
+  const alertCount =
+    (metrics?.low_stock_count || 0) + (metrics?.out_of_stock_count || 0);
+
+  return (
+    <div>
+      <PageHeader
+        badge="GLOBAL DASHBOARD"
+        title="Resumen del Negocio"
+        subtitle="Vista general de tu operación Amazon FBA"
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <KpiCard
+          label="Productos Activos"
+          value={String(metrics?.active_products || 0)}
+          subtitle={`de ${metrics?.total_products || 0} total`}
+          icon={Package}
+          accentColor="cyan"
+          animationDelay={0}
+          progressBar={
+            metrics?.total_products
+              ? Math.round(
+                  ((metrics?.active_products || 0) / metrics.total_products) * 100
+                )
+              : 0
+          }
+        />
+        <KpiCard
+          label="Promedio ROI"
+          value={fmtPct(metrics?.avg_roi)}
+          subtitle="retorno de inversión"
+          icon={TrendingUp}
+          accentColor="green"
+          trend={
+            (metrics?.avg_roi || 0) >= 20
+              ? "up"
+              : (metrics?.avg_roi || 0) > 0
+                ? "neutral"
+                : "down"
+          }
+          trendValue={
+            (metrics?.avg_roi || 0) >= 20 ? "Saludable" : "Revisar"
+          }
+          animationDelay={75}
+        />
+        <KpiCard
+          label="Beneficio Potencial"
+          value={fmt(metrics?.total_potential_profit)}
+          subtitle="por unidad vendida"
+          icon={DollarSign}
+          accentColor="green"
+          animationDelay={150}
+        />
+        <KpiCard
+          label="Alertas Stock"
+          value={String(alertCount)}
+          subtitle={`${metrics?.low_stock_count || 0} bajo, ${metrics?.out_of_stock_count || 0} sin stock`}
+          icon={AlertTriangle}
+          accentColor="amber"
+          animationDelay={225}
+          trend={alertCount > 0 ? "down" : "up"}
+          trendValue={alertCount > 0 ? `${alertCount} alertas` : "Sin alertas"}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+        <DataTableWrapper title="Rendimiento de Ventas">
+          <div className="p-6 flex items-center justify-center h-48 text-muted-foreground text-sm">
+            <div className="text-center">
+              <p className="font-display text-lg font-semibold text-foreground mb-1">
+                {fmt(metrics?.revenue_last_30d)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Revenue últimos 30 días
+              </p>
+              <p className="font-display text-lg font-semibold text-foreground mt-3 mb-1">
+                {metrics?.units_sold_last_30d || 0} uds
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Unidades vendidas
+              </p>
+            </div>
+          </div>
+        </DataTableWrapper>
+
+        <DataTableWrapper title="Resumen de Inventario">
+          <div className="p-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Stock Bajo</span>
+                <span className="font-display font-semibold text-amber-400">
+                  {metrics?.low_stock_count || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Sin Stock</span>
+                <span className="font-display font-semibold text-rose-400">
+                  {metrics?.out_of_stock_count || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Sobrestock</span>
+                <span className="font-display font-semibold text-cyan-400">
+                  {metrics?.overstock_count || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pt-3 border-t border-border">
+                <span className="text-sm font-medium text-foreground">Total Productos</span>
+                <span className="font-display font-bold text-foreground">
+                  {metrics?.total_products || 0}
+                </span>
+              </div>
+            </div>
+          </div>
+        </DataTableWrapper>
+      </div>
+    </div>
+  );
 }

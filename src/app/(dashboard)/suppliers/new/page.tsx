@@ -4,18 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Save, Loader2, Factory } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Save, Loader2, Factory, Mail, Package, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -23,25 +15,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supplierSchema, SupplierFormData } from "@/validations/supplier";
+import { PageHeader } from "@/components/ui/page-header";
 
 const COUNTRIES = [
-  "China",
-  "India",
-  "Vietnam",
-  "Taiwán",
-  "Corea del Sur",
-  "Tailandia",
-  "Turquía",
-  "Bangladesh",
-  "Indonesia",
-  "Otro",
+  "China", "India", "Vietnam", "Taiwan", "Corea del Sur",
+  "Tailandia", "Turquia", "Bangladesh", "Indonesia", "Otro",
 ];
+
+const sectionClass = "rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-4";
+const sectionTitleClass = "flex items-center gap-2 text-sm font-semibold text-white/80 uppercase tracking-wider mb-4";
+const labelClass = "text-sm text-white/50";
+const errorClass = "text-xs text-red-400 mt-1";
+const inputClass = "bg-white/[0.04] border-white/[0.08]";
 
 export default function NewSupplierPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [saving, setSaving] = useState(false);
 
   const {
@@ -82,83 +72,50 @@ export default function NewSupplierPage() {
         throw new Error(err.error || "Error al crear proveedor");
       }
 
-      toast({
-        title: "Proveedor creado",
-        description: `${data.name} se agregó correctamente`,
-      });
-
+      toast.success(`${data.name} se agrego correctamente`);
       router.push("/suppliers");
-      router.refresh();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error al crear proveedor";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Nuevo Proveedor</h1>
-          <p className="text-sm text-muted-foreground">
-            Agrega un proveedor de Alibaba, 1688 u otra plataforma
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6 animate-fade-up">
+      <PageHeader
+        badge="NUEVO PROVEEDOR"
+        title="Crear Proveedor"
+        subtitle="Agrega un proveedor de Alibaba, 1688 u otra plataforma"
+        breadcrumbs={[
+          { label: "Proveedores", href: "/suppliers" },
+          { label: "Nuevo" },
+        ]}
+      />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Info básica */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Factory className="h-5 w-5" />
-              Información del Proveedor
-            </CardTitle>
-            <CardDescription>Datos principales del proveedor</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Info basica */}
+        <div className={sectionClass}>
+          <div className={sectionTitleClass}>
+            <Factory className="h-4 w-4 text-cyan-400" />
+            Informacion del Proveedor
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <Label htmlFor="name">Nombre del Proveedor *</Label>
-              <Input
-                id="name"
-                placeholder="Ej: Shenzhen Tech Manufacturing Co."
-                {...register("name")}
-              />
-              {errors.name && (
-                <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
-              )}
+              <Label className={labelClass}>Nombre del Proveedor *</Label>
+              <Input {...register("name")} placeholder="Ej: Shenzhen Tech Manufacturing Co." className={inputClass} />
+              {errors.name && <p className={errorClass}>{errors.name.message}</p>}
             </div>
-
             <div className="md:col-span-2">
-              <Label htmlFor="alibaba_url">URL Alibaba / 1688</Label>
-              <Input
-                id="alibaba_url"
-                placeholder="https://supplier.alibaba.com/..."
-                {...register("alibaba_url")}
-              />
-              {errors.alibaba_url && (
-                <p className="text-sm text-red-500 mt-1">{errors.alibaba_url.message}</p>
-              )}
+              <Label className={labelClass}>URL Alibaba / 1688</Label>
+              <Input {...register("alibaba_url")} placeholder="https://supplier.alibaba.com/..." className={inputClass} />
+              {errors.alibaba_url && <p className={errorClass}>{errors.alibaba_url.message}</p>}
             </div>
-
             <div>
-              <Label htmlFor="country">País</Label>
-              <Select
-                value={watch("country") || ""}
-                onValueChange={(val) => setValue("country", val)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar país" />
-                </SelectTrigger>
+              <Label className={labelClass}>Pais</Label>
+              <Select value={watch("country") || ""} onValueChange={(val) => setValue("country", val)}>
+                <SelectTrigger className={inputClass}><SelectValue placeholder="Seleccionar pais" /></SelectTrigger>
                 <SelectContent>
                   {COUNTRIES.map((c) => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -166,159 +123,105 @@ export default function NewSupplierPage() {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
-              <Label htmlFor="status">Estado</Label>
-              <Select
-                value={watch("status")}
-                onValueChange={(val) => setValue("status", val as "active" | "inactive")}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <Label className={labelClass}>Estado</Label>
+              <Select value={watch("status")} onValueChange={(val) => setValue("status", val as "active" | "inactive")}>
+                <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Activo</SelectItem>
                   <SelectItem value="inactive">Inactivo</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             <div>
-              <Label htmlFor="rating">Rating (1-5)</Label>
-              <Select
-                value={watch("rating")?.toString() || ""}
-                onValueChange={(val) => setValue("rating", val ? parseInt(val) : null)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sin rating" />
-                </SelectTrigger>
+              <Label className={labelClass}>Rating (1-5)</Label>
+              <Select value={watch("rating")?.toString() || ""} onValueChange={(val) => setValue("rating", val ? parseInt(val) : null)}>
+                <SelectTrigger className={inputClass}><SelectValue placeholder="Sin rating" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">⭐ 1</SelectItem>
-                  <SelectItem value="2">⭐ 2</SelectItem>
-                  <SelectItem value="3">⭐ 3</SelectItem>
-                  <SelectItem value="4">⭐ 4</SelectItem>
-                  <SelectItem value="5">⭐ 5</SelectItem>
+                  <SelectItem value="1">1</SelectItem>
+                  <SelectItem value="2">2</SelectItem>
+                  <SelectItem value="3">3</SelectItem>
+                  <SelectItem value="4">4</SelectItem>
+                  <SelectItem value="5">5</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             <div>
-              <Label htmlFor="payment_terms">Términos de Pago</Label>
-              <Input
-                id="payment_terms"
-                placeholder="Ej: 30% anticipo, 70% antes de envío"
-                {...register("payment_terms")}
-              />
+              <Label className={labelClass}>Terminos de Pago</Label>
+              <Input {...register("payment_terms")} placeholder="Ej: 30% anticipo, 70% antes de envio" className={inputClass} />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Contacto */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Información de Contacto</CardTitle>
-            <CardDescription>Datos del contacto principal</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className={sectionClass}>
+          <div className={sectionTitleClass}>
+            <Mail className="h-4 w-4 text-cyan-400" />
+            Informacion de Contacto
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="contact_name">Nombre de Contacto</Label>
-              <Input
-                id="contact_name"
-                placeholder="Ej: Jack Wang"
-                {...register("contact_name")}
-              />
+              <Label className={labelClass}>Nombre de Contacto</Label>
+              <Input {...register("contact_name")} placeholder="Ej: Jack Wang" className={inputClass} />
             </div>
+            <div>
+              <Label className={labelClass}>Email</Label>
+              <Input type="email" {...register("contact_email")} placeholder="supplier@example.com" className={inputClass} />
+              {errors.contact_email && <p className={errorClass}>{errors.contact_email.message}</p>}
+            </div>
+            <div>
+              <Label className={labelClass}>WhatsApp</Label>
+              <Input {...register("contact_whatsapp")} placeholder="+86 138 0000 0000" className={inputClass} />
+            </div>
+          </div>
+        </div>
 
+        {/* Produccion */}
+        <div className={sectionClass}>
+          <div className={sectionTitleClass}>
+            <Package className="h-4 w-4 text-cyan-400" />
+            Produccion y Logistica
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="contact_email">Email</Label>
-              <Input
-                id="contact_email"
-                type="email"
-                placeholder="supplier@example.com"
-                {...register("contact_email")}
-              />
-              {errors.contact_email && (
-                <p className="text-sm text-red-500 mt-1">{errors.contact_email.message}</p>
-              )}
+              <Label className={labelClass}>MOQ (Minimo de Orden)</Label>
+              <Input type="number" {...register("min_order_qty")} placeholder="Ej: 500" className={inputClass} />
+              {errors.min_order_qty && <p className={errorClass}>{errors.min_order_qty.message}</p>}
             </div>
-
             <div>
-              <Label htmlFor="contact_whatsapp">WhatsApp</Label>
-              <Input
-                id="contact_whatsapp"
-                placeholder="+86 138 0000 0000"
-                {...register("contact_whatsapp")}
-              />
+              <Label className={labelClass}>Lead Time (dias)</Label>
+              <Input type="number" {...register("lead_time_days")} placeholder="Ej: 30" className={inputClass} />
+              {errors.lead_time_days && <p className={errorClass}>{errors.lead_time_days.message}</p>}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Producción */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Producción y Logística</CardTitle>
-            <CardDescription>MOQ, tiempos de producción</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="min_order_qty">MOQ (Mínimo de Orden)</Label>
-              <Input
-                id="min_order_qty"
-                type="number"
-                placeholder="Ej: 500"
-                {...register("min_order_qty")}
-              />
-              {errors.min_order_qty && (
-                <p className="text-sm text-red-500 mt-1">{errors.min_order_qty.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="lead_time_days">Lead Time (días)</Label>
-              <Input
-                id="lead_time_days"
-                type="number"
-                placeholder="Ej: 30"
-                {...register("lead_time_days")}
-              />
-              {errors.lead_time_days && (
-                <p className="text-sm text-red-500 mt-1">{errors.lead_time_days.message}</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Notas */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Notas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              placeholder="Notas adicionales sobre el proveedor..."
-              rows={4}
-              {...register("notes")}
-            />
-          </CardContent>
-        </Card>
+        <div className={sectionClass}>
+          <div className={sectionTitleClass}>
+            <FileText className="h-4 w-4 text-cyan-400" />
+            Notas
+          </div>
+          <Textarea {...register("notes")} placeholder="Notas adicionales sobre el proveedor..." rows={4} className={inputClass} />
+        </div>
 
-        {/* Botones */}
-        <div className="flex justify-end gap-3">
-          <Button
+        {/* Actions */}
+        <div className="flex items-center gap-3 justify-end">
+          <button
             type="button"
-            variant="outline"
-            onClick={() => router.back()}
+            onClick={() => router.push("/suppliers")}
+            className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white/50 hover:text-white/70 hover:bg-white/10 transition-colors"
           >
             Cancelar
-          </Button>
-          <Button type="submit" disabled={saving}>
-            {saving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
-            )}
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             {saving ? "Guardando..." : "Crear Proveedor"}
-          </Button>
+          </button>
         </div>
       </form>
     </div>

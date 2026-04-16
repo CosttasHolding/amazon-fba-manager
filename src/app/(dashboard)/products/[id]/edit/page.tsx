@@ -5,13 +5,6 @@ import { useRouter, useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,8 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Loader2, Package, DollarSign, Info, Users } from "lucide-react";
+import { Save, Loader2, Package, DollarSign, Info, Users } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/ui/page-header";
 
 const CATEGORIES = [
   "Electronics", "Toys", "Home", "Kitchen", "Health", "Beauty", "Sports", "Books", "Other",
@@ -54,7 +48,7 @@ const productSchema = z.object({
   minStock: z.coerce.number().min(0).default(10),
 });
 
-type ProductForm = z.infer<typeof productSchema>;
+type ProductFormData = z.infer<typeof productSchema>;
 
 interface Supplier {
   id: string;
@@ -71,6 +65,11 @@ interface LinkedSupplier {
   is_primary: boolean;
   suppliers: { id: string; name: string };
 }
+
+const sectionClass = "rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-4";
+const sectionTitleClass = "flex items-center gap-2 text-sm font-semibold text-white/80 uppercase tracking-wider mb-4";
+const labelClass = "text-sm text-white/50";
+const errorClass = "text-xs text-red-400 mt-1";
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -93,7 +92,7 @@ export default function EditProductPage() {
     watch,
     reset,
     formState: { errors },
-  } = useForm<ProductForm>({
+  } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
   });
 
@@ -128,7 +127,7 @@ export default function EditProductPage() {
         imageUrl: d.imageUrl ?? d.image_url ?? "",
         minStock: d.minStock ?? d.min_stock ?? 10,
       });
-    } catch (error) {
+    } catch {
       toast.error("Error al cargar el producto");
       router.push("/products");
     } finally {
@@ -169,7 +168,7 @@ export default function EditProductPage() {
     }
   };
 
-  const onSubmit = async (data: ProductForm) => {
+  const onSubmit = async (data: ProductFormData) => {
     setSaving(true);
     try {
       const res = await fetch(`/api/products/${params.id}`, {
@@ -205,8 +204,9 @@ export default function EditProductPage() {
 
       toast.success("Producto actualizado correctamente");
       router.push(`/products/${params.id}`);
-    } catch (error: any) {
-      toast.error(error.message || "Error al actualizar el producto");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error al actualizar el producto";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -218,198 +218,200 @@ export default function EditProductPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+          <span className="text-sm text-white/40">Cargando producto...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => router.push(`/products/${params.id}`)}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Editar Producto</h1>
-          <p className="text-sm text-muted-foreground">Modifica los datos del producto</p>
-        </div>
-      </div>
+    <div className="space-y-6 animate-fade-up">
+      <PageHeader
+        badge="EDITAR PRODUCTO"
+        title="Editar Producto"
+        subtitle="Modifica los datos del producto"
+        breadcrumbs={[
+          { label: "Productos", href: "/products" },
+          { label: "Editar" },
+        ]}
+      />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              Informaci{"\u00F3"}n b{"\u00E1"}sica
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <Label htmlFor="name">Nombre del producto *</Label>
-                <Input id="name" {...register("name")} />
-                {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="asin">ASIN</Label>
-                <Input id="asin" {...register("asin")} />
-              </div>
-              <div>
-                <Label htmlFor="sku">SKU *</Label>
-                <Input id="sku" {...register("sku")} />
-                {errors.sku && <p className="text-sm text-red-500 mt-1">{errors.sku.message}</p>}
-              </div>
-              <div>
-                <Label>Categor{"\u00ED"}a *</Label>
-                <Select value={category} onValueChange={(v) => setValue("category", v as any)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Estado</Label>
-                <Select value={status} onValueChange={(v) => setValue("status", v as any)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {STATUSES.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Info basica */}
+        <div className={sectionClass}>
+          <div className={sectionTitleClass}>
+            <Package className="h-4 w-4 text-cyan-400" />
+            Informacion basica
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <Label className={labelClass}>Nombre del producto *</Label>
+              <Input {...register("name")} className="bg-white/[0.04] border-white/[0.08]" />
+              {errors.name && <p className={errorClass}>{errors.name.message}</p>}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Costos y precios
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="unitCost">Costo compra ($) *</Label>
-                <Input id="unitCost" type="number" step="0.01" {...register("unitCost")} />
-              </div>
-              <div>
-                <Label htmlFor="salePrice">Precio venta ($) *</Label>
-                <Input id="salePrice" type="number" step="0.01" {...register("salePrice")} />
-              </div>
-              <div>
-                <Label htmlFor="fbaFee">Tarifa FBA ($)</Label>
-                <Input id="fbaFee" type="number" step="0.01" {...register("fbaFee")} />
-              </div>
-              <div>
-                <Label htmlFor="referralFee">Tarifa referral ($)</Label>
-                <Input id="referralFee" type="number" step="0.01" {...register("referralFee")} />
-              </div>
-              <div>
-                <Label htmlFor="shippingCost">Costo env{"\u00ED"}o ($)</Label>
-                <Input id="shippingCost" type="number" step="0.01" {...register("shippingCost")} />
-              </div>
-              <div>
-                <Label htmlFor="storageCost">Almacenamiento ($)</Label>
-                <Input id="storageCost" type="number" step="0.01" {...register("storageCost")} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Proveedor
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
             <div>
-              <Label>Seleccionar proveedor</Label>
-              <Select value={selectedSupplier || "none"} onValueChange={setSelectedSupplier}>
-                <SelectTrigger><SelectValue placeholder="Sin proveedor" /></SelectTrigger>
+              <Label className={labelClass}>ASIN</Label>
+              <Input {...register("asin")} className="bg-white/[0.04] border-white/[0.08]" />
+            </div>
+            <div>
+              <Label className={labelClass}>SKU *</Label>
+              <Input {...register("sku")} className="bg-white/[0.04] border-white/[0.08]" />
+              {errors.sku && <p className={errorClass}>{errors.sku.message}</p>}
+            </div>
+            <div>
+              <Label className={labelClass}>Categoria *</Label>
+              <Select value={category} onValueChange={(v) => setValue("category", v as ProductFormData["category"])}>
+                <SelectTrigger className="bg-white/[0.04] border-white/[0.08]"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Sin proveedor</SelectItem>
-                  {suppliers.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name} {s.platform ? `(${s.platform})` : ""}
-                    </SelectItem>
+                  {CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            {selectedSupplier && selectedSupplier !== "none" && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-border">
-                <div>
-                  <Label>Costo unitario ($)</Label>
-                  <Input type="number" step="0.01" value={supplierData.unit_cost}
-                    onChange={(e) => setSupplierData((p) => ({ ...p, unit_cost: e.target.value }))}
-                    placeholder="0.00" />
-                </div>
-                <div>
-                  <Label>MOQ</Label>
-                  <Input type="number" value={supplierData.moq}
-                    onChange={(e) => setSupplierData((p) => ({ ...p, moq: e.target.value }))}
-                    placeholder="100" />
-                </div>
-                <div>
-                  <Label>Lead time (d{"\u00ED"}as)</Label>
-                  <Input type="number" value={supplierData.lead_time_days}
-                    onChange={(e) => setSupplierData((p) => ({ ...p, lead_time_days: e.target.value }))}
-                    placeholder="30" />
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            <div>
+              <Label className={labelClass}>Estado</Label>
+              <Select value={status} onValueChange={(v) => setValue("status", v as ProductFormData["status"])}>
+                <SelectTrigger className="bg-white/[0.04] border-white/[0.08]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Info className="h-4 w-4" />
-              Detalles adicionales
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="weight">Peso (kg)</Label>
-                <Input id="weight" type="number" step="0.01" {...register("weight")} />
-              </div>
-              <div>
-                <Label htmlFor="dimensions">Dimensiones</Label>
-                <Input id="dimensions" {...register("dimensions")} placeholder="30x20x10 cm" />
-              </div>
-              <div>
-                <Label htmlFor="minStock">Stock m{"\u00ED"}nimo</Label>
-                <Input id="minStock" type="number" {...register("minStock")} />
-              </div>
+        {/* Costos */}
+        <div className={sectionClass}>
+          <div className={sectionTitleClass}>
+            <DollarSign className="h-4 w-4 text-cyan-400" />
+            Costos y precios
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <Label className={labelClass}>Costo compra ($) *</Label>
+              <Input type="number" step="0.01" {...register("unitCost")} className="bg-white/[0.04] border-white/[0.08]" />
             </div>
             <div>
-              <Label htmlFor="imageUrl">URL de imagen</Label>
-              <Input id="imageUrl" {...register("imageUrl")} placeholder="https://..." />
+              <Label className={labelClass}>Precio venta ($) *</Label>
+              <Input type="number" step="0.01" {...register("salePrice")} className="bg-white/[0.04] border-white/[0.08]" />
             </div>
             <div>
-              <Label htmlFor="notes">Notas</Label>
-              <Textarea id="notes" {...register("notes")} placeholder="Notas adicionales..." rows={3} />
+              <Label className={labelClass}>Tarifa FBA ($)</Label>
+              <Input type="number" step="0.01" {...register("fbaFee")} className="bg-white/[0.04] border-white/[0.08]" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <Label className={labelClass}>Tarifa referral ($)</Label>
+              <Input type="number" step="0.01" {...register("referralFee")} className="bg-white/[0.04] border-white/[0.08]" />
+            </div>
+            <div>
+              <Label className={labelClass}>Costo envio ($)</Label>
+              <Input type="number" step="0.01" {...register("shippingCost")} className="bg-white/[0.04] border-white/[0.08]" />
+            </div>
+            <div>
+              <Label className={labelClass}>Almacenamiento ($)</Label>
+              <Input type="number" step="0.01" {...register("storageCost")} className="bg-white/[0.04] border-white/[0.08]" />
+            </div>
+          </div>
+        </div>
 
+        {/* Proveedor */}
+        <div className={sectionClass}>
+          <div className={sectionTitleClass}>
+            <Users className="h-4 w-4 text-cyan-400" />
+            Proveedor
+          </div>
+          <div>
+            <Label className={labelClass}>Seleccionar proveedor</Label>
+            <Select value={selectedSupplier || "none"} onValueChange={setSelectedSupplier}>
+              <SelectTrigger className="bg-white/[0.04] border-white/[0.08]">
+                <SelectValue placeholder="Sin proveedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin proveedor</SelectItem>
+                {suppliers.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name} {s.platform ? `(${s.platform})` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {selectedSupplier && selectedSupplier !== "none" && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-white/[0.06]">
+              <div>
+                <Label className={labelClass}>Costo unitario ($)</Label>
+                <Input type="number" step="0.01" value={supplierData.unit_cost}
+                  onChange={(e) => setSupplierData((p) => ({ ...p, unit_cost: e.target.value }))}
+                  placeholder="0.00" className="bg-white/[0.04] border-white/[0.08]" />
+              </div>
+              <div>
+                <Label className={labelClass}>MOQ</Label>
+                <Input type="number" value={supplierData.moq}
+                  onChange={(e) => setSupplierData((p) => ({ ...p, moq: e.target.value }))}
+                  placeholder="100" className="bg-white/[0.04] border-white/[0.08]" />
+              </div>
+              <div>
+                <Label className={labelClass}>Lead time (dias)</Label>
+                <Input type="number" value={supplierData.lead_time_days}
+                  onChange={(e) => setSupplierData((p) => ({ ...p, lead_time_days: e.target.value }))}
+                  placeholder="30" className="bg-white/[0.04] border-white/[0.08]" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Detalles */}
+        <div className={sectionClass}>
+          <div className={sectionTitleClass}>
+            <Info className="h-4 w-4 text-cyan-400" />
+            Detalles adicionales
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className={labelClass}>Peso (kg)</Label>
+              <Input type="number" step="0.01" {...register("weight")} className="bg-white/[0.04] border-white/[0.08]" />
+            </div>
+            <div>
+              <Label className={labelClass}>Dimensiones</Label>
+              <Input {...register("dimensions")} placeholder="30x20x10 cm" className="bg-white/[0.04] border-white/[0.08]" />
+            </div>
+            <div>
+              <Label className={labelClass}>Stock minimo</Label>
+              <Input type="number" {...register("minStock")} className="bg-white/[0.04] border-white/[0.08]" />
+            </div>
+          </div>
+          <div>
+            <Label className={labelClass}>URL de imagen</Label>
+            <Input {...register("imageUrl")} placeholder="https://..." className="bg-white/[0.04] border-white/[0.08]" />
+          </div>
+          <div>
+            <Label className={labelClass}>Notas</Label>
+            <Textarea {...register("notes")} placeholder="Notas adicionales..." rows={3} className="bg-white/[0.04] border-white/[0.08]" />
+          </div>
+        </div>
+
+        {/* Actions */}
         <div className="flex items-center gap-3 justify-end">
-          <Button type="button" variant="outline" onClick={() => router.push(`/products/${params.id}`)}>
+          <button
+            type="button"
+            onClick={() => router.push(`/products/${params.id}`)}
+            className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white/50 hover:text-white/70 hover:bg-white/10 transition-colors"
+          >
             Cancelar
-          </Button>
-          <Button type="submit" disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Guardar cambios
-          </Button>
+          </button>
         </div>
       </form>
     </div>

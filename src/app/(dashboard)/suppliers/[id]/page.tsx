@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
-  ArrowLeft,
   Edit,
   Trash2,
   Factory,
@@ -18,15 +18,6 @@ import {
   AlertTriangle,
   Loader2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,8 +29,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Supplier } from "@/types";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { DataTableWrapper, tableHeaderClass, tableCellClass, tableRowClass } from "@/components/ui/data-table-wrapper";
 
 interface LinkedProduct {
   id: string;
@@ -58,10 +52,28 @@ interface LinkedProduct {
   };
 }
 
+const fmt = (v: number | null) => (v ? `$${v.toFixed(2)}` : "—");
+
+const renderStars = (rating: number | null) => {
+  if (!rating) return <span className="text-white/25 text-sm">Sin rating</span>;
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          className={`h-4 w-4 ${
+            i <= rating ? "fill-amber-400 text-amber-400" : "text-white/10"
+          }`}
+        />
+      ))}
+      <span className="ml-1.5 text-sm text-white/40">({rating}/5)</span>
+    </div>
+  );
+};
+
 export default function SupplierDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { toast } = useToast();
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [products, setProducts] = useState<LinkedProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,277 +121,302 @@ export default function SupplierDetailPage() {
         method: "DELETE",
       });
       if (res.ok) {
-        toast({
-          title: "Proveedor eliminado",
-          description: "El proveedor fue eliminado correctamente",
-        });
+        toast.success("Proveedor eliminado correctamente");
         router.push("/suppliers");
-        router.refresh();
       } else {
         throw new Error("Error al eliminar");
       }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch {
+      toast.error("Error al eliminar el proveedor");
     } finally {
       setDeleting(false);
     }
   };
 
-  const renderStars = (rating: number | null) => {
-    if (!rating) return <span className="text-muted-foreground">Sin rating</span>;
-    return (
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Star
-            key={i}
-            className={`h-4 w-4 ${
-              i <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
-            }`}
-          />
-        ))}
-        <span className="ml-1 text-sm text-muted-foreground">({rating}/5)</span>
-      </div>
-    );
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+          <span className="text-sm text-white/40">Cargando proveedor...</span>
+        </div>
       </div>
     );
   }
 
   if (!supplier) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <AlertTriangle className="h-12 w-12 text-muted-foreground/50 mb-4" />
-        <p className="text-lg font-semibold">Proveedor no encontrado</p>
-        <Button variant="outline" className="mt-4" onClick={() => router.push("/suppliers")}>
-          Volver a Proveedores
-        </Button>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+          <AlertTriangle className="h-8 w-8 text-red-400" />
+        </div>
+        <p className="text-white/50">Proveedor no encontrado</p>
+        <button
+          onClick={() => router.push("/suppliers")}
+          className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-white/70 hover:bg-white/10 transition-colors"
+        >
+          Volver a proveedores
+        </button>
       </div>
     );
   }
 
+  const infoRows = [
+    { label: "Pais", icon: Globe, value: supplier.country || "No especificado" },
+    { label: "MOQ", icon: Package, value: supplier.min_order_qty ? `${supplier.min_order_qty} unidades` : "No especificado" },
+    { label: "Lead Time", icon: Clock, value: supplier.lead_time_days ? `${supplier.lead_time_days} dias` : "No especificado" },
+    { label: "Pago", icon: CreditCard, value: supplier.payment_terms || "No especificado" },
+  ];
+
+  const contactRows = [
+    { label: "Nombre", value: supplier.contact_name || "No especificado", href: null },
+    { label: "Email", value: supplier.contact_email || "No especificado", href: supplier.contact_email ? `mailto:${supplier.contact_email}` : null },
+    { label: "WhatsApp", value: supplier.contact_whatsapp || "No especificado", href: supplier.contact_whatsapp ? `https://wa.me/${supplier.contact_whatsapp.replace(/\D/g, "")}` : null },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/suppliers")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">{supplier.name}</h1>
-              <Badge
-                className={
-                  supplier.status === "active"
-                    ? "bg-green-500/10 text-green-500"
-                    : "bg-red-500/10 text-red-500"
-                }
-              >
-                {supplier.status === "active" ? "Activo" : "Inactivo"}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Creado el {new Date(supplier.created_at).toLocaleDateString("es")}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
+      <PageHeader
+        badge="PROVEEDOR"
+        title={supplier.name}
+        subtitle={`Creado el ${new Date(supplier.created_at).toLocaleDateString("es-ES")}`}
+        breadcrumbs={[
+          { label: "Proveedores", href: "/suppliers" },
+          { label: supplier.name },
+        ]}
+      >
+        <div className="flex items-center gap-2 flex-wrap">
+          <StatusBadge status={supplier.status} />
           {supplier.alibaba_url && (
-            <Button
-              variant="outline"
-              onClick={() => window.open(supplier.alibaba_url!, "_blank")}
+            <a
+              href={supplier.alibaba_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/50 text-sm hover:text-white/70 hover:bg-white/10 transition-colors"
             >
-              <ExternalLink className="mr-2 h-4 w-4" /> Ver en Alibaba
-            </Button>
+              <ExternalLink className="h-4 w-4" />
+              Alibaba
+            </a>
           )}
-          <Button variant="outline" onClick={() => router.push(`/suppliers/${params.id}/edit`)}>
-            <Edit className="mr-2 h-4 w-4" /> Editar
-          </Button>
+          <Link
+            href={`/suppliers/${params.id}/edit`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors"
+          >
+            <Edit className="h-4 w-4" />
+            Editar
+          </Link>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="icon">
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <button
+                disabled={deleting}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/20 transition-colors disabled:opacity-50"
+              >
+                {deleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                Eliminar
+              </button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="bg-[#0a0e1a] border-white/10">
               <AlertDialogHeader>
-                <AlertDialogTitle>¿Eliminar proveedor?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Se eliminará &quot;{supplier.name}&quot; y todas sus vinculaciones con productos.
-                  Esta acción no se puede deshacer.
+                <AlertDialogTitle className="text-white">
+                  Eliminar proveedor?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-white/50">
+                  Se eliminara &quot;{supplier.name}&quot; y todas sus vinculaciones con productos.
+                  Esta accion no se puede deshacer.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} disabled={deleting}>
+                <AlertDialogCancel className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10">
+                  Cancelar
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30"
+                >
                   {deleting ? "Eliminando..." : "Eliminar"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </div>
-      </div>
+      </PageHeader>
 
-      {/* Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Datos del Proveedor */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Factory className="h-5 w-5" /> Información General
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      {/* Info + Contact Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* General Info */}
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <Factory className="h-4 w-4 text-cyan-400" />
+            <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">
+              Informacion General
+            </h3>
+          </div>
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">País</span>
-              <span className="flex items-center gap-1.5">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                {supplier.country || "No especificado"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Rating</span>
+              <span className="text-sm text-white/40">Rating</span>
               {renderStars(supplier.rating)}
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">MOQ</span>
-              <span className="flex items-center gap-1.5">
-                <Package className="h-4 w-4 text-muted-foreground" />
-                {supplier.min_order_qty ? `${supplier.min_order_qty} unidades` : "No especificado"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Lead Time</span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                {supplier.lead_time_days ? `${supplier.lead_time_days} días` : "No especificado"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Pago</span>
-              <span className="flex items-center gap-1.5">
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                {supplier.payment_terms || "No especificado"}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+            {infoRows.map((row) => (
+              <div key={row.label} className="flex items-center justify-between">
+                <span className="text-sm text-white/40">{row.label}</span>
+                <span className="flex items-center gap-1.5 text-sm text-white/70">
+                  <row.icon className="h-3.5 w-3.5 text-white/30" />
+                  {row.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
 
-        {/* Contacto */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" /> Contacto
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Nombre</span>
-              <span>{supplier.contact_name || "No especificado"}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Email</span>
-              {supplier.contact_email ? (
-                <a href={`mailto:${supplier.contact_email}`} className="text-blue-500 hover:underline">
-                  {supplier.contact_email}
-                </a>
-              ) : (
-                <span>No especificado</span>
-              )}
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">WhatsApp</span>
-              {supplier.contact_whatsapp ? (
-                <a
-                  href={`https://wa.me/${supplier.contact_whatsapp.replace(/\D/g, "")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-green-500 hover:underline flex items-center gap-1"
-                >
-                  <Phone className="h-3.5 w-3.5" />
-                  {supplier.contact_whatsapp}
-                </a>
-              ) : (
-                <span>No especificado</span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Contact */}
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <Mail className="h-4 w-4 text-cyan-400" />
+            <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">
+              Contacto
+            </h3>
+          </div>
+          <div className="space-y-4">
+            {contactRows.map((row) => (
+              <div key={row.label} className="flex items-center justify-between">
+                <span className="text-sm text-white/40">{row.label}</span>
+                {row.href ? (
+                  <a
+                    href={row.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+                  >
+                    {row.label === "WhatsApp" && <Phone className="h-3.5 w-3.5" />}
+                    {row.value}
+                  </a>
+                ) : (
+                  <span className="text-sm text-white/70">{row.value}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Notas */}
+      {/* Notes */}
       {supplier.notes && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Notas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm whitespace-pre-wrap">{supplier.notes}</p>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-sm font-semibold text-white/80 uppercase tracking-wider">
+              Notas
+            </span>
+          </div>
+          <p className="text-sm text-white/50 whitespace-pre-wrap leading-relaxed">
+            {supplier.notes}
+          </p>
+        </div>
       )}
 
-      {/* Productos Vinculados */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" /> Productos Vinculados
-          </CardTitle>
-          <CardDescription>
-            {products.length} producto{products.length !== 1 ? "s" : ""} de este proveedor
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {products.length === 0 ? (
-            <div className="text-center py-8">
-              <Package className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">
-                No hay productos vinculados a este proveedor
-              </p>
+      {/* Linked Products */}
+      <DataTableWrapper
+        title={`${products.length} producto${products.length !== 1 ? "s" : ""} vinculado${products.length !== 1 ? "s" : ""}`}
+      >
+        {products.length === 0 ? (
+          <div className="text-center py-12">
+            <Package className="h-10 w-10 text-white/20 mx-auto mb-3" />
+            <p className="text-sm text-white/40">
+              No hay productos vinculados a este proveedor
+            </p>
+          </div>
+        ) : (
+          <div>
+            {/* Desktop */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/[0.06]">
+                    <th className={tableHeaderClass}>Producto</th>
+                    <th className={tableHeaderClass}>SKU</th>
+                    <th className={`${tableHeaderClass} text-right`}>Costo unit.</th>
+                    <th className={`${tableHeaderClass} text-right`}>MOQ</th>
+                    <th className={tableHeaderClass}>Estado</th>
+                    <th className={`${tableHeaderClass} text-center`}>Principal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((item) => (
+                    <tr
+                      key={item.id}
+                      className={`${tableRowClass} cursor-pointer`}
+                      onClick={() => router.push(`/products/${item.products.id}`)}
+                    >
+                      <td className={tableCellClass}>
+                        <p className="font-medium text-white/80">{item.products.name}</p>
+                        {item.products.asin && (
+                          <p className="text-xs text-white/30">ASIN: {item.products.asin}</p>
+                        )}
+                      </td>
+                      <td className={`${tableCellClass} text-white/40 font-mono text-xs`}>
+                        {item.products.sku}
+                      </td>
+                      <td className={`${tableCellClass} text-right font-medium text-white/80 tabular-nums`}>
+                        {fmt(item.unit_cost)}
+                      </td>
+                      <td className={`${tableCellClass} text-right text-white/40 tabular-nums`}>
+                        {item.moq || "—"}
+                      </td>
+                      <td className={tableCellClass}>
+                        <StatusBadge status={item.products.status} />
+                      </td>
+                      <td className={`${tableCellClass} text-center`}>
+                        {item.is_primary && (
+                          <Star className="h-4 w-4 text-yellow-500 mx-auto fill-yellow-500" />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ) : (
-            <div className="space-y-3">
+
+            {/* Mobile */}
+            <div className="md:hidden space-y-3 p-4">
               {products.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
+                  className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 cursor-pointer hover:bg-white/[0.04] transition-colors"
                   onClick={() => router.push(`/products/${item.products.id}`)}
                 >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{item.products.name}</p>
-                      {item.is_primary && (
-                        <Badge className="bg-blue-500/10 text-blue-500 text-xs">Principal</Badge>
-                      )}
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-white/80 text-sm">{item.products.name}</p>
+                        {item.is_primary && (
+                          <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
+                        )}
+                      </div>
+                      <p className="text-xs text-white/30">SKU: {item.products.sku}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      SKU: {item.products.sku}
-                      {item.products.asin && ` · ASIN: ${item.products.asin}`}
-                    </p>
+                    <StatusBadge status={item.products.status} />
                   </div>
-                  <div className="text-right">
-                    {item.unit_cost && (
-                      <p className="font-medium">${item.unit_cost.toFixed(2)}</p>
-                    )}
-                    {item.moq && (
-                      <p className="text-xs text-muted-foreground">MOQ: {item.moq}</p>
-                    )}
+                  <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                    <div>
+                      <span className="text-white/30">Costo</span>
+                      <p className="font-medium text-white/70 tabular-nums">{fmt(item.unit_cost)}</p>
+                    </div>
+                    <div>
+                      <span className="text-white/30">MOQ</span>
+                      <p className="font-medium text-white/70">{item.moq || "—"}</p>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </DataTableWrapper>
     </div>
   );
 }

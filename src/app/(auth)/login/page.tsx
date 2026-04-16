@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Package } from "lucide-react";
+import { Package, Mail, Lock, LogIn, Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -33,55 +32,117 @@ export default function LoginPage() {
 
       window.location.href = "/dashboard";
     } catch {
-      setError("Error al iniciar sesi\u00f3n");
+      setError("Error al iniciar sesión");
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "auto", padding: "1rem" }}>
-      <img src="/banner.png" alt="" style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", objectFit: "cover", objectPosition: "center", zIndex: 0 }} />
-      <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.08)", zIndex: 1 }} />
-      <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "1.5rem" }}>
-        <div style={{ width: "56px", height: "56px", borderRadius: "16px", backgroundColor: "rgba(10, 15, 35, 0.40)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "0.75rem", border: "1px solid rgba(255, 255, 255, 0.18)" }}>
-          <Package style={{ width: "28px", height: "28px", color: "#818cf8" }} />
+    <div className="fixed inset-0 flex flex-col items-center justify-center overflow-auto p-4">
+      {/* Background image */}
+      <img
+        src="/banner.png"
+        alt=""
+        className="fixed inset-0 w-screen h-screen object-cover object-center z-0"
+      />
+      {/* Overlay */}
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1]" />
+
+      {/* Logo + title */}
+      <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
+        <div className="w-14 h-14 rounded-2xl bg-[#0a0e1a]/40 backdrop-blur-xl flex items-center justify-center mb-3 border border-white/[0.15]">
+          <Package className="w-7 h-7 text-cyan-400" />
         </div>
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#ffffff", textShadow: "0 2px 12px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.5)", marginBottom: "0.25rem" }}>
+        <h1 className="text-2xl font-bold text-white drop-shadow-lg">
           FBA Manager
         </h1>
-        <p style={{ fontSize: "0.875rem", color: "rgba(255, 255, 255, 0.95)", textShadow: "0 1px 8px rgba(0,0,0,0.7), 0 1px 2px rgba(0,0,0,0.5)" }}>
-          {`Gesti\u00f3n profesional de productos Amazon FBA`}
+        <p className="text-sm text-white/70 drop-shadow-md">
+          Gestión profesional de productos Amazon FBA
         </p>
       </div>
-      <div style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: "400px", backgroundColor: "rgba(10, 15, 35, 0.30)", backdropFilter: "blur(24px) saturate(1.3)", WebkitBackdropFilter: "blur(24px) saturate(1.3)", borderRadius: "16px", border: "1px solid rgba(255, 255, 255, 0.15)", padding: "2rem", boxShadow: "0 8px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255,255,255,0.06) inset" }}>
-        <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "#ffffff", textShadow: "0 1px 6px rgba(0,0,0,0.5)", marginBottom: "0.25rem" }}>
-            {"Iniciar Sesi\u00f3n"}
+
+      {/* Card */}
+      <div className="relative z-10 w-full max-w-[400px] bg-[#0a0e1a]/30 backdrop-blur-2xl rounded-2xl border border-white/[0.12] p-7 shadow-2xl shadow-black/30 animate-fade-in">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h2 className="text-lg font-semibold text-white drop-shadow-md">
+            Iniciar Sesión
           </h2>
-          <p style={{ fontSize: "0.875rem", color: "rgba(255, 255, 255, 0.7)", textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>
+          <p className="text-sm text-white/60 mt-1">
             Ingresa tus credenciales para continuar
           </p>
         </div>
-        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <Label style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "0.875rem", fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>Email</Label>
-            <Input type="email" placeholder="tu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ backgroundColor: "rgba(255, 255, 255, 0.10)", border: "1px solid rgba(255, 255, 255, 0.20)", color: "#ffffff", borderRadius: "8px", padding: "0.625rem 0.75rem", fontSize: "0.875rem" }} />
+
+        {/* Form */}
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div className="space-y-1.5">
+            <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
+              <Mail className="h-3.5 w-3.5 text-white/40" />
+              Email
+            </label>
+            <Input
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:ring-cyan-500/20"
+            />
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <Label style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "0.875rem", fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>{`Contrase\u00f1a`}</Label>
-            <Input type="password" placeholder={"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"} value={password} onChange={(e) => setPassword(e.target.value)} required style={{ backgroundColor: "rgba(255, 255, 255, 0.10)", border: "1px solid rgba(255, 255, 255, 0.20)", color: "#ffffff", borderRadius: "8px", padding: "0.625rem 0.75rem", fontSize: "0.875rem" }} />
+
+          <div className="space-y-1.5">
+            <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5 text-white/40" />
+              Contraseña
+            </label>
+            <Input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:ring-cyan-500/20"
+            />
           </div>
+
+          {/* Error */}
           {error && (
-            <div style={{ backgroundColor: "rgba(239, 68, 68, 0.20)", border: "1px solid rgba(239, 68, 68, 0.35)", borderRadius: "8px", padding: "0.625rem 0.75rem", color: "#fca5a5", fontSize: "0.8125rem", textAlign: "center" }}>
-              {error}
+            <div className="rounded-xl bg-red-500/15 border border-red-500/25 px-4 py-3 text-center">
+              <p className="text-sm text-red-300">{error}</p>
             </div>
           )}
-          <Button type="submit" disabled={loading} style={{ width: "100%", background: "linear-gradient(135deg, #38bdf8, #0ea5e9)", color: "#ffffff", fontWeight: 600, borderRadius: "8px", padding: "0.625rem", fontSize: "0.9375rem", border: "none", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, boxShadow: "0 4px 12px rgba(14, 165, 233, 0.35)" }}>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 shadow-lg shadow-cyan-500/25 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <LogIn className="h-4 w-4" />
+            )}
             {loading ? "Ingresando..." : "Ingresar"}
-          </Button>
+          </button>
         </form>
+
+        {/* Register link */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-white/50">
+            ¿No tienes cuenta?{" "}
+            <Link
+              href="/register"
+              className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+            >
+              Crear cuenta
+            </Link>
+          </p>
+        </div>
       </div>
-      <p style={{ position: "relative", zIndex: 10, marginTop: "1.5rem", fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.6)", textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>
+
+      {/* Footer */}
+      <p className="relative z-10 mt-6 text-xs text-white/40 drop-shadow-md">
         Amazon FBA Manager v2.0
       </p>
     </div>

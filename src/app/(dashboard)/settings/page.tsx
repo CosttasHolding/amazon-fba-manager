@@ -1,16 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -18,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Settings,
   User,
@@ -28,36 +20,52 @@ import {
   Download,
   Upload,
   FileText,
+  Building2,
+  Globe,
+  MapPin,
+  DollarSign,
+  Percent,
+  Truck,
+  Warehouse,
+  Target,
+  Coins,
+  Receipt,
+  ShoppingCart,
+  BarChart3,
+  BoxesIcon,
+  Tags,
 } from "lucide-react";
 import { toast } from "sonner";
 
 const TABS = [
   { id: "profile", label: "Perfil", icon: User },
   { id: "fba", label: "FBA Defaults", icon: Package },
-  { id: "calculations", label: "C\u00E1lculos", icon: Calculator },
+  { id: "calculations", label: "Cálculos", icon: Calculator },
   { id: "data", label: "Datos", icon: FileText },
 ] as const;
 
+type TabId = (typeof TABS)[number]["id"];
+
 const MARKETPLACES = [
   { value: "US", label: "Estados Unidos (US)" },
-  { value: "CA", label: "Canad\u00E1 (CA)" },
-  { value: "MX", label: "M\u00E9xico (MX)" },
+  { value: "CA", label: "Canadá (CA)" },
+  { value: "MX", label: "México (MX)" },
   { value: "UK", label: "Reino Unido (UK)" },
   { value: "DE", label: "Alemania (DE)" },
   { value: "FR", label: "Francia (FR)" },
   { value: "IT", label: "Italia (IT)" },
-  { value: "ES", label: "Espa\u00F1a (ES)" },
-  { value: "JP", label: "Jap\u00F3n (JP)" },
+  { value: "ES", label: "España (ES)" },
+  { value: "JP", label: "Japón (JP)" },
   { value: "AU", label: "Australia (AU)" },
 ];
 
 const CURRENCIES = [
   { value: "USD", label: "USD ($)" },
-  { value: "EUR", label: "EUR (\u20AC)" },
-  { value: "GBP", label: "GBP (\u00A3)" },
+  { value: "EUR", label: "EUR (€)" },
+  { value: "GBP", label: "GBP (£)" },
   { value: "CAD", label: "CAD (C$)" },
   { value: "MXN", label: "MXN ($)" },
-  { value: "JPY", label: "JPY (\u00A5)" },
+  { value: "JPY", label: "JPY (¥)" },
   { value: "AUD", label: "AUD (A$)" },
 ];
 
@@ -76,14 +84,39 @@ interface UserSettings {
   tax_rate: number;
 }
 
+function Section({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-5">
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-cyan-400" />
+        <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">{title}</h3>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, icon: Icon, children, className = "" }: { label: string; icon?: React.ElementType; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={className}>
+      <label className="text-sm text-white/50 mb-1.5 flex items-center gap-1.5">
+        {Icon && <Icon className="h-3.5 w-3.5 text-white/30" />}
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+const inputClass = "bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 focus:border-cyan-500/40 focus:ring-cyan-500/20";
+
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState<TabId>("profile");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [exporting, setExporting] = useState("");
 
-  // Form states
   const [profile, setProfile] = useState({ full_name: "", company: "", country: "" });
   const [fba, setFba] = useState({
     marketplace: "US",
@@ -92,15 +125,9 @@ export default function SettingsPage() {
     default_shipping_cost: "0.00",
     default_storage_cost: "0.00",
   });
-  const [calc, setCalc] = useState({
-    target_roi: "30.00",
-    currency: "USD",
-    tax_rate: "0.00",
-  });
+  const [calc, setCalc] = useState({ target_roi: "30.00", currency: "USD", tax_rate: "0.00" });
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
+  useEffect(() => { fetchSettings(); }, []);
 
   const fetchSettings = async () => {
     try {
@@ -108,11 +135,7 @@ export default function SettingsPage() {
       if (res.ok) {
         const data = await res.json();
         setSettings(data);
-        setProfile({
-          full_name: data.full_name || "",
-          company: data.company || "",
-          country: data.country || "",
-        });
+        setProfile({ full_name: data.full_name || "", company: data.company || "", country: data.country || "" });
         setFba({
           marketplace: data.marketplace || "US",
           default_fba_fee: String(data.default_fba_fee ?? "3.00"),
@@ -126,49 +149,33 @@ export default function SettingsPage() {
           tax_rate: String(data.tax_rate ?? "0.00"),
         });
       }
-    } catch (error) {
-      toast.error("Error al cargar configuraci\u00F3n");
-    } finally {
-      setLoading(false);
-    }
+    } catch { toast.error("Error al cargar configuración"); } finally { setLoading(false); }
   };
 
-  const saveSettings = async (data: Record<string, any>) => {
+  const saveSettings = async (data: Record<string, unknown>) => {
     setSaving(true);
     try {
-      const res = await fetch("/api/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
       if (!res.ok) throw new Error("Error al guardar");
       const updated = await res.json();
       setSettings(updated);
-      toast.success("Configuraci\u00F3n guardada correctamente");
-    } catch (error) {
-      toast.error("Error al guardar configuraci\u00F3n");
-    } finally {
-      setSaving(false);
-    }
+      toast.success("Configuración guardada correctamente");
+    } catch { toast.error("Error al guardar configuración"); } finally { setSaving(false); }
   };
 
   const handleSaveProfile = () => saveSettings(profile);
-
-  const handleSaveFba = () =>
-    saveSettings({
-      marketplace: fba.marketplace,
-      default_fba_fee: parseFloat(fba.default_fba_fee) || 0,
-      default_referral_fee: parseFloat(fba.default_referral_fee) || 0,
-      default_shipping_cost: parseFloat(fba.default_shipping_cost) || 0,
-      default_storage_cost: parseFloat(fba.default_storage_cost) || 0,
-    });
-
-  const handleSaveCalc = () =>
-    saveSettings({
-      target_roi: parseFloat(calc.target_roi) || 0,
-      currency: calc.currency,
-      tax_rate: parseFloat(calc.tax_rate) || 0,
-    });
+  const handleSaveFba = () => saveSettings({
+    marketplace: fba.marketplace,
+    default_fba_fee: parseFloat(fba.default_fba_fee) || 0,
+    default_referral_fee: parseFloat(fba.default_referral_fee) || 0,
+    default_shipping_cost: parseFloat(fba.default_shipping_cost) || 0,
+    default_storage_cost: parseFloat(fba.default_storage_cost) || 0,
+  });
+  const handleSaveCalc = () => saveSettings({
+    target_roi: parseFloat(calc.target_roi) || 0,
+    currency: calc.currency,
+    tax_rate: parseFloat(calc.tax_rate) || 0,
+  });
 
   const handleExport = async (entity: string) => {
     setExporting(entity);
@@ -177,26 +184,18 @@ export default function SettingsPage() {
       if (!res.ok) throw new Error("Error al exportar");
       const data = await res.json();
       const items = data.data || data || [];
-
-      if (items.length === 0) {
-        toast.error(`No hay ${entity} para exportar`);
-        return;
-      }
-
+      if (items.length === 0) { toast.error(`No hay ${entity} para exportar`); return; }
       const headers = Object.keys(items[0]);
       const csvRows = [headers.join(",")];
       for (const item of items) {
-        const values = headers.map((h) => {
+        const values = headers.map((h: string) => {
           const val = item[h];
           if (val === null || val === undefined) return "";
-          const str = String(val).replace(/"/g, '""');
-          return `"${str}"`;
+          return `"${String(val).replace(/"/g, '""')}"`;
         });
         csvRows.push(values.join(","));
       }
-
-      const csv = csvRows.join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -204,49 +203,42 @@ export default function SettingsPage() {
       link.click();
       URL.revokeObjectURL(url);
       toast.success(`${entity} exportado correctamente`);
-    } catch (error) {
-      toast.error(`Error al exportar ${entity}`);
-    } finally {
-      setExporting("");
-    }
+    } catch { toast.error(`Error al exportar ${entity}`); } finally { setExporting(""); }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+          <p className="text-sm text-white/40">Cargando configuración…</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Settings className="h-6 w-6" />
-          Configuraci{"\u00F3"}n
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Administra tu perfil, valores por defecto y datos
-        </p>
-      </div>
+    <div className="space-y-6 animate-fade-in">
+       <PageHeader
+        badge="Sistema"
+        title="Configuración"
+        subtitle="Administra tu perfil, valores por defecto y datos"
+        breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Configuración" }]}
+      />
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-border overflow-x-auto">
+      {/* Tab navigation */}
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-1.5 flex gap-1 overflow-x-auto">
         {TABS.map((tab) => {
           const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap flex-1 justify-center ${isActive ? "bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shadow-lg shadow-cyan-500/5" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04] border border-transparent"}`}
             >
               <Icon className="h-4 w-4" />
-              {tab.label}
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           );
         })}
@@ -254,244 +246,172 @@ export default function SettingsPage() {
 
       {/* Profile Tab */}
       {activeTab === "profile" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Perfil
-            </CardTitle>
-            <CardDescription>Tu informaci{"\u00F3"}n personal</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="full_name">Nombre completo</Label>
-                <Input
-                  id="full_name"
-                  value={profile.full_name}
-                  onChange={(e) => setProfile((p) => ({ ...p, full_name: e.target.value }))}
-                  placeholder="Tu nombre"
-                />
-              </div>
-              <div>
-                <Label htmlFor="company">Empresa</Label>
-                <Input
-                  id="company"
-                  value={profile.company}
-                  onChange={(e) => setProfile((p) => ({ ...p, company: e.target.value }))}
-                  placeholder="Nombre de empresa"
-                />
-              </div>
-              <div>
-                <Label htmlFor="country">Pa{"\u00ED"}s</Label>
-                <Input
-                  id="country"
-                  value={profile.country}
-                  onChange={(e) => setProfile((p) => ({ ...p, country: e.target.value }))}
-                  placeholder="Tu pa\u00EDs"
-                />
-              </div>
+        <div className="space-y-6 animate-fade-in">
+          <Section icon={User} title="Información personal">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <Field label="Nombre completo" icon={User}>
+                <Input className={inputClass} value={profile.full_name} onChange={(e) => setProfile((p) => ({ ...p, full_name: e.target.value }))} placeholder="Tu nombre" />
+              </Field>
+              <Field label="Empresa" icon={Building2}>
+                <Input className={inputClass} value={profile.company} onChange={(e) => setProfile((p) => ({ ...p, company: e.target.value }))} placeholder="Nombre de empresa" />
+              </Field>
+              <Field label="País" icon={MapPin}>
+                <Input className={inputClass} value={profile.country} onChange={(e) => setProfile((p) => ({ ...p, country: e.target.value }))} placeholder="Tu país" />
+              </Field>
             </div>
-            <div className="flex justify-end pt-2">
-              <Button onClick={handleSaveProfile} disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                Guardar perfil
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          </Section>
+          <div className="flex justify-end">
+            <button onClick={handleSaveProfile} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Guardar perfil
+            </button>
+          </div>
+        </div>
       )}
 
       {/* FBA Defaults Tab */}
       {activeTab === "fba" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Valores por defecto FBA
-            </CardTitle>
-            <CardDescription>
-              Estos valores se usar{"\u00E1"}n como predeterminados al crear nuevos productos
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Marketplace</Label>
+        <div className="space-y-6 animate-fade-in">
+          <Section icon={Globe} title="Marketplace">
+            <Field label="Marketplace de Amazon" icon={Globe}>
               <Select value={fba.marketplace} onValueChange={(v) => setFba((p) => ({ ...p, marketplace: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {MARKETPLACES.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                  ))}
+                <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-[#0a0e1a] border-white/10">
+                  {MARKETPLACES.map((m) => (<SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>))}
                 </SelectContent>
               </Select>
+            </Field>
+          </Section>
+          <Section icon={DollarSign} title="Tarifas por defecto">
+            <p className="text-xs text-white/30 -mt-2">Estos valores se usarán como predeterminados al crear nuevos productos</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <Field label="Tarifa FBA ($)" icon={DollarSign}>
+                <Input type="number" step="0.01" className={inputClass} value={fba.default_fba_fee} onChange={(e) => setFba((p) => ({ ...p, default_fba_fee: e.target.value }))} />
+              </Field>
+              <Field label="Referral fee (%)" icon={Percent}>
+                <Input type="number" step="0.01" className={inputClass} value={fba.default_referral_fee} onChange={(e) => setFba((p) => ({ ...p, default_referral_fee: e.target.value }))} />
+              </Field>
+              <Field label="Envío ($)" icon={Truck}>
+                <Input type="number" step="0.01" className={inputClass} value={fba.default_shipping_cost} onChange={(e) => setFba((p) => ({ ...p, default_shipping_cost: e.target.value }))} />
+              </Field>
+              <Field label="Almacenamiento ($)" icon={Warehouse}>
+                <Input type="number" step="0.01" className={inputClass} value={fba.default_storage_cost} onChange={(e) => setFba((p) => ({ ...p, default_storage_cost: e.target.value }))} />
+              </Field>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <Label>Tarifa FBA ($)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={fba.default_fba_fee}
-                  onChange={(e) => setFba((p) => ({ ...p, default_fba_fee: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label>Referral fee (%)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={fba.default_referral_fee}
-                  onChange={(e) => setFba((p) => ({ ...p, default_referral_fee: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label>Env{"\u00ED"}o ($)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={fba.default_shipping_cost}
-                  onChange={(e) => setFba((p) => ({ ...p, default_shipping_cost: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label>Almacenamiento ($)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={fba.default_storage_cost}
-                  onChange={(e) => setFba((p) => ({ ...p, default_storage_cost: e.target.value }))}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end pt-2">
-              <Button onClick={handleSaveFba} disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                Guardar FBA defaults
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          </Section>
+          <div className="flex justify-end">
+            <button onClick={handleSaveFba} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Guardar FBA defaults
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Calculations Tab */}
       {activeTab === "calculations" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calculator className="h-5 w-5" />
-              C{"\u00E1"}lculos
-            </CardTitle>
-            <CardDescription>
-              Valores predeterminados para la calculadora de rentabilidad
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label>ROI objetivo (%)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={calc.target_roi}
-                  onChange={(e) => setCalc((p) => ({ ...p, target_roi: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label>Moneda</Label>
+        <div className="space-y-6 animate-fade-in">
+          <Section icon={Calculator} title="Parámetros de cálculo">
+            <p className="text-xs text-white/30 -mt-2">Valores predeterminados para la calculadora de rentabilidad</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <Field label="ROI objetivo (%)" icon={Target}>
+                <Input type="number" step="0.01" className={inputClass} value={calc.target_roi} onChange={(e) => setCalc((p) => ({ ...p, target_roi: e.target.value }))} />
+              </Field>
+              <Field label="Moneda" icon={Coins}>
                 <Select value={calc.currency} onValueChange={(v) => setCalc((p) => ({ ...p, currency: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {CURRENCIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                    ))}
+                  <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-[#0a0e1a] border-white/10">
+                    {CURRENCIES.map((c) => (<SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label>Tasa impositiva (%)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={calc.tax_rate}
-                  onChange={(e) => setCalc((p) => ({ ...p, tax_rate: e.target.value }))}
-                />
-              </div>
+              </Field>
+              <Field label="Tasa impositiva (%)" icon={Receipt}>
+                <Input type="number" step="0.01" className={inputClass} value={calc.tax_rate} onChange={(e) => setCalc((p) => ({ ...p, tax_rate: e.target.value }))} />
+              </Field>
             </div>
-            <div className="flex justify-end pt-2">
-              <Button onClick={handleSaveCalc} disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                Guardar c{"\u00E1"}lculos
-              </Button>
+          </Section>
+          <Section icon={BarChart3} title="Vista previa">
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: "ROI objetivo", value: `${calc.target_roi}%`, color: "text-green-400" },
+                { label: "Moneda", value: calc.currency, color: "text-cyan-400" },
+                { label: "Impuestos", value: `${calc.tax_rate}%`, color: "text-amber-400" },
+              ].map((item) => (
+                <div key={item.label} className="text-center p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                  <p className="text-xs text-white/40 mb-1">{item.label}</p>
+                  <p className={`text-lg font-bold ${item.color}`}>{item.value}</p>
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
+          </Section>
+          <div className="flex justify-end">
+            <button onClick={handleSaveCalc} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Guardar cálculos
+            </button>
+          </div>
+        </div>
       )}
 
-      {/* Data Operations Tab */}
+      {/* Data Tab */}
       {activeTab === "data" && (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Download className="h-5 w-5" />
-                Exportar datos
-              </CardTitle>
-              <CardDescription>
-                Descarga tus datos en formato CSV
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                {[
-                  { entity: "products", label: "Productos" },
-                  { entity: "suppliers", label: "Proveedores" },
-                  { entity: "inventory", label: "Inventario" },
-                  { entity: "sales", label: "Ventas" },
-                ].map((item) => (
-                  <Button
-                    key={item.entity}
-                    variant="outline"
-                    onClick={() => handleExport(item.entity)}
-                    disabled={exporting === item.entity}
-                    className="w-full"
-                  >
-                    {exporting === item.entity ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Download className="h-4 w-4 mr-2" />
-                    )}
-                    {item.label}
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="space-y-6 animate-fade-in">
+          <Section icon={Download} title="Exportar datos">
+            <p className="text-xs text-white/30 -mt-2">Descarga tus datos en formato CSV</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { entity: "products", label: "Productos", icon: Tags, color: "cyan" },
+                { entity: "suppliers", label: "Proveedores", icon: Building2, color: "purple" },
+                { entity: "inventory", label: "Inventario", icon: BoxesIcon, color: "amber" },
+                { entity: "sales", label: "Ventas", icon: ShoppingCart, color: "green" },
+              ].map((item) => {
+                const Icon = item.icon;
+                const isLoading = exporting === item.entity;
+                const colorMap: Record<string, string> = {
+                  cyan: "border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/10",
+                  purple: "border-purple-500/20 text-purple-400 hover:bg-purple-500/10",
+                  amber: "border-amber-500/20 text-amber-400 hover:bg-amber-500/10",
+                  green: "border-green-500/20 text-green-400 hover:bg-green-500/10",
+                };
+                return (
+                  <button key={item.entity} onClick={() => handleExport(item.entity)} disabled={isLoading} className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium bg-white/[0.02] border transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${colorMap[item.color]}`}>
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
+                    Exportar {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Section>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
-                Importar datos
-              </CardTitle>
-              <CardDescription>
-                Pr{"\u00F3"}ximamente: importa datos desde archivos CSV
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-center py-8 border-2 border-dashed border-border rounded-lg">
-                <div className="text-center">
-                  <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">
-                    Funci{"\u00F3"}n de importaci{"\u00F3"}n en desarrollo
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Pronto podr{"\u00E1"}s importar productos y proveedores desde CSV
-                  </p>
+          <Section icon={Upload} title="Importar datos">
+            <div className="flex items-center justify-center py-10 border-2 border-dashed border-white/[0.06] rounded-xl bg-white/[0.01]">
+              <div className="text-center">
+                <div className="mx-auto mb-4 h-12 w-12 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
+                  <Upload className="h-5 w-5 text-white/30" />
+                </div>
+                <p className="text-sm text-white/40 font-medium">Función de importación en desarrollo</p>
+                <p className="text-xs text-white/25 mt-1.5 max-w-xs mx-auto">Pronto podrás importar productos y proveedores desde archivos CSV</p>
+                <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                  <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <span className="text-xs text-amber-400 font-medium">Próximamente</span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </Section>
+
+          <Section icon={Settings} title="Zona de peligro">
+            <div className="rounded-xl border border-red-500/10 bg-red-500/[0.03] p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-red-400">Restablecer configuración</p>
+                  <p className="text-xs text-white/30 mt-1">Restaura todos los valores por defecto. Esta acción no se puede deshacer.</p>
+                </div>
+                <button onClick={() => toast.error("Función no implementada — usa las pestañas para editar valores")} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all duration-200 whitespace-nowrap">
+                  Restablecer todo
+                </button>
+              </div>
+            </div>
+          </Section>
         </div>
       )}
     </div>

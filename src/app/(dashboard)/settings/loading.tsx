@@ -1,51 +1,33 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-
 export default function SettingsLoading() {
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-6 w-6 rounded" />
-          <Skeleton className="h-8 w-44" />
-        </div>
-        <Skeleton className="h-4 w-72 mt-2" />
+    <div className="space-y-6 animate-pulse">
+      <div className="space-y-2">
+        <div className="h-3 w-20 rounded-full bg-white/[0.06]" />
+        <div className="h-7 w-40 rounded-lg bg-white/[0.06]" />
+        <div className="h-4 w-64 rounded-lg bg-white/[0.04]" />
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-border overflow-x-auto pb-px">
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-1.5 flex gap-1">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-2 px-4 py-2">
-            <Skeleton className="h-4 w-4 rounded" />
-            <Skeleton className="h-4 w-16" />
-          </div>
+          <div key={i} className="flex-1 h-10 rounded-xl bg-white/[0.04]" />
         ))}
       </div>
 
-      {/* Card content */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-5 w-5 rounded" />
-            <Skeleton className="h-6 w-24" />
-          </div>
-          <Skeleton className="h-4 w-48 mt-1" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="space-y-1.5">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-10 w-full rounded-lg" />
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-end pt-2">
-            <Skeleton className="h-10 w-36 rounded-lg" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-5">
+        <div className="h-4 w-36 rounded-lg bg-white/[0.06]" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="h-3 w-24 rounded bg-white/[0.04]" />
+              <div className="h-10 w-full rounded-lg bg-white/[0.04]" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <div className="h-10 w-36 rounded-xl bg-white/[0.04]" />
+      </div>
     </div>
   );
 }

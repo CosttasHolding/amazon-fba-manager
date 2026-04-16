@@ -1,35 +1,31 @@
-﻿'use client';
+﻿"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
-import { UserPlus } from 'lucide-react';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Package, Mail, Lock, User, UserPlus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast({ title: 'Error', description: 'Las contrasenas no coinciden', variant: 'destructive' });
+      toast.error("Las contraseñas no coinciden");
       return;
     }
 
     if (password.length < 8) {
-      toast({ title: 'Error', description: 'La contrasena debe tener al menos 8 caracteres', variant: 'destructive' });
+      toast.error("La contraseña debe tener al menos 8 caracteres");
       return;
     }
 
@@ -44,55 +40,147 @@ export default function RegisterPage() {
 
       if (error) throw error;
 
-      toast({ title: 'Exito', description: 'Cuenta creada. Revisa tu email para confirmar.' });
-      setTimeout(() => router.push('/login'), 2000);
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      toast.success("Cuenta creada. Revisa tu email para confirmar.");
+      setTimeout(() => router.push("/login"), 2000);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Error al crear cuenta";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 p-3 rounded-2xl bg-primary/10 w-fit">
-            <UserPlus className="h-8 w-8 text-primary" />
+    <div className="fixed inset-0 flex flex-col items-center justify-center overflow-auto p-4">
+      {/* Background image */}
+      <img
+        src="/banner.png"
+        alt=""
+        className="fixed inset-0 w-screen h-screen object-cover object-center z-0"
+      />
+      {/* Overlay */}
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1]" />
+
+      {/* Logo + title */}
+      <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
+        <div className="w-14 h-14 rounded-2xl bg-[#0a0e1a]/40 backdrop-blur-xl flex items-center justify-center mb-3 border border-white/[0.15]">
+          <Package className="w-7 h-7 text-cyan-400" />
+        </div>
+        <h1 className="text-2xl font-bold text-white drop-shadow-lg">
+          FBA Manager
+        </h1>
+        <p className="text-sm text-white/70 drop-shadow-md">
+          Crea tu cuenta para comenzar
+        </p>
+      </div>
+
+      {/* Card */}
+      <div className="relative z-10 w-full max-w-[400px] bg-[#0a0e1a]/30 backdrop-blur-2xl rounded-2xl border border-white/[0.12] p-7 shadow-2xl shadow-black/30 animate-fade-in">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h2 className="text-lg font-semibold text-white drop-shadow-md">
+            Crear Cuenta
+          </h2>
+          <p className="text-sm text-white/60 mt-1">
+            Registra tu cuenta para comenzar
+          </p>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleRegister} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5 text-white/40" />
+              Nombre completo
+            </label>
+            <Input
+              type="text"
+              placeholder="Tu nombre completo"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:ring-cyan-500/20"
+            />
           </div>
-          <CardTitle className="text-2xl">Crear Cuenta</CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">Registra tu cuenta para comenzar</p>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Nombre Completo</Label>
-              <Input id="fullName" type="text" placeholder="Tu nombre completo" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="tu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Contrasena</Label>
-              <Input id="password" type="password" placeholder="Minimo 8 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar Contrasena</Label>
-              <Input id="confirmPassword" type="password" placeholder="Repite la contrasena" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
-            </Button>
-          </form>
-          <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Ya tienes cuenta?{' '}
-              <Link href="/login" className="text-primary hover:underline font-medium">Iniciar Sesion</Link>
-            </p>
+
+          <div className="space-y-1.5">
+            <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
+              <Mail className="h-3.5 w-3.5 text-white/40" />
+              Email
+            </label>
+            <Input
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:ring-cyan-500/20"
+            />
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="space-y-1.5">
+            <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5 text-white/40" />
+              Contraseña
+            </label>
+            <Input
+              type="password"
+              placeholder="Mínimo 8 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:ring-cyan-500/20"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5 text-white/40" />
+              Confirmar contraseña
+            </label>
+            <Input
+              type="password"
+              placeholder="Repite la contraseña"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:ring-cyan-500/20"
+            />
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 shadow-lg shadow-cyan-500/25 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <UserPlus className="h-4 w-4" />
+            )}
+            {loading ? "Creando cuenta..." : "Crear Cuenta"}
+          </button>
+        </form>
+
+        {/* Login link */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-white/50">
+            ¿Ya tienes cuenta?{" "}
+            <Link
+              href="/login"
+              className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+            >
+              Iniciar Sesión
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <p className="relative z-10 mt-6 text-xs text-white/40 drop-shadow-md">
+        Amazon FBA Manager v2.0
+      </p>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 import Link from "next/link";
 
-export default function DashboardError({
+export default function GlobalError({
   error,
   reset,
 }: {
@@ -12,11 +12,11 @@ export default function DashboardError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("Dashboard error:", error);
+    console.error("Global error:", error);
   }, [error]);
 
   return (
-    <div className="flex items-center justify-center min-h-[60vh] animate-fade-in">
+    <div className="flex items-center justify-center min-h-screen bg-[#030712] animate-fade-in">
       <div className="text-center max-w-md mx-auto px-4">
         {/* Icon */}
         <div className="mx-auto mb-6 h-16 w-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
@@ -25,10 +25,10 @@ export default function DashboardError({
 
         {/* Text */}
         <h2 className="text-xl font-bold text-white mb-2">
-          Algo salió mal
+          Error de aplicación
         </h2>
         <p className="text-sm text-white/40 mb-2">
-          Ocurrió un error inesperado al cargar esta página.
+          Ocurrió un error crítico en la aplicación.
         </p>
 
         {/* Error detail */}

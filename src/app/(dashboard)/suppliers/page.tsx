@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Plus,
   Search,
@@ -11,19 +12,10 @@ import {
   Clock,
   Package,
   ExternalLink,
-  MoreHorizontal,
   Filter,
+  Loader2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -32,6 +24,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Supplier } from "@/types";
+import { PageHeader } from "@/components/ui/page-header";
+import { KpiCard } from "@/components/ui/kpi-card";
+import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  DataTableWrapper,
+  tableHeaderClass,
+  tableCellClass,
+  tableRowClass,
+} from "@/components/ui/data-table-wrapper";
+
+const renderStars = (rating: number | null) => {
+  if (!rating) return <span className="text-white/25 text-xs">Sin rating</span>;
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          className={`h-3.5 w-3.5 ${
+            i <= rating ? "fill-amber-400 text-amber-400" : "text-white/10"
+          }`}
+        />
+      ))}
+    </div>
+  );
+};
 
 export default function SuppliersPage() {
   const router = useRouter();
@@ -79,136 +96,81 @@ export default function SuppliersPage() {
         ).toFixed(1)
       : "N/A";
 
-  const renderStars = (rating: number | null) => {
-    if (!rating) return <span className="text-muted-foreground text-sm">Sin rating</span>;
-    return (
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Star
-            key={i}
-            className={`h-3.5 w-3.5 ${
-              i <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
-
-  const statusBadge = (status: string) => (
-    <Badge variant={status === "active" ? "default" : "secondary"}
-      className={status === "active"
-        ? "bg-green-500/10 text-green-500 hover:bg-green-500/20"
-        : "bg-red-500/10 text-red-500 hover:bg-red-500/20"
-      }
-    >
-      {status === "active" ? "Activo" : "Inactivo"}
-    </Badge>
-  );
-
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Proveedores</h1>
-            <p className="text-sm text-muted-foreground">Cargando...</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i}><CardContent className="p-4"><div className="h-16 animate-pulse bg-muted rounded" /></CardContent></Card>
-          ))}
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+          <span className="text-sm text-white/40">Cargando proveedores...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Proveedores</h1>
-          <p className="text-sm text-muted-foreground">
-            Gestiona tus proveedores de Alibaba, 1688 y más
-          </p>
-        </div>
-        <Button onClick={() => router.push("/suppliers/new")}>
-          <Plus className="mr-2 h-4 w-4" /> Nuevo Proveedor
-        </Button>
+      <PageHeader
+        badge="PROVEEDORES"
+        title="Proveedores"
+        subtitle="Gestiona tus proveedores de Alibaba, 1688 y mas"
+      >
+        <Link
+          href="/suppliers/new"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          Nuevo Proveedor
+        </Link>
+      </PageHeader>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard
+          label="Total"
+          value={String(suppliers.length)}
+          icon={Factory}
+          accentColor="cyan"
+          animationDelay={0}
+        />
+        <KpiCard
+          label="Activos"
+          value={String(activeCount)}
+          icon={Package}
+          accentColor="green"
+          animationDelay={75}
+          progressBar={suppliers.length > 0 ? Math.round((activeCount / suppliers.length) * 100) : 0}
+        />
+        <KpiCard
+          label="Paises"
+          value={String(countries.length)}
+          icon={Globe}
+          accentColor="purple"
+          animationDelay={150}
+        />
+        <KpiCard
+          label="Rating Prom."
+          value={avgRating}
+          icon={Star}
+          accentColor="amber"
+          animationDelay={225}
+        />
       </div>
 
-      {/* Métricas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-blue-500/10 p-2">
-                <Factory className="h-5 w-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold">{suppliers.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-green-500/10 p-2">
-                <Package className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Activos</p>
-                <p className="text-2xl font-bold">{activeCount}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-purple-500/10 p-2">
-                <Globe className="h-5 w-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Países</p>
-                <p className="text-2xl font-bold">{countries.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-amber-500/10 p-2">
-                <Star className="h-5 w-5 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Rating Prom.</p>
-                <p className="text-2xl font-bold">{avgRating}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filtros */}
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
           <Input
-            placeholder="Buscar proveedor, contacto, país..."
+            placeholder="Buscar proveedor, contacto, pais..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-9 bg-white/[0.04] border-white/[0.08]"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[160px]">
-            <Filter className="mr-2 h-4 w-4" />
+          <SelectTrigger className="w-full sm:w-[160px] bg-white/[0.04] border-white/[0.08]">
+            <Filter className="mr-2 h-4 w-4 text-white/30" />
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>
@@ -220,127 +182,131 @@ export default function SuppliersPage() {
       </div>
 
       {/* Empty State */}
-      {filtered.length === 0 && !loading && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Factory className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-semibold mb-1">
-              {suppliers.length === 0 ? "No hay proveedores" : "Sin resultados"}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {suppliers.length === 0
-                ? "Agrega tu primer proveedor de Alibaba"
-                : "Intenta cambiar los filtros de búsqueda"}
-            </p>
-            {suppliers.length === 0 && (
-              <Button onClick={() => router.push("/suppliers/new")}>
-                <Plus className="mr-2 h-4 w-4" /> Agregar Proveedor
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+      {filtered.length === 0 && (
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-12 text-center">
+          <Factory className="h-12 w-12 text-white/15 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-white/70 mb-1">
+            {suppliers.length === 0 ? "No hay proveedores" : "Sin resultados"}
+          </h3>
+          <p className="text-sm text-white/35 mb-4">
+            {suppliers.length === 0
+              ? "Agrega tu primer proveedor de Alibaba"
+              : "Intenta cambiar los filtros de busqueda"}
+          </p>
+          {suppliers.length === 0 && (
+            <Link
+              href="/suppliers/new"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Agregar Proveedor
+            </Link>
+          )}
+        </div>
       )}
 
-      {/* Tabla Desktop */}
+      {/* Table */}
       {filtered.length > 0 && (
-        <Card className="hidden md:block">
-          <CardContent className="p-0">
+        <DataTableWrapper
+          title={`${filtered.length} proveedor${filtered.length !== 1 ? "es" : ""}`}
+        >
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Proveedor</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">País</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Rating</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">MOQ</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Lead Time</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Estado</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Acciones</th>
+                <tr className="border-b border-white/[0.06]">
+                  <th className={tableHeaderClass}>Proveedor</th>
+                  <th className={tableHeaderClass}>Pais</th>
+                  <th className={tableHeaderClass}>Rating</th>
+                  <th className={tableHeaderClass}>MOQ</th>
+                  <th className={tableHeaderClass}>Lead Time</th>
+                  <th className={tableHeaderClass}>Estado</th>
+                  <th className={`${tableHeaderClass} text-right`}>Link</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((supplier) => (
                   <tr
                     key={supplier.id}
-                    className="border-b border-border hover:bg-muted/50 cursor-pointer transition-colors"
+                    className={`${tableRowClass} cursor-pointer`}
                     onClick={() => router.push(`/suppliers/${supplier.id}`)}
                   >
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">{supplier.name}</p>
-                        {supplier.contact_name && (
-                          <p className="text-sm text-muted-foreground">{supplier.contact_name}</p>
-                        )}
-                      </div>
+                    <td className={tableCellClass}>
+                      <p className="font-medium text-white/80">{supplier.name}</p>
+                      {supplier.contact_name && (
+                        <p className="text-xs text-white/30">{supplier.contact_name}</p>
+                      )}
                     </td>
-                    <td className="p-4 text-sm">{supplier.country || "—"}</td>
-                    <td className="p-4">{renderStars(supplier.rating)}</td>
-                    <td className="p-4 text-sm">
+                    <td className={`${tableCellClass} text-white/40`}>
+                      {supplier.country || "—"}
+                    </td>
+                    <td className={tableCellClass}>
+                      {renderStars(supplier.rating)}
+                    </td>
+                    <td className={`${tableCellClass} text-white/40 tabular-nums`}>
                       {supplier.min_order_qty ? `${supplier.min_order_qty} uds` : "—"}
                     </td>
-                    <td className="p-4 text-sm">
-                      {supplier.lead_time_days ? `${supplier.lead_time_days} días` : "—"}
+                    <td className={`${tableCellClass} text-white/40 tabular-nums`}>
+                      {supplier.lead_time_days ? `${supplier.lead_time_days} dias` : "—"}
                     </td>
-                    <td className="p-4">{statusBadge(supplier.status)}</td>
-                    <td className="p-4 text-right">
+                    <td className={tableCellClass}>
+                      <StatusBadge status={supplier.status} />
+                    </td>
+                    <td className={`${tableCellClass} text-right`}>
                       {supplier.alibaba_url && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             window.open(supplier.alibaba_url!, "_blank");
                           }}
+                          className="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
                         >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
+                          <ExternalLink className="h-4 w-4 text-white/30 hover:text-cyan-400" />
+                        </button>
                       )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </CardContent>
-        </Card>
-      )}
+          </div>
 
-      {/* Cards Mobile */}
-      {filtered.length > 0 && (
-        <div className="md:hidden space-y-3">
-          {filtered.map((supplier) => (
-            <Card
-              key={supplier.id}
-              className="cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => router.push(`/suppliers/${supplier.id}`)}
-            >
-              <CardContent className="p-4">
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-3 p-4">
+            {filtered.map((supplier) => (
+              <div
+                key={supplier.id}
+                className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 cursor-pointer hover:bg-white/[0.04] transition-colors"
+                onClick={() => router.push(`/suppliers/${supplier.id}`)}
+              >
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <p className="font-medium">{supplier.name}</p>
+                    <p className="font-medium text-white/80">{supplier.name}</p>
                     {supplier.contact_name && (
-                      <p className="text-sm text-muted-foreground">{supplier.contact_name}</p>
+                      <p className="text-xs text-white/30">{supplier.contact_name}</p>
                     )}
                   </div>
-                  {statusBadge(supplier.status)}
+                  <StatusBadge status={supplier.status} />
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-3">
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-xs text-white/40">
                     <Globe className="h-3.5 w-3.5" />
-                    {supplier.country || "Sin país"}
+                    {supplier.country || "Sin pais"}
                   </div>
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-xs text-white/40">
                     <Package className="h-3.5 w-3.5" />
                     MOQ: {supplier.min_order_qty || "—"}
                   </div>
                   <div>{renderStars(supplier.rating)}</div>
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-xs text-white/40">
                     <Clock className="h-3.5 w-3.5" />
                     {supplier.lead_time_days ? `${supplier.lead_time_days}d` : "—"}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
+        </DataTableWrapper>
       )}
     </div>
   );

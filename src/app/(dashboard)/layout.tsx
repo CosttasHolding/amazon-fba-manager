@@ -15,6 +15,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { Sidebar } from "@/components/sidebar";
 import { TopHeader } from "@/components/top-header";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 export default async function DashboardLayout({
   children,
@@ -37,55 +38,36 @@ export default async function DashboardLayout({
 
   const userName = user.user_metadata?.full_name || user.user_metadata?.name;
 
-  const mobileNavItems = [
-    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/products", icon: Package, label: "Productos" },
-    { href: "/inventory", icon: Warehouse, label: "Inventario" },
-    { href: "/sales", icon: TrendingUp, label: "Ventas" },
-    { href: "/suppliers", icon: Factory, label: "Proveedores" },
-    { href: "/calculator", icon: Calculator, label: "Calculadora" },
-  ];
-
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
       <Sidebar userEmail={user.email} userName={userName} />
 
       {/* Mobile Bottom Nav */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[hsl(225,43%,5%)]/95 backdrop-blur-xl border-t border-slate-800/50 px-2 py-1.5 pb-safe">
-        <div className="flex justify-around">
-          {mobileNavItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl text-slate-600 hover:text-cyan-400 transition-colors"
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="text-[10px] font-medium font-body">
-                {item.label}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </nav>
+      <MobileBottomNav />
 
       {/* Mobile Top Bar */}
-      <header className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+      <header className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[hsl(225,43%,5%)]/90 backdrop-blur-xl border-b border-white/[0.06]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
             <Package className="w-4 h-4 text-white" />
           </div>
-          <h1 className="text-base font-bold text-foreground font-display">
-            FBA Manager
-          </h1>
+          <div>
+            <h1 className="text-sm font-bold text-white font-display leading-none">
+              FBA Manager
+            </h1>
+            <p className="text-[9px] text-cyan-400/50 tracking-[0.15em] uppercase font-display">
+              Command Center
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle compact />
           <form action={handleLogout}>
             <button
               type="submit"
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-card border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all duration-200"
-              title="Cerrar sesi\u00F3n"
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 transition-all duration-200"
+              title="Cerrar sesión"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -94,7 +76,7 @@ export default async function DashboardLayout({
       </header>
 
       {/* Main Content */}
-      <main className="lg:ml-64 min-h-screen pb-20 lg:pb-0">
+      <main className="lg:ml-64 min-h-screen pb-24 lg:pb-0">
         {/* Desktop Top Header */}
         <TopHeader userEmail={user.email} userName={userName} />
 

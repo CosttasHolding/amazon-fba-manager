@@ -4,6 +4,10 @@ export default {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        display: ["var(--font-display)", "ui-monospace", "monospace"],
+        body: ["var(--font-body)", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

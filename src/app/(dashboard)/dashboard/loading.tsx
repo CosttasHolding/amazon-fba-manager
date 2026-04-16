@@ -1,30 +1,31 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
-
 export default function DashboardLoading() {
   return (
-    <div>
-      {/* Header */}
-      <div className="mb-8">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-4 w-64 mt-2" />
+    <div className="space-y-6 animate-pulse">
+      <div className="space-y-2">
+        <div className="h-3 w-20 rounded-full bg-white/[0.06]" />
+        <div className="h-7 w-48 rounded-lg bg-white/[0.06]" />
+        <div className="h-4 w-64 rounded-lg bg-white/[0.04]" />
       </div>
 
-      {/* KPI Cards - matches grid grid-cols-2 lg:grid-cols-4 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1.5 sm:space-y-2 min-w-0 flex-1">
-                  <Skeleton className="h-3 w-20 sm:w-28" />
-                  <Skeleton className="h-6 sm:h-8 w-16 sm:w-24" />
-                  <Skeleton className="h-3 w-24 hidden sm:block" />
-                </div>
-                <Skeleton className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex-shrink-0 ml-2" />
-              </div>
-            </CardContent>
-          </Card>
+          <div key={i} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="h-3 w-24 rounded-full bg-white/[0.06]" />
+              <div className="h-8 w-8 rounded-lg bg-white/[0.04]" />
+            </div>
+            <div className="h-8 w-20 rounded-lg bg-white/[0.08]" />
+            <div className="h-2 w-full rounded-full bg-white/[0.04]" />
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4">
+        <div className="h-5 w-40 rounded-lg bg-white/[0.06]" />
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-4">
+            <div className="h-4 w-full rounded bg-white/[0.04]" />
+          </div>
         ))}
       </div>
     </div>
