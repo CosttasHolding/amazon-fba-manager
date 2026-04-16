@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,10 +22,6 @@ const STATUS_OPTIONS = [
   { value: "out_of_stock", label: "Sin stock" },
 ];
 
-const CATEGORY_OPTIONS = [
-  { value: "", label: "Todas las categorías" },
-];
-
 export default function ProductsPage() {
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
@@ -37,6 +33,7 @@ export default function ProductsPage() {
   const [filterCategory, setFilterCategory] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [showNewModal, setShowNewModal] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   const fetchProducts = () => {
     setLoading(true);
@@ -55,6 +52,19 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  // Cerrar filtros al hacer click afuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
+      }
+    };
+    if (showFilters) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showFilters]);
 
   const filtered = products.filter((p) => {
     const matchSearch =
@@ -98,21 +108,108 @@ export default function ProductsPage() {
         title="Catálogo de Productos"
         subtitle={`${products.length} producto${products.length !== 1 ? "s" : ""} registrado${products.length !== 1 ? "s" : ""}`}
       >
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all duration-200 ${showFilters || activeFiltersCount > 0
-              ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-400"
-              : "bg-white/5 border-white/10 text-white/50 hover:text-white/80 hover:bg-white/10"
-            }`}
-        >
-          <Filter className="w-4 h-4" />
-          Filtros
-          {activeFiltersCount > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-[10px] font-bold text-cyan-400">
-              {activeFiltersCount}
-            </span>
+        {/* Contenedor relativo para el dropdown */}
+        <div className="relative" ref={filterRef}>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all duration-200 ${showFilters || activeFiltersCount > 0
+                ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-400"
+                : "bg-white/5 border-white/10 text-white/50 hover:text-white/80 hover:bg-white/10"
+              }`}
+          >
+            <Filter className="w-4 h-4" />
+            Filtros
+            {activeFiltersCount > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-[10px] font-bold text-cyan-400">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
+
+          {/* Dropdown flotante de filtros */}
+          {showFilters && (
+            <div className="absolute right-0 top-full mt-2 z-50 w-[420px] rounded-2xl border border-white/[0.08] bg-[#0d1117] shadow-2xl shadow-black/40 p-5 space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-cyan-400" />
+                  <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Filtros</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  {activeFiltersCount > 0 && (
+                    <button
+                      onClick={clearFilters}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all"
+                    >
+                      <X className="h-3 w-3" />
+                      Limpiar
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowFilters(false)}
+                    className="p-1.5 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-all"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-white/40 mb-1.5 block">Estado</label>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+                    className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm px-3 py-2.5 focus:border-cyan-500/40 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                  >
+                    {STATUS_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value} className="bg-[#0a0e1a]">
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-white/40 mb-1.5 block">Categoría</label>
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}
+                    className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm px-3 py-2.5 focus:border-cyan-500/40 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                  >
+                    <option value="" className="bg-[#0a0e1a]">Todas las categorías</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat} className="bg-[#0a0e1a]">
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {activeFiltersCount > 0 && (
+                <div className="flex items-center gap-2 pt-2 border-t border-white/[0.06]">
+                  <span className="text-xs text-white/30">Activos:</span>
+                  {filterStatus && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-400">
+                      {STATUS_OPTIONS.find((o) => o.value === filterStatus)?.label}
+                      <button onClick={() => setFilterStatus("")} className="hover:text-white transition-colors">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                  {filterCategory && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs text-purple-400">
+                      {filterCategory}
+                      <button onClick={() => setFilterCategory("")} className="hover:text-white transition-colors">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           )}
-        </button>
+        </div>
+
         <button
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-cyan-500 hover:bg-cyan-600 text-white transition-all duration-200"
           onClick={() => setShowNewModal(true)}
@@ -127,91 +224,6 @@ export default function ProductsPage() {
         onOpenChange={setShowNewModal}
         onSuccess={fetchProducts}
       />
-
-      {showFilters && (
-        <div className="mb-6 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4 animate-fade-in">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-cyan-400" />
-              <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Filtros</h3>
-            </div>
-            <div className="flex items-center gap-2">
-              {activeFiltersCount > 0 && (
-                <button
-                  onClick={clearFilters}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all"
-                >
-                  <X className="h-3 w-3" />
-                  Limpiar
-                </button>
-              )}
-              <button
-                onClick={() => setShowFilters(false)}
-                className="p-1.5 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-all"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs text-white/40 mb-1.5 block">Estado</label>
-              <select
-                value={filterStatus}
-                onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
-                className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm px-3 py-2.5 focus:border-cyan-500/40 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
-              >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value} className="bg-[#0a0e1a]">
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs text-white/40 mb-1.5 block">Categoría</label>
-              <select
-                value={filterCategory}
-                onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}
-                className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm px-3 py-2.5 focus:border-cyan-500/40 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
-              >
-                <option value="" className="bg-[#0a0e1a]">Todas las categorías</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat} className="bg-[#0a0e1a]">
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {activeFiltersCount > 0 && (
-            <div className="flex items-center gap-2 pt-1">
-              <span className="text-xs text-white/30">Activos:</span>
-              {filterStatus && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-400">
-                  Estado: {STATUS_OPTIONS.find((o) => o.value === filterStatus)?.label}
-                  <button onClick={() => setFilterStatus("")} className="hover:text-white transition-colors">
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              {filterCategory && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs text-purple-400">
-                  Cat: {filterCategory}
-                  <button onClick={() => setFilterCategory("")} className="hover:text-white transition-colors">
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              <span className="text-xs text-white/20">
-                — {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <KpiCard
