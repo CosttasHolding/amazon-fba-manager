@@ -11,6 +11,7 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { DataTableWrapper, tableHeaderClass, tableRowClass, tableCellClass } from "@/components/ui/data-table-wrapper";
 import { PaginationControl } from "@/components/ui/pagination-control";
+import { ProductFormModal } from "@/components/product-form-modal";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -35,19 +36,24 @@ export default function ProductsPage() {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
+  const [showNewModal, setShowNewModal] = useState(false);
 
-  useEffect(() => {
+  const fetchProducts = () => {
+    setLoading(true);
     fetch("/api/products")
       .then((r) => r.json())
       .then((d) => {
         const data = d.data || [];
         setProducts(data);
-        // Extract unique categories
         const cats = [...new Set(data.map((p: any) => p.category).filter(Boolean))] as string[];
         setCategories(cats);
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchProducts();
   }, []);
 
   const filtered = products.filter((p) => {
@@ -94,11 +100,10 @@ export default function ProductsPage() {
       >
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all duration-200 ${
-            showFilters || activeFiltersCount > 0
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all duration-200 ${showFilters || activeFiltersCount > 0
               ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-400"
               : "bg-white/5 border-white/10 text-white/50 hover:text-white/80 hover:bg-white/10"
-          }`}
+            }`}
         >
           <Filter className="w-4 h-4" />
           Filtros
@@ -110,14 +115,19 @@ export default function ProductsPage() {
         </button>
         <button
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-cyan-500 hover:bg-cyan-600 text-white transition-all duration-200"
-          onClick={() => router.push("/products/new")}
+          onClick={() => setShowNewModal(true)}
         >
           <Plus className="w-4 h-4" />
           Nuevo Producto
         </button>
       </PageHeader>
 
-      {/* Filter panel */}
+      <ProductFormModal
+        open={showNewModal}
+        onOpenChange={setShowNewModal}
+        onSuccess={fetchProducts}
+      />
+
       {showFilters && (
         <div className="mb-6 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4 animate-fade-in">
           <div className="flex items-center justify-between">
@@ -145,7 +155,6 @@ export default function ProductsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Status filter */}
             <div>
               <label className="text-xs text-white/40 mb-1.5 block">Estado</label>
               <select
@@ -160,8 +169,6 @@ export default function ProductsPage() {
                 ))}
               </select>
             </div>
-
-            {/* Category filter */}
             <div>
               <label className="text-xs text-white/40 mb-1.5 block">Categoría</label>
               <select
@@ -179,7 +186,6 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          {/* Active filters summary */}
           {activeFiltersCount > 0 && (
             <div className="flex items-center gap-2 pt-1">
               <span className="text-xs text-white/30">Activos:</span>
@@ -241,7 +247,6 @@ export default function ProductsPage() {
         />
       </div>
 
-      {/* Search bar */}
       <div className="relative max-w-sm mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
@@ -264,7 +269,6 @@ export default function ProductsPage() {
         </div>
       ) : (
         <>
-          {/* Mobile: Cards view */}
           <div className="lg:hidden space-y-3">
             {filtered.length === 0 ? (
               <p className="text-center py-12 text-white/40">
@@ -307,7 +311,6 @@ export default function ProductsPage() {
             )}
           </div>
 
-          {/* Desktop: Table view */}
           <div className="hidden lg:block">
             <DataTableWrapper>
               {filtered.length === 0 ? (
@@ -317,7 +320,7 @@ export default function ProductsPage() {
                   </p>
                   {!search && activeFiltersCount === 0 && (
                     <button
-                      onClick={() => router.push("/products/new")}
+                      onClick={() => setShowNewModal(true)}
                       className="px-4 py-2 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-white/50 hover:text-white/80 transition-all"
                     >
                       Crear primero
@@ -390,7 +393,6 @@ export default function ProductsPage() {
             </DataTableWrapper>
           </div>
 
-          {/* Pagination */}
           {filtered.length > ITEMS_PER_PAGE && (
             <PaginationControl
               currentPage={currentPage}

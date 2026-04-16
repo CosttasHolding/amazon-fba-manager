@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   Plus,
   Search,
@@ -33,6 +32,7 @@ import {
   tableCellClass,
   tableRowClass,
 } from "@/components/ui/data-table-wrapper";
+import { SupplierFormModal } from "@/components/supplier-form-modal";
 
 const renderStars = (rating: number | null) => {
   if (!rating) return <span className="text-white/25 text-xs">Sin rating</span>;
@@ -41,9 +41,8 @@ const renderStars = (rating: number | null) => {
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className={`h-3.5 w-3.5 ${
-            i <= rating ? "fill-amber-400 text-amber-400" : "text-white/10"
-          }`}
+          className={`h-3.5 w-3.5 ${i <= rating ? "fill-amber-400 text-amber-400" : "text-white/10"
+            }`}
         />
       ))}
     </div>
@@ -56,12 +55,14 @@ export default function SuppliersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [showNewModal, setShowNewModal] = useState(false);
 
   useEffect(() => {
     fetchSuppliers();
   }, []);
 
   const fetchSuppliers = async () => {
+    setLoading(true);
     try {
       const res = await fetch("/api/suppliers");
       if (res.ok) {
@@ -91,9 +92,9 @@ export default function SuppliersPage() {
   const avgRating =
     suppliers.filter((s) => s.rating).length > 0
       ? (
-          suppliers.filter((s) => s.rating).reduce((sum, s) => sum + (s.rating || 0), 0) /
-          suppliers.filter((s) => s.rating).length
-        ).toFixed(1)
+        suppliers.filter((s) => s.rating).reduce((sum, s) => sum + (s.rating || 0), 0) /
+        suppliers.filter((s) => s.rating).length
+      ).toFixed(1)
       : "N/A";
 
   if (loading) {
@@ -109,22 +110,26 @@ export default function SuppliersPage() {
 
   return (
     <div className="space-y-6 animate-fade-up">
-      {/* Header */}
       <PageHeader
         badge="PROVEEDORES"
         title="Proveedores"
         subtitle="Gestiona tus proveedores de Alibaba, 1688 y mas"
       >
-        <Link
-          href="/suppliers/new"
+        <button
+          onClick={() => setShowNewModal(true)}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors"
         >
           <Plus className="h-4 w-4" />
           Nuevo Proveedor
-        </Link>
+        </button>
       </PageHeader>
 
-      {/* KPIs */}
+      <SupplierFormModal
+        open={showNewModal}
+        onOpenChange={setShowNewModal}
+        onSuccess={fetchSuppliers}
+      />
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label="Total"
@@ -157,7 +162,6 @@ export default function SuppliersPage() {
         />
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
@@ -181,7 +185,6 @@ export default function SuppliersPage() {
         </Select>
       </div>
 
-      {/* Empty State */}
       {filtered.length === 0 && (
         <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-12 text-center">
           <Factory className="h-12 w-12 text-white/15 mx-auto mb-4" />
@@ -194,23 +197,21 @@ export default function SuppliersPage() {
               : "Intenta cambiar los filtros de busqueda"}
           </p>
           {suppliers.length === 0 && (
-            <Link
-              href="/suppliers/new"
+            <button
+              onClick={() => setShowNewModal(true)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors"
             >
               <Plus className="h-4 w-4" />
               Agregar Proveedor
-            </Link>
+            </button>
           )}
         </div>
       )}
 
-      {/* Table */}
       {filtered.length > 0 && (
         <DataTableWrapper
           title={`${filtered.length} proveedor${filtered.length !== 1 ? "es" : ""}`}
         >
-          {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -271,7 +272,6 @@ export default function SuppliersPage() {
             </table>
           </div>
 
-          {/* Mobile Cards */}
           <div className="md:hidden space-y-3 p-4">
             {filtered.map((supplier) => (
               <div
