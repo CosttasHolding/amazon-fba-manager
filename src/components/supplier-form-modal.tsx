@@ -33,10 +33,10 @@ interface SupplierFormModalProps {
     onSuccess: () => void;
 }
 
-const labelClass = "text-[11px] text-white/40 mb-0.5 block";
+const labelClass = "text-xs text-white/40 mb-1 block";
 const errorClass = "text-[10px] text-red-400 mt-0.5";
-const inputClass = "bg-white/[0.04] border-white/[0.08] h-8 text-sm";
-const sectionLabel = "text-[11px] font-semibold text-cyan-400/80 uppercase tracking-wider";
+const inputClass = "bg-white/[0.04] border-white/[0.08] h-9 text-sm";
+const sectionLabel = "text-xs font-semibold text-cyan-400/80 uppercase tracking-wider";
 
 export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFormModalProps) {
     const [saving, setSaving] = useState(false);
@@ -99,19 +99,19 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl bg-[#0a0e1a] border-white/[0.08] p-0 gap-0">
-                <DialogHeader className="px-5 pt-4 pb-3 border-b border-white/[0.06]">
-                    <DialogTitle className="text-white text-base font-semibold">
+            <DialogContent className="max-w-2xl max-h-[75vh] bg-[#0a0e1a] border-white/[0.08] p-0 gap-0">
+                <DialogHeader className="px-6 pt-5 pb-4 border-b border-white/[0.06]">
+                    <DialogTitle className="text-white text-lg font-semibold">
                         Alta de Proveedor
                     </DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="px-5 py-4 space-y-4">
+                <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 space-y-5">
 
                     {/* INFO DEL PROVEEDOR */}
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                         <p className={sectionLabel}>Información del proveedor</p>
-                        <div className="grid grid-cols-4 gap-3">
+                        <div className="grid grid-cols-4 gap-4">
                             <div className="col-span-2">
                                 <label className={labelClass}>Nombre *</label>
                                 <Input {...register("name")} placeholder="Ej: Shenzhen Tech Co." className={inputClass} />
@@ -163,12 +163,12 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
                         </div>
                     </div>
 
-                    <div className="border-t border-white/[0.04]" />
+                    <div className="border-t border-white/[0.06]" />
 
                     {/* CONTACTO */}
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                         <p className={sectionLabel}>Contacto</p>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label className={labelClass}>Nombre contacto</label>
                                 <Input {...register("contact_name")} placeholder="Ej: Jack Wang" className={inputClass} />
@@ -185,12 +185,12 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
                         </div>
                     </div>
 
-                    <div className="border-t border-white/[0.04]" />
+                    <div className="border-t border-white/[0.06]" />
 
                     {/* PRODUCCION + NOTAS */}
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                         <p className={sectionLabel}>Producción y notas</p>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label className={labelClass}>MOQ</label>
                                 <Input type="number" {...register("min_order_qty")} placeholder="500" className={inputClass} />
@@ -201,28 +201,28 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
                                 <Input type="number" {...register("lead_time_days")} placeholder="30" className={inputClass} />
                                 {errors.lead_time_days && <p className={errorClass}>{errors.lead_time_days.message}</p>}
                             </div>
-                            <div className="row-span-2">
+                            <div>
                                 <label className={labelClass}>Notas</label>
-                                <Textarea {...register("notes")} placeholder="Notas adicionales..." rows={2} className="bg-white/[0.04] border-white/[0.08] text-sm resize-none h-[68px]" />
+                                <Textarea {...register("notes")} placeholder="Notas adicionales..." rows={1} className="bg-white/[0.04] border-white/[0.08] text-sm resize-none h-9" />
                             </div>
                         </div>
                     </div>
 
                     {/* ACTIONS */}
-                    <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.06]">
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.06]">
                         <button
                             type="button"
                             onClick={() => onOpenChange(false)}
-                            className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white/50 hover:text-white/70 hover:bg-white/10 transition-colors"
+                            className="px-5 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-white/50 hover:text-white/70 hover:bg-white/10 transition-colors"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
                         >
-                            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                             {saving ? "Guardando..." : "Crear Proveedor"}
                         </button>
                     </div>
