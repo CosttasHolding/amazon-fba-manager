@@ -1,116 +1,107 @@
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+﻿import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import {
-    Package,
-    LayoutDashboard,
-    Warehouse,
-    DollarSign,
-    Calculator,
-    Upload,
-    Settings,
-    LogOut,
-} from 'lucide-react';
-import Link from 'next/link';
-import { ThemeToggle } from '@/components/theme-toggle';
+  Package,
+  LayoutDashboard,
+  Warehouse,
+  TrendingUp,
+  Calculator,
+  Settings,
+  LogOut,
+  Factory,
+} from "lucide-react";
+import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Toaster } from "@/components/ui/sonner";
+import { Sidebar } from "@/components/sidebar";
+import { TopHeader } from "@/components/top-header";
 
 export default async function DashboardLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const handleLogout = async () => {
+    "use server";
     const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    await supabase.auth.signOut();
+    redirect("/login");
+  };
 
-    if (!user) redirect('/login');
+  const userName = user.user_metadata?.full_name || user.user_metadata?.name;
 
-    const handleLogout = async () => {
-        'use server';
-        const supabase = await createClient();
-        await supabase.auth.signOut();
-        redirect('/login');
-    };
+  const mobileNavItems = [
+    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/products", icon: Package, label: "Productos" },
+    { href: "/inventory", icon: Warehouse, label: "Inventario" },
+    { href: "/sales", icon: TrendingUp, label: "Ventas" },
+    { href: "/suppliers", icon: Factory, label: "Proveedores" },
+    { href: "/calculator", icon: Calculator, label: "Calculadora" },
+  ];
 
-    const navItems = [
-        { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { href: '/products', icon: Package, label: 'Productos' },
-        { href: '/inventory', icon: Warehouse, label: 'Inventario' },
-        { href: '/sales', icon: DollarSign, label: 'Ventas' },
-        { href: '/calculator', icon: Calculator, label: 'Calculadora' },
-        { href: '/import', icon: Upload, label: 'Importar' },
-        { href: '/settings', icon: Settings, label: 'Configuración' },
-    ];
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Desktop Sidebar */}
+      <Sidebar userEmail={user.email} userName={userName} />
 
-    return (
-        <div className="min-h-screen bg-background">
-            {/* Mobile Bottom Nav */}
-            <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/90 backdrop-blur-lg border-t border-border px-2 py-1.5 flex justify-around">
-                {navItems.slice(0, 5).map((item) => (
-                    <Link
-                        key={item.href}
-                        href={item.href}
-                        className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl text-muted-foreground hover:text-primary transition-colors"
-                    >
-                        <item.icon className="w-5 h-5" />
-                        <span className="text-[10px] font-medium">{item.label}</span>
-                    </Link>
-                ))}
-            </nav>
-
-            {/* Mobile Top Bar */}
-            <header className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-card/90 backdrop-blur-lg border-b border-border">
-                <h1 className="text-lg font-bold text-gradient">FBA Manager</h1>
-                <ThemeToggle compact />
-            </header>
-
-            {/* Desktop Layout */}
-            <div className="flex">
-                {/* Desktop Sidebar */}
-                <aside className="hidden lg:flex w-64 flex-col fixed h-screen bg-[hsl(var(--sidebar-bg))] border-r border-[hsl(var(--sidebar-border))]">
-                    <div className="p-5 border-b border-[hsl(var(--sidebar-border))]">
-                        <h1 className="text-xl font-bold text-gradient">FBA Manager</h1>
-                        <p className="text-[10px] text-muted-foreground mt-0.5 tracking-wider uppercase">
-                            Amazon Analytics
-                        </p>
-                    </div>
-
-                    <nav className="p-3 space-y-0.5 flex-1 overflow-y-auto">
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[hsl(var(--sidebar-text))] hover:text-[hsl(var(--sidebar-text-hover))] hover:bg-[hsl(var(--sidebar-hover))] transition-all duration-200 group"
-                            >
-                                <div className="w-8 h-8 rounded-lg bg-transparent group-hover:bg-[hsl(var(--sidebar-active))] flex items-center justify-center transition-all duration-200">
-                                    <item.icon className="w-4 h-4 text-[hsl(var(--sidebar-icon))] group-hover:text-[hsl(var(--sidebar-icon-hover))] transition-colors duration-200" />
-                                </div>
-                                <span className="text-sm font-medium">{item.label}</span>
-                            </Link>
-                        ))}
-                    </nav>
-
-                    <div className="p-3 border-t border-[hsl(var(--sidebar-border))] space-y-0.5">
-                        <ThemeToggle />
-                        <form action={handleLogout}>
-                            <button
-                                type="submit"
-                                className="flex items-center gap-3 px-3 py-2.5 w-full rounded-xl text-red-500/70 hover:text-red-500 hover:bg-red-500/5 transition-all duration-200 group"
-                            >
-                                <div className="w-8 h-8 rounded-lg flex items-center justify-center group-hover:bg-red-500/10 transition-all duration-200">
-                                    <LogOut className="w-4 h-4" />
-                                </div>
-                                <span className="text-sm font-medium">Cerrar Sesión</span>
-                            </button>
-                        </form>
-                    </div>
-                </aside>
-
-                {/* Main Content */}
-                <main className="flex-1 lg:ml-64 min-h-screen pb-20 lg:pb-0">
-                    <div className="p-4 sm:p-6 lg:p-8">{children}</div>
-                </main>
-            </div>
+      {/* Mobile Bottom Nav */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[hsl(225,43%,5%)]/95 backdrop-blur-xl border-t border-slate-800/50 px-2 py-1.5 pb-safe">
+        <div className="flex justify-around">
+          {mobileNavItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl text-slate-600 hover:text-cyan-400 transition-colors"
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="text-[10px] font-medium font-body">
+                {item.label}
+              </span>
+            </Link>
+          ))}
         </div>
-    );
+      </nav>
+
+      {/* Mobile Top Bar */}
+      <header className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-xl border-b border-border/50">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+            <Package className="w-4 h-4 text-white" />
+          </div>
+          <h1 className="text-base font-bold text-foreground font-display">
+            FBA Manager
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <ThemeToggle compact />
+          <form action={handleLogout}>
+            <button
+              type="submit"
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-card border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all duration-200"
+              title="Cerrar sesi\u00F3n"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </form>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="lg:ml-64 min-h-screen pb-20 lg:pb-0">
+        {/* Desktop Top Header */}
+        <TopHeader userEmail={user.email} userName={userName} />
+
+        <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+      </main>
+
+      <Toaster richColors position="top-right" />
+    </div>
+  );
 }

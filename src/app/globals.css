@@ -1,132 +1,344 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-    :root {
-        --background: 220 20% 97%;
-        --foreground: 220 30% 10%;
-        --card: 0 0% 100%;
-        --card-foreground: 220 30% 10%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 220 30% 10%;
-        --primary: 230 80% 56%;
-        --primary-foreground: 0 0% 100%;
-        --secondary: 220 15% 93%;
-        --secondary-foreground: 220 30% 20%;
-        --muted: 220 15% 93%;
-        --muted-foreground: 220 10% 50%;
-        --accent: 230 80% 56%;
-        --accent-foreground: 0 0% 100%;
-        --destructive: 0 72% 51%;
-        --destructive-foreground: 0 0% 100%;
-        --border: 220 15% 90%;
-        --input: 220 15% 90%;
-        --ring: 230 80% 56%;
-        --radius: 0.75rem;
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 222 47% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 8%;
+    --primary: 192 82% 41%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 343 81% 59%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 87%;
+    --input: 220 13% 87%;
+    --ring: 192 82% 41%;
+    --radius: 0.75rem;
+    --chart-1: 192 82% 41%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 270 50% 60%;
+    --chart-5: 343 81% 59%;
+    --sidebar: 0 0% 99%;
+    --sidebar-foreground: 222 47% 8%;
+    --sidebar-primary: 192 82% 41%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 87%;
+    --sidebar-ring: 192 82% 41%;
+  }
 
-        --sidebar-bg: 0 0% 100%;
-        --sidebar-border: 220 15% 92%;
-        --sidebar-hover: 230 80% 97%;
-        --sidebar-active: 230 80% 94%;
-        --sidebar-text: 220 10% 45%;
-        --sidebar-text-hover: 230 80% 50%;
-        --sidebar-icon: 220 10% 60%;
-        --sidebar-icon-hover: 230 80% 50%;
+  .dark {
+    --background: 222 47% 4%;
+    --foreground: 216 20% 93%;
+    --card: 220 40% 8%;
+    --card-foreground: 216 20% 93%;
+    --popover: 220 43% 10%;
+    --popover-foreground: 216 20% 93%;
+    --primary: 192 100% 50%;
+    --primary-foreground: 222 47% 4%;
+    --secondary: 220 30% 12%;
+    --secondary-foreground: 216 20% 85%;
+    --muted: 220 25% 14%;
+    --muted-foreground: 215 18% 52%;
+    --accent: 220 30% 14%;
+    --accent-foreground: 216 20% 93%;
+    --destructive: 343 81% 59%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 219 30% 16%;
+    --input: 220 30% 12%;
+    --ring: 192 100% 50%;
+    --chart-1: 192 100% 50%;
+    --chart-2: 160 100% 55%;
+    --chart-3: 38 100% 50%;
+    --chart-4: 270 60% 65%;
+    --chart-5: 343 81% 59%;
+    --sidebar: 225 43% 5%;
+    --sidebar-foreground: 216 20% 93%;
+    --sidebar-primary: 192 100% 50%;
+    --sidebar-primary-foreground: 222 47% 4%;
+    --sidebar-accent: 220 30% 12%;
+    --sidebar-accent-foreground: 216 20% 93%;
+    --sidebar-border: 219 30% 14%;
+    --sidebar-ring: 192 100% 50%;
+  }
 
-        --metric-green: 152 60% 42%;
-        --metric-green-bg: 152 60% 96%;
-        --metric-blue: 230 80% 56%;
-        --metric-blue-bg: 230 80% 96%;
-        --metric-purple: 270 60% 56%;
-        --metric-purple-bg: 270 60% 96%;
-        --metric-amber: 38 90% 50%;
-        --metric-amber-bg: 38 90% 96%;
-        --subtle-bg: 220 20% 96%;
-        --glow-primary: 230 80% 56%;
-    }
+  * {
+    @apply border-border;
+  }
 
-    .dark {
-        --background: 228 25% 8%;
-        --foreground: 220 20% 92%;
-        --card: 228 22% 12%;
-        --card-foreground: 220 20% 92%;
-        --popover: 228 22% 12%;
-        --popover-foreground: 220 20% 92%;
-        --primary: 230 80% 62%;
-        --primary-foreground: 0 0% 100%;
-        --secondary: 228 20% 18%;
-        --secondary-foreground: 220 20% 85%;
-        --muted: 228 20% 18%;
-        --muted-foreground: 220 15% 55%;
-        --accent: 230 80% 62%;
-        --accent-foreground: 0 0% 100%;
-        --destructive: 0 62% 50%;
-        --destructive-foreground: 0 0% 100%;
-        --border: 228 18% 18%;
-        --input: 228 18% 18%;
-        --ring: 230 80% 62%;
-
-        --sidebar-bg: 228 25% 10%;
-        --sidebar-border: 228 18% 16%;
-        --sidebar-hover: 230 30% 16%;
-        --sidebar-active: 230 40% 18%;
-        --sidebar-text: 220 15% 55%;
-        --sidebar-text-hover: 230 80% 72%;
-        --sidebar-icon: 220 15% 45%;
-        --sidebar-icon-hover: 230 80% 72%;
-
-        --metric-green: 152 55% 55%;
-        --metric-green-bg: 152 40% 12%;
-        --metric-blue: 230 80% 65%;
-        --metric-blue-bg: 230 40% 12%;
-        --metric-purple: 270 55% 65%;
-        --metric-purple-bg: 270 40% 12%;
-        --metric-amber: 38 80% 60%;
-        --metric-amber-bg: 38 40% 12%;
-        --subtle-bg: 228 20% 14%;
-        --glow-primary: 230 80% 62%;
-    }
-
-    * {
-        @apply border-border;
-    }
-
-    body {
-        @apply bg-background text-foreground antialiased;
-    }
+  body {
+    @apply antialiased bg-background text-foreground;
+  }
 }
 
+/* ===== ANIMATIONS ===== */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 4px currentColor;
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 8px currentColor;
+  }
+}
+
+@keyframes progressFill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--progress-width, 100%);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== ANIMATION UTILITIES ===== */
+
 @layer utilities {
-    .glass {
-        @apply bg-white/70 backdrop-blur-xl;
-    }
+  .animate-fade-up {
+    animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
 
-    .glass-card {
-        @apply bg-white/80 backdrop-blur-lg border;
-    }
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out both;
+  }
 
-    .glow-sm {
-        box-shadow: 0 0 20px -5px hsl(var(--glow-primary) / 0.15);
-    }
+  .animate-slide-in-left {
+    animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
 
-    .glow-md {
-        box-shadow: 0 0 30px -5px hsl(var(--glow-primary) / 0.2);
-    }
+  .animate-count-up {
+    animation: countUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
 
-    .hover-lift {
-        @apply transition-all duration-300;
-    }
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.6) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
 
-    .hover-lift:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-    }
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
 
-    .text-gradient {
-        background: linear-gradient(to right, hsl(var(--primary)), hsl(270, 80%, 60%));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
+  .animate-progress-fill {
+    animation: progressFill 1s ease-out both;
+  }
+
+  .animation-delay-75 {
+    animation-delay: 75ms;
+  }
+
+  .animation-delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .animation-delay-150 {
+    animation-delay: 150ms;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animation-delay-225 {
+    animation-delay: 225ms;
+  }
+
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .animation-delay-500 {
+    animation-delay: 500ms;
+  }
+
+  /* Font utilities */
+  .font-display {
+    font-family: var(--font-display), ui-monospace, monospace;
+  }
+
+  .font-body {
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Glow effects */
+  .glow-sm {
+    box-shadow: 0 0 15px -3px hsl(var(--primary) / 0.15);
+  }
+
+  .glow-md {
+    box-shadow: 0 0 25px -5px hsl(var(--primary) / 0.2);
+  }
+
+  .glow-lg {
+    box-shadow: 0 0 40px -5px hsl(var(--primary) / 0.25);
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.08);
+  }
+
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Grain overlay */
+  .grain-overlay::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+}
+
+/* ===== SCROLLBAR ===== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* ===== FIX: Dropdowns & popovers SOLID background ===== */
+
+[data-radix-popper-content-wrapper] {
+  z-index: 50 !important;
+}
+
+[role="listbox"],
+[data-radix-select-viewport],
+[data-radix-select-content],
+[data-radix-popper-content-wrapper] > div {
+  background-color: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+[role="option"] {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+}
+
+[role="option"]:hover,
+[role="option"][data-highlighted] {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+[data-radix-select-trigger],
+select {
+  background-color: hsl(var(--input)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+/* Dialog/modal solid background */
+[data-radix-dialog-overlay] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Dropdown menu solid */
+[data-radix-dropdown-menu-content] {
+  background-color: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  backdrop-filter: none !important;
 }

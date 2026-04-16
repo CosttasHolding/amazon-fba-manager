@@ -92,3 +92,42 @@ export interface DashboardMetrics {
     revenue_last_30d: number;
     units_sold_last_30d: number;
 }
+// ============================================
+// Suppliers (Fase 2)
+// ============================================
+
+export interface Supplier {
+  id: string;
+  user_id: string;
+  name: string;
+  alibaba_url: string | null;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_whatsapp: string | null;
+  country: string | null;
+  rating: number | null;
+  payment_terms: string | null;
+  min_order_qty: number | null;
+  lead_time_days: number | null;
+  notes: string | null;
+  status: "active" | "inactive";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductSupplier {
+  id: string;
+  product_id: string;
+  supplier_id: string;
+  user_id: string;
+  unit_cost: number | null;
+  moq: number | null;
+  lead_time_days: number | null;
+  is_primary: boolean;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface SupplierWithProducts extends Supplier {
+  product_suppliers?: (ProductSupplier & { product?: Product })[];
+}
