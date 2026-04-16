@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectContent,
@@ -20,7 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Save, Loader2, Package, DollarSign, Info, Users } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const CATEGORIES = [
@@ -67,10 +66,10 @@ interface ProductFormModalProps {
     onSuccess: () => void;
 }
 
-const sectionClass = "rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4";
-const sectionTitleClass = "flex items-center gap-2 text-sm font-semibold text-white/80 uppercase tracking-wider mb-4";
-const labelClass = "text-sm text-white/50";
-const errorClass = "text-xs text-red-400 mt-1";
+const labelClass = "text-[11px] text-white/40 mb-0.5 block";
+const errorClass = "text-[10px] text-red-400 mt-0.5";
+const inputClass = "bg-white/[0.04] border-white/[0.08] h-8 text-sm";
+const sectionLabel = "text-[11px] font-semibold text-cyan-400/80 uppercase tracking-wider";
 
 export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormModalProps) {
     const [saving, setSaving] = useState(false);
@@ -197,39 +196,37 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#0a0e1a] border-white/[0.08]">
-                <DialogHeader>
-                    <DialogTitle className="text-white text-lg font-semibold">
+            <DialogContent className="max-w-2xl bg-[#0a0e1a] border-white/[0.08] p-0 gap-0">
+                <DialogHeader className="px-5 pt-4 pb-3 border-b border-white/[0.06]">
+                    <DialogTitle className="text-white text-base font-semibold">
                         Alta de Producto
                     </DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                    {/* Info basica */}
-                    <div className={sectionClass}>
-                        <div className={sectionTitleClass}>
-                            <Package className="h-4 w-4 text-cyan-400" />
-                            Informacion basica
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                <Label className={labelClass}>Nombre del producto *</Label>
-                                <Input {...register("name")} placeholder="Ej: Silicone Kitchen Utensil Set" className="bg-white/[0.04] border-white/[0.08]" />
+                <form onSubmit={handleSubmit(onSubmit)} className="px-5 py-4 space-y-4">
+
+                    {/* INFO BASICA */}
+                    <div className="space-y-2">
+                        <p className={sectionLabel}>Información básica</p>
+                        <div className="grid grid-cols-4 gap-3">
+                            <div className="col-span-2">
+                                <label className={labelClass}>Nombre *</label>
+                                <Input {...register("name")} placeholder="Nombre del producto" className={inputClass} />
                                 {errors.name && <p className={errorClass}>{errors.name.message}</p>}
                             </div>
                             <div>
-                                <Label className={labelClass}>ASIN</Label>
-                                <Input {...register("asin")} placeholder="B08XXXXXX" className="bg-white/[0.04] border-white/[0.08]" />
-                            </div>
-                            <div>
-                                <Label className={labelClass}>SKU *</Label>
-                                <Input {...register("sku")} placeholder="SKU-001" className="bg-white/[0.04] border-white/[0.08]" />
+                                <label className={labelClass}>SKU *</label>
+                                <Input {...register("sku")} placeholder="SKU-001" className={inputClass} />
                                 {errors.sku && <p className={errorClass}>{errors.sku.message}</p>}
                             </div>
                             <div>
-                                <Label className={labelClass}>Categoria *</Label>
+                                <label className={labelClass}>ASIN</label>
+                                <Input {...register("asin")} placeholder="B08XXXXXX" className={inputClass} />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Categoría</label>
                                 <Select value={category} onValueChange={(v) => setValue("category", v as ProductFormData["category"])}>
-                                    <SelectTrigger className="bg-white/[0.04] border-white/[0.08]"><SelectValue /></SelectTrigger>
+                                    <SelectTrigger className={`${inputClass} w-full`}><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         {CATEGORIES.map((cat) => (
                                             <SelectItem key={cat} value={cat}>{cat}</SelectItem>
@@ -238,9 +235,9 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
                                 </Select>
                             </div>
                             <div>
-                                <Label className={labelClass}>Estado</Label>
+                                <label className={labelClass}>Estado</label>
                                 <Select value={status} onValueChange={(v) => setValue("status", v as ProductFormData["status"])}>
-                                    <SelectTrigger className="bg-white/[0.04] border-white/[0.08]"><SelectValue /></SelectTrigger>
+                                    <SelectTrigger className={`${inputClass} w-full`}><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         {STATUSES.map((s) => (
                                             <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
@@ -248,135 +245,112 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
                                     </SelectContent>
                                 </Select>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Costos */}
-                    <div className={sectionClass}>
-                        <div className={sectionTitleClass}>
-                            <DollarSign className="h-4 w-4 text-cyan-400" />
-                            Costos y precios
-                            {loadingDefaults && <Loader2 className="h-3 w-3 animate-spin text-white/30" />}
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             <div>
-                                <Label className={labelClass}>Costo compra ($) *</Label>
-                                <Input type="number" step="0.01" {...register("unitCost")} className="bg-white/[0.04] border-white/[0.08]" />
+                                <label className={labelClass}>Peso (kg)</label>
+                                <Input type="number" step="0.01" {...register("weight")} className={inputClass} />
                             </div>
                             <div>
-                                <Label className={labelClass}>Precio venta ($) *</Label>
-                                <Input type="number" step="0.01" {...register("salePrice")} className="bg-white/[0.04] border-white/[0.08]" />
-                            </div>
-                            <div>
-                                <Label className={labelClass}>Tarifa FBA ($)</Label>
-                                <Input type="number" step="0.01" {...register("fbaFee")} className="bg-white/[0.04] border-white/[0.08]" />
-                            </div>
-                            <div>
-                                <Label className={labelClass}>Tarifa referral ($)</Label>
-                                <Input type="number" step="0.01" {...register("referralFee")} className="bg-white/[0.04] border-white/[0.08]" />
-                            </div>
-                            <div>
-                                <Label className={labelClass}>Costo envio ($)</Label>
-                                <Input type="number" step="0.01" {...register("shippingCost")} className="bg-white/[0.04] border-white/[0.08]" />
-                            </div>
-                            <div>
-                                <Label className={labelClass}>Almacenamiento ($)</Label>
-                                <Input type="number" step="0.01" {...register("storageCost")} className="bg-white/[0.04] border-white/[0.08]" />
+                                <label className={labelClass}>Stock mínimo</label>
+                                <Input type="number" {...register("minStock")} className={inputClass} />
                             </div>
                         </div>
                     </div>
 
-                    {/* Proveedor */}
-                    <div className={sectionClass}>
-                        <div className={sectionTitleClass}>
-                            <Users className="h-4 w-4 text-cyan-400" />
-                            Proveedor (opcional)
-                        </div>
-                        <div>
-                            <Label className={labelClass}>Seleccionar proveedor</Label>
-                            <Select value={selectedSupplier || "none"} onValueChange={setSelectedSupplier}>
-                                <SelectTrigger className="bg-white/[0.04] border-white/[0.08]">
-                                    <SelectValue placeholder="Sin proveedor" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">Sin proveedor</SelectItem>
-                                    {suppliers.map((s) => (
-                                        <SelectItem key={s.id} value={s.id}>
-                                            {s.name} {s.platform ? `(${s.platform})` : ""}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        {selectedSupplier && selectedSupplier !== "none" && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-white/[0.06]">
-                                <div>
-                                    <Label className={labelClass}>Costo unitario ($)</Label>
-                                    <Input type="number" step="0.01" value={supplierData.unit_cost}
-                                        onChange={(e) => setSupplierData((p) => ({ ...p, unit_cost: e.target.value }))}
-                                        placeholder="0.00" className="bg-white/[0.04] border-white/[0.08]" />
-                                </div>
-                                <div>
-                                    <Label className={labelClass}>MOQ</Label>
-                                    <Input type="number" value={supplierData.moq}
-                                        onChange={(e) => setSupplierData((p) => ({ ...p, moq: e.target.value }))}
-                                        placeholder="100" className="bg-white/[0.04] border-white/[0.08]" />
-                                </div>
-                                <div>
-                                    <Label className={labelClass}>Lead time (dias)</Label>
-                                    <Input type="number" value={supplierData.lead_time_days}
-                                        onChange={(e) => setSupplierData((p) => ({ ...p, lead_time_days: e.target.value }))}
-                                        placeholder="30" className="bg-white/[0.04] border-white/[0.08]" />
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    <div className="border-t border-white/[0.04]" />
 
-                    {/* Detalles */}
-                    <div className={sectionClass}>
-                        <div className={sectionTitleClass}>
-                            <Info className="h-4 w-4 text-cyan-400" />
-                            Detalles adicionales
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* COSTOS Y PRECIOS */}
+                    <div className="space-y-2">
+                        <p className={sectionLabel}>Costos y precios</p>
+                        <div className="grid grid-cols-3 gap-3">
                             <div>
-                                <Label className={labelClass}>Peso (kg)</Label>
-                                <Input type="number" step="0.01" {...register("weight")} className="bg-white/[0.04] border-white/[0.08]" />
+                                <label className={labelClass}>Costo compra ($) *</label>
+                                <Input type="number" step="0.01" {...register("unitCost")} className={inputClass} />
                             </div>
                             <div>
-                                <Label className={labelClass}>Dimensiones</Label>
-                                <Input {...register("dimensions")} placeholder="30x20x10 cm" className="bg-white/[0.04] border-white/[0.08]" />
+                                <label className={labelClass}>Precio venta ($) *</label>
+                                <Input type="number" step="0.01" {...register("salePrice")} className={inputClass} />
                             </div>
                             <div>
-                                <Label className={labelClass}>Stock minimo</Label>
-                                <Input type="number" {...register("minStock")} className="bg-white/[0.04] border-white/[0.08]" />
+                                <label className={labelClass}>Tarifa FBA ($)</label>
+                                <Input type="number" step="0.01" {...register("fbaFee")} className={inputClass} />
                             </div>
-                        </div>
-                        <div>
-                            <Label className={labelClass}>URL de imagen</Label>
-                            <Input {...register("imageUrl")} placeholder="https://..." className="bg-white/[0.04] border-white/[0.08]" />
-                        </div>
-                        <div>
-                            <Label className={labelClass}>Notas</Label>
-                            <Textarea {...register("notes")} placeholder="Notas adicionales..." rows={3} className="bg-white/[0.04] border-white/[0.08]" />
+                            <div>
+                                <label className={labelClass}>Tarifa referral ($)</label>
+                                <Input type="number" step="0.01" {...register("referralFee")} className={inputClass} />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Costo envío ($)</label>
+                                <Input type="number" step="0.01" {...register("shippingCost")} className={inputClass} />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Almacenamiento ($)</label>
+                                <Input type="number" step="0.01" {...register("storageCost")} className={inputClass} />
+                            </div>
                         </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-3 justify-end pt-2 border-t border-white/[0.06]">
+                    <div className="border-t border-white/[0.04]" />
+
+                    {/* PROVEEDOR */}
+                    <div className="space-y-2">
+                        <p className={sectionLabel}>Proveedor (opcional)</p>
+                        <div className="grid grid-cols-4 gap-3">
+                            <div className={selectedSupplier && selectedSupplier !== "none" ? "" : "col-span-4"}>
+                                <label className={labelClass}>Proveedor</label>
+                                <Select value={selectedSupplier || "none"} onValueChange={setSelectedSupplier}>
+                                    <SelectTrigger className={`${inputClass} w-full`}>
+                                        <SelectValue placeholder="Sin proveedor" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Sin proveedor</SelectItem>
+                                        {suppliers.map((s) => (
+                                            <SelectItem key={s.id} value={s.id}>
+                                                {s.name} {s.platform ? `(${s.platform})` : ""}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            {selectedSupplier && selectedSupplier !== "none" && (
+                                <>
+                                    <div>
+                                        <label className={labelClass}>Costo unit. ($)</label>
+                                        <Input type="number" step="0.01" value={supplierData.unit_cost}
+                                            onChange={(e) => setSupplierData((p) => ({ ...p, unit_cost: e.target.value }))}
+                                            placeholder="0.00" className={inputClass} />
+                                    </div>
+                                    <div>
+                                        <label className={labelClass}>MOQ</label>
+                                        <Input type="number" value={supplierData.moq}
+                                            onChange={(e) => setSupplierData((p) => ({ ...p, moq: e.target.value }))}
+                                            placeholder="100" className={inputClass} />
+                                    </div>
+                                    <div>
+                                        <label className={labelClass}>Lead time (días)</label>
+                                        <Input type="number" value={supplierData.lead_time_days}
+                                            onChange={(e) => setSupplierData((p) => ({ ...p, lead_time_days: e.target.value }))}
+                                            placeholder="30" className={inputClass} />
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* ACTIONS */}
+                    <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.06]">
                         <button
                             type="button"
                             onClick={() => onOpenChange(false)}
-                            className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white/50 hover:text-white/70 hover:bg-white/10 transition-colors"
+                            className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white/50 hover:text-white/70 hover:bg-white/10 transition-colors"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
                         >
-                            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                             {saving ? "Guardando..." : "Crear producto"}
                         </button>
                     </div>

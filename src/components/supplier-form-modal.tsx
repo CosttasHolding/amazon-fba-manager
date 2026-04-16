@@ -10,7 +10,6 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
@@ -19,7 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Save, Loader2, Factory, Mail, Package, FileText } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supplierSchema, SupplierFormData } from "@/validations/supplier";
 
@@ -34,11 +33,10 @@ interface SupplierFormModalProps {
     onSuccess: () => void;
 }
 
-const sectionClass = "rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4";
-const sectionTitleClass = "flex items-center gap-2 text-sm font-semibold text-white/80 uppercase tracking-wider mb-4";
-const labelClass = "text-sm text-white/50";
-const errorClass = "text-xs text-red-400 mt-1";
-const inputClass = "bg-white/[0.04] border-white/[0.08]";
+const labelClass = "text-[11px] text-white/40 mb-0.5 block";
+const errorClass = "text-[10px] text-red-400 mt-0.5";
+const inputClass = "bg-white/[0.04] border-white/[0.08] h-8 text-sm";
+const sectionLabel = "text-[11px] font-semibold text-cyan-400/80 uppercase tracking-wider";
 
 export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFormModalProps) {
     const [saving, setSaving] = useState(false);
@@ -101,35 +99,28 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#0a0e1a] border-white/[0.08]">
-                <DialogHeader>
-                    <DialogTitle className="text-white text-lg font-semibold">
+            <DialogContent className="max-w-2xl bg-[#0a0e1a] border-white/[0.08] p-0 gap-0">
+                <DialogHeader className="px-5 pt-4 pb-3 border-b border-white/[0.06]">
+                    <DialogTitle className="text-white text-base font-semibold">
                         Alta de Proveedor
                     </DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                    {/* Info basica */}
-                    <div className={sectionClass}>
-                        <div className={sectionTitleClass}>
-                            <Factory className="h-4 w-4 text-cyan-400" />
-                            Informacion del Proveedor
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                <Label className={labelClass}>Nombre del Proveedor *</Label>
-                                <Input {...register("name")} placeholder="Ej: Shenzhen Tech Manufacturing Co." className={inputClass} />
+                <form onSubmit={handleSubmit(onSubmit)} className="px-5 py-4 space-y-4">
+
+                    {/* INFO DEL PROVEEDOR */}
+                    <div className="space-y-2">
+                        <p className={sectionLabel}>Información del proveedor</p>
+                        <div className="grid grid-cols-4 gap-3">
+                            <div className="col-span-2">
+                                <label className={labelClass}>Nombre *</label>
+                                <Input {...register("name")} placeholder="Ej: Shenzhen Tech Co." className={inputClass} />
                                 {errors.name && <p className={errorClass}>{errors.name.message}</p>}
                             </div>
-                            <div className="md:col-span-2">
-                                <Label className={labelClass}>URL Alibaba / 1688</Label>
-                                <Input {...register("alibaba_url")} placeholder="https://supplier.alibaba.com/..." className={inputClass} />
-                                {errors.alibaba_url && <p className={errorClass}>{errors.alibaba_url.message}</p>}
-                            </div>
                             <div>
-                                <Label className={labelClass}>Pais</Label>
+                                <label className={labelClass}>País</label>
                                 <Select value={watch("country") || ""} onValueChange={(val) => setValue("country", val)}>
-                                    <SelectTrigger className={inputClass}><SelectValue placeholder="Seleccionar pais" /></SelectTrigger>
+                                    <SelectTrigger className={`${inputClass} w-full`}><SelectValue placeholder="País" /></SelectTrigger>
                                     <SelectContent>
                                         {COUNTRIES.map((c) => (
                                             <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -138,19 +129,24 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
                                 </Select>
                             </div>
                             <div>
-                                <Label className={labelClass}>Estado</Label>
+                                <label className={labelClass}>Estado</label>
                                 <Select value={watch("status")} onValueChange={(val) => setValue("status", val as "active" | "inactive")}>
-                                    <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
+                                    <SelectTrigger className={`${inputClass} w-full`}><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="active">Activo</SelectItem>
                                         <SelectItem value="inactive">Inactivo</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
+                            <div className="col-span-2">
+                                <label className={labelClass}>URL Alibaba / 1688</label>
+                                <Input {...register("alibaba_url")} placeholder="https://supplier.alibaba.com/..." className={inputClass} />
+                                {errors.alibaba_url && <p className={errorClass}>{errors.alibaba_url.message}</p>}
+                            </div>
                             <div>
-                                <Label className={labelClass}>Rating (1-5)</Label>
+                                <label className={labelClass}>Rating (1-5)</label>
                                 <Select value={watch("rating")?.toString() || ""} onValueChange={(val) => setValue("rating", val ? parseInt(val) : null)}>
-                                    <SelectTrigger className={inputClass}><SelectValue placeholder="Sin rating" /></SelectTrigger>
+                                    <SelectTrigger className={`${inputClass} w-full`}><SelectValue placeholder="—" /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="1">1</SelectItem>
                                         <SelectItem value="2">2</SelectItem>
@@ -161,79 +157,72 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
                                 </Select>
                             </div>
                             <div>
-                                <Label className={labelClass}>Terminos de Pago</Label>
-                                <Input {...register("payment_terms")} placeholder="Ej: 30% anticipo, 70% antes de envio" className={inputClass} />
+                                <label className={labelClass}>Términos de pago</label>
+                                <Input {...register("payment_terms")} placeholder="30/70" className={inputClass} />
                             </div>
                         </div>
                     </div>
 
-                    {/* Contacto */}
-                    <div className={sectionClass}>
-                        <div className={sectionTitleClass}>
-                            <Mail className="h-4 w-4 text-cyan-400" />
-                            Informacion de Contacto
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border-t border-white/[0.04]" />
+
+                    {/* CONTACTO */}
+                    <div className="space-y-2">
+                        <p className={sectionLabel}>Contacto</p>
+                        <div className="grid grid-cols-3 gap-3">
                             <div>
-                                <Label className={labelClass}>Nombre de Contacto</Label>
+                                <label className={labelClass}>Nombre contacto</label>
                                 <Input {...register("contact_name")} placeholder="Ej: Jack Wang" className={inputClass} />
                             </div>
                             <div>
-                                <Label className={labelClass}>Email</Label>
-                                <Input type="email" {...register("contact_email")} placeholder="supplier@example.com" className={inputClass} />
+                                <label className={labelClass}>Email</label>
+                                <Input type="email" {...register("contact_email")} placeholder="email@example.com" className={inputClass} />
                                 {errors.contact_email && <p className={errorClass}>{errors.contact_email.message}</p>}
                             </div>
                             <div>
-                                <Label className={labelClass}>WhatsApp</Label>
+                                <label className={labelClass}>WhatsApp</label>
                                 <Input {...register("contact_whatsapp")} placeholder="+86 138 0000 0000" className={inputClass} />
                             </div>
                         </div>
                     </div>
 
-                    {/* Produccion */}
-                    <div className={sectionClass}>
-                        <div className={sectionTitleClass}>
-                            <Package className="h-4 w-4 text-cyan-400" />
-                            Produccion y Logistica
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border-t border-white/[0.04]" />
+
+                    {/* PRODUCCION + NOTAS */}
+                    <div className="space-y-2">
+                        <p className={sectionLabel}>Producción y notas</p>
+                        <div className="grid grid-cols-3 gap-3">
                             <div>
-                                <Label className={labelClass}>MOQ (Minimo de Orden)</Label>
-                                <Input type="number" {...register("min_order_qty")} placeholder="Ej: 500" className={inputClass} />
+                                <label className={labelClass}>MOQ</label>
+                                <Input type="number" {...register("min_order_qty")} placeholder="500" className={inputClass} />
                                 {errors.min_order_qty && <p className={errorClass}>{errors.min_order_qty.message}</p>}
                             </div>
                             <div>
-                                <Label className={labelClass}>Lead Time (dias)</Label>
-                                <Input type="number" {...register("lead_time_days")} placeholder="Ej: 30" className={inputClass} />
+                                <label className={labelClass}>Lead time (días)</label>
+                                <Input type="number" {...register("lead_time_days")} placeholder="30" className={inputClass} />
                                 {errors.lead_time_days && <p className={errorClass}>{errors.lead_time_days.message}</p>}
+                            </div>
+                            <div className="row-span-2">
+                                <label className={labelClass}>Notas</label>
+                                <Textarea {...register("notes")} placeholder="Notas adicionales..." rows={2} className="bg-white/[0.04] border-white/[0.08] text-sm resize-none h-[68px]" />
                             </div>
                         </div>
                     </div>
 
-                    {/* Notas */}
-                    <div className={sectionClass}>
-                        <div className={sectionTitleClass}>
-                            <FileText className="h-4 w-4 text-cyan-400" />
-                            Notas
-                        </div>
-                        <Textarea {...register("notes")} placeholder="Notas adicionales sobre el proveedor..." rows={3} className={inputClass} />
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-3 justify-end pt-2 border-t border-white/[0.06]">
+                    {/* ACTIONS */}
+                    <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.06]">
                         <button
                             type="button"
                             onClick={() => onOpenChange(false)}
-                            className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white/50 hover:text-white/70 hover:bg-white/10 transition-colors"
+                            className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white/50 hover:text-white/70 hover:bg-white/10 transition-colors"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
                         >
-                            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                             {saving ? "Guardando..." : "Crear Proveedor"}
                         </button>
                     </div>
