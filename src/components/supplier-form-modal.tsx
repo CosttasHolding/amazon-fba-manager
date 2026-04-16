@@ -1,233 +1,61 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Save, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { supplierSchema, SupplierFormData } from "@/validations/supplier";
+import { Button } from "@/components/ui/button";
+import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
-const COUNTRIES = [
-    "China", "India", "Vietnam", "Taiwan", "Corea del Sur",
-    "Tailandia", "Turquia", "Bangladesh", "Indonesia", "Otro",
-];
-
-interface SupplierFormModalProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onSuccess: () => void;
-}
-
-const labelClass = "text-xs text-white/40 mb-1 block";
-const errorClass = "text-[10px] text-red-400 mt-0.5";
-const inputClass = "bg-white/[0.04] border-white/[0.08] h-9 text-sm";
-const sectionLabel = "text-xs font-semibold text-cyan-400/80 uppercase tracking-wider";
-
-export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFormModalProps) {
-    const [saving, setSaving] = useState(false);
-
-    const {
-        register,
-        handleSubmit,
-        setValue,
-        watch,
-        reset,
-        formState: { errors },
-    } = useForm<SupplierFormData>({
+export function SupplierFormModal({ onSuccess }: { onSuccess?: () => void }) {
+    const router = useRouter();
+    const form = useForm<SupplierFormData>({
         resolver: zodResolver(supplierSchema),
-        defaultValues: {
-            name: "",
-            alibaba_url: "",
-            contact_name: "",
-            contact_email: "",
-            contact_whatsapp: "",
-            country: "",
-            rating: null,
-            payment_terms: "",
-            min_order_qty: null,
-            lead_time_days: null,
-            notes: "",
-            status: "active",
-        },
+        defaultValues: { status: "active" },
     });
 
-    useEffect(() => {
-        if (open) {
-            reset();
-        }
-    }, [open, reset]);
-
     const onSubmit = async (data: SupplierFormData) => {
-        setSaving(true);
         try {
             const res = await fetch("/api/suppliers", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
             });
-
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.error || "Error al crear proveedor");
-            }
-
-            toast.success(`${data.name} se agregó correctamente`);
-            onOpenChange(false);
-            onSuccess();
-        } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : "Error al crear proveedor";
-            toast.error(message);
-        } finally {
-            setSaving(false);
+            if (!res.ok) throw new Error("Error al crear proveedor");
+            toast.success("Proveedor creado");
+            onSuccess?.();
+            router.refresh();
+        } catch (error) {
+            toast.error("Error al guardar");
         }
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[75vh] bg-[#0a0e1a] border-white/[0.08] p-0 gap-0">
-                <DialogHeader className="px-6 pt-5 pb-4 border-b border-white/[0.06]">
-                    <DialogTitle className="text-white text-lg font-semibold">
-                        Alta de Proveedor
-                    </DialogTitle>
-                </DialogHeader>
-
-                <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 space-y-5">
-
-                    {/* INFO DEL PROVEEDOR */}
-                    <div className="space-y-3">
-                        <p className={sectionLabel}>Información del proveedor</p>
-                        <div className="grid grid-cols-4 gap-4">
-                            <div className="col-span-2">
-                                <label className={labelClass}>Nombre *</label>
-                                <Input {...register("name")} placeholder="Ej: Shenzhen Tech Co." className={inputClass} />
-                                {errors.name && <p className={errorClass}>{errors.name.message}</p>}
-                            </div>
-                            <div>
-                                <label className={labelClass}>País</label>
-                                <Select value={watch("country") || ""} onValueChange={(val) => setValue("country", val)}>
-                                    <SelectTrigger className={`${inputClass} w-full`}><SelectValue placeholder="País" /></SelectTrigger>
-                                    <SelectContent>
-                                        {COUNTRIES.map((c) => (
-                                            <SelectItem key={c} value={c}>{c}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div>
-                                <label className={labelClass}>Estado</label>
-                                <Select value={watch("status")} onValueChange={(val) => setValue("status", val as "active" | "inactive")}>
-                                    <SelectTrigger className={`${inputClass} w-full`}><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="active">Activo</SelectItem>
-                                        <SelectItem value="inactive">Inactivo</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="col-span-2">
-                                <label className={labelClass}>URL Alibaba / 1688</label>
-                                <Input {...register("alibaba_url")} placeholder="https://supplier.alibaba.com/..." className={inputClass} />
-                                {errors.alibaba_url && <p className={errorClass}>{errors.alibaba_url.message}</p>}
-                            </div>
-                            <div>
-                                <label className={labelClass}>Rating (1-5)</label>
-                                <Select value={watch("rating")?.toString() || ""} onValueChange={(val) => setValue("rating", val ? parseInt(val) : null)}>
-                                    <SelectTrigger className={`${inputClass} w-full`}><SelectValue placeholder="—" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="1">1</SelectItem>
-                                        <SelectItem value="2">2</SelectItem>
-                                        <SelectItem value="3">3</SelectItem>
-                                        <SelectItem value="4">4</SelectItem>
-                                        <SelectItem value="5">5</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div>
-                                <label className={labelClass}>Términos de pago</label>
-                                <Input {...register("payment_terms")} placeholder="30/70" className={inputClass} />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="border-t border-white/[0.06]" />
-
-                    {/* CONTACTO */}
-                    <div className="space-y-3">
-                        <p className={sectionLabel}>Contacto</p>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <label className={labelClass}>Nombre contacto</label>
-                                <Input {...register("contact_name")} placeholder="Ej: Jack Wang" className={inputClass} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Email</label>
-                                <Input type="email" {...register("contact_email")} placeholder="email@example.com" className={inputClass} />
-                                {errors.contact_email && <p className={errorClass}>{errors.contact_email.message}</p>}
-                            </div>
-                            <div>
-                                <label className={labelClass}>WhatsApp</label>
-                                <Input {...register("contact_whatsapp")} placeholder="+86 138 0000 0000" className={inputClass} />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="border-t border-white/[0.06]" />
-
-                    {/* PRODUCCION + NOTAS */}
-                    <div className="space-y-3">
-                        <p className={sectionLabel}>Producción y notas</p>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <label className={labelClass}>MOQ</label>
-                                <Input type="number" {...register("min_order_qty")} placeholder="500" className={inputClass} />
-                                {errors.min_order_qty && <p className={errorClass}>{errors.min_order_qty.message}</p>}
-                            </div>
-                            <div>
-                                <label className={labelClass}>Lead time (días)</label>
-                                <Input type="number" {...register("lead_time_days")} placeholder="30" className={inputClass} />
-                                {errors.lead_time_days && <p className={errorClass}>{errors.lead_time_days.message}</p>}
-                            </div>
-                            <div>
-                                <label className={labelClass}>Notas</label>
-                                <Textarea {...register("notes")} placeholder="Notas adicionales..." rows={1} className="bg-white/[0.04] border-white/[0.08] text-sm resize-none h-9" />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* ACTIONS */}
-                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.06]">
-                        <button
-                            type="button"
-                            onClick={() => onOpenChange(false)}
-                            className="px-5 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-white/50 hover:text-white/70 hover:bg-white/10 transition-colors"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
-                        >
-                            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                            {saving ? "Guardando..." : "Crear Proveedor"}
-                        </button>
-                    </div>
-                </form>
-            </DialogContent>
-        </Dialog>
+        <DialogContent className="max-w-2xl bg-[#0a0e1a] border-white/[0.08]">
+            <DialogHeader>
+                <DialogTitle className="text-cyan-400">Nuevo Proveedor</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-4 gap-4 py-4">
+                <div className="col-span-2">
+                    <Label className="text-xs text-cyan-400/80">Nombre</Label>
+                    <Input {...form.register("name")} className="h-9 bg-white/[0.04] border-white/[0.08]" />
+                </div>
+                <div className="col-span-2">
+                    <Label className="text-xs text-cyan-400/80">País</Label>
+                    <Input {...form.register("country")} className="h-9 bg-white/[0.04] border-white/[0.08]" />
+                </div>
+                <div className="col-span-4">
+                    <Label className="text-xs text-cyan-400/80 uppercase tracking-wider">Notas</Label>
+                    <Textarea {...form.register("notes")} className="min-h-[120px] bg-white/[0.04] border-white/[0.08]" />
+                </div>
+                <div className="col-span-4 flex justify-end gap-2 mt-4">
+                    <Button type="submit" className="bg-cyan-500 hover:bg-cyan-600 text-white">Guardar Proveedor</Button>
+                </div>
+            </form>
+        </DialogContent>
     );
 }
