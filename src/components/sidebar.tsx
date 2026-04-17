@@ -72,11 +72,11 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
             <Package className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-base font-bold text-foreground font-display tracking-tight">
-              FBA Manager
+            <h1 className="text-sm font-bold text-foreground font-display tracking-tight leading-tight">
+              CosttasHolding
             </h1>
-            <p className="text-[10px] text-muted-foreground tracking-[0.2em] uppercase font-display">
-              Command Center
+            <p className="text-[10px] text-muted-foreground tracking-[0.15em] uppercase font-display">
+              Manager
             </p>
           </div>
         </div>
@@ -84,7 +84,7 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
 
       {/* Nav Items */}
       <nav className="flex-1 px-3 mt-2 space-y-0.5 overflow-y-auto">
-        {navItems.map((item, index) => {
+        {navItems.map((item) => {
           const active = isActive(item.href);
           return (
             <Link
@@ -99,7 +99,6 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
                 }
               `}
             >
-              {/* Active indicator bar */}
               {active && (
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary" />
               )}
@@ -116,10 +115,8 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
           );
         })}
 
-        {/* Divider */}
         <div className="my-3 mx-3 border-t border-border" />
 
-        {/* Settings */}
         {bottomNavItems.map((item) => {
           const active = isActive(item.href);
           return (

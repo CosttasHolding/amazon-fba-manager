@@ -19,11 +19,11 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL("http://localhost:3000"),
   title: {
-    default: "Amazon FBA Manager",
-    template: "%s | FBA Manager",
+    default: "CosttasHolding Manager",
+    template: "%s | CosttasHolding Manager",
   },
   description:
-    "Gesti\u00F3n profesional de productos Amazon FBA. Controla inventario, ventas, proveedores y rentabilidad.",
+    "Gestión profesional de productos Amazon FBA. Controla inventario, ventas, proveedores y rentabilidad.",
   keywords: [
     "Amazon FBA",
     "inventory management",
@@ -31,12 +31,13 @@ export const metadata: Metadata = {
     "ROI calculator",
     "FBA fees",
     "suppliers",
+    "CosttasHolding",
   ],
-  authors: [{ name: "FBA Manager" }],
+  authors: [{ name: "CosttasHolding" }],
   openGraph: {
-    title: "Amazon FBA Manager",
+    title: "CosttasHolding Manager",
     description:
-      "Gesti\u00F3n profesional de productos Amazon FBA. Controla inventario, ventas, proveedores y rentabilidad.",
+      "Gestión profesional de productos Amazon FBA. Controla inventario, ventas, proveedores y rentabilidad.",
     type: "website",
     locale: "es_ES",
   },

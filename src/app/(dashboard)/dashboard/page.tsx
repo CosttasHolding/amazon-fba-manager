@@ -40,7 +40,7 @@ export default function DashboardPage() {
       <PageHeader
         badge="GLOBAL DASHBOARD"
         title="Resumen del Negocio"
-        subtitle="Vista general de tu operación Amazon FBA"
+        subtitle="Vista general de tu operación en Amazon FBA"
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

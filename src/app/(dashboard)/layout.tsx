@@ -31,13 +31,9 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Desktop Sidebar */}
       <Sidebar userEmail={user.email} userName={userName} />
-
-      {/* Mobile Bottom Nav */}
       <MobileBottomNav />
 
-      {/* Mobile Top Bar */}
       <header className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-card/90 backdrop-blur-xl border-b border-border">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
@@ -45,10 +41,10 @@ export default async function DashboardLayout({
           </div>
           <div>
             <h1 className="text-sm font-bold text-foreground font-display leading-none">
-              FBA Manager
+              CosttasHolding
             </h1>
             <p className="text-[9px] text-muted-foreground tracking-[0.15em] uppercase font-display">
-              Command Center
+              Manager
             </p>
           </div>
         </div>
@@ -73,11 +69,8 @@ export default async function DashboardLayout({
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="lg:ml-64 min-h-screen pb-24 lg:pb-0">
-        {/* Desktop Top Header */}
         <TopHeader userEmail={user.email} userName={userName} />
-
         <div className="p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
 

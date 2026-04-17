@@ -39,31 +39,26 @@ export default function LoginPage() {
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center overflow-auto p-4">
-      {/* Background image */}
       <img
         src="/banner.png"
         alt=""
         className="fixed inset-0 w-screen h-screen object-cover object-center z-0"
       />
-      {/* Overlay */}
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1]" />
 
-      {/* Logo + title */}
       <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
         <div className="w-14 h-14 rounded-2xl bg-[#0a0e1a]/40 backdrop-blur-xl flex items-center justify-center mb-3 border border-white/[0.15]">
           <Package className="w-7 h-7 text-cyan-400" />
         </div>
         <h1 className="text-2xl font-bold text-white drop-shadow-lg">
-          FBA Manager
+          CosttasHolding Manager
         </h1>
         <p className="text-sm text-white/70 drop-shadow-md">
           Gestión profesional de productos Amazon FBA
         </p>
       </div>
 
-      {/* Card */}
       <div className="relative z-10 w-full max-w-[400px] bg-[#0a0e1a]/30 backdrop-blur-2xl rounded-2xl border border-white/[0.12] p-7 shadow-2xl shadow-black/30 animate-fade-in">
-        {/* Header */}
         <div className="text-center mb-6">
           <h2 className="text-lg font-semibold text-white drop-shadow-md">
             Iniciar Sesión
@@ -73,7 +68,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleLogin} className="space-y-5">
           <div className="space-y-1.5">
             <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
@@ -105,14 +99,12 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Error */}
           {error && (
             <div className="rounded-xl bg-red-500/15 border border-red-500/25 px-4 py-3 text-center">
               <p className="text-sm text-red-300">{error}</p>
             </div>
           )}
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
@@ -127,7 +119,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Register link */}
         <div className="mt-6 text-center">
           <p className="text-sm text-white/50">
             ¿No tienes cuenta?{" "}
@@ -141,9 +132,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Footer */}
       <p className="relative z-10 mt-6 text-xs text-white/40 drop-shadow-md">
-        Amazon FBA Manager v2.0
+        CosttasHolding Manager v2.0
       </p>
     </div>
   );
