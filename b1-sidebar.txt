@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
@@ -10,10 +10,7 @@ import {
   TrendingUp,
   Calculator,
   Settings,
-  LogOut,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { useState } from "react";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -25,7 +22,7 @@ const navItems = [
 ];
 
 const bottomNavItems = [
-  { href: "/settings", icon: Settings, label: "Configuración" },
+  { href: "/settings", icon: Settings, label: "Configuraci\u00F3n" },
 ];
 
 interface SidebarProps {
@@ -35,8 +32,6 @@ interface SidebarProps {
 
 export function Sidebar({ userEmail, userName }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
-  const [loggingOut, setLoggingOut] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -49,33 +44,19 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
     return "U";
   };
 
-  const handleLogout = async () => {
-    setLoggingOut(true);
-    try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      router.push("/login");
-      router.refresh();
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
-    } finally {
-      setLoggingOut(false);
-    }
-  };
-
   return (
-    <aside className="hidden lg:flex w-64 flex-col fixed h-screen bg-card border-r border-border z-40">
+    <aside className="hidden lg:flex w-64 flex-col fixed h-screen bg-[hsl(225,43%,5%)] dark:bg-[hsl(225,43%,5%)] border-r border-[hsl(var(--sidebar-border))] z-40">
       {/* Logo */}
       <div className="px-5 pt-6 pb-5">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
-            <Package className="w-5 h-5 text-primary-foreground" />
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+            <Package className="w-5 h-5 text-white" />
           </div>
           <div>
             <h1 className="text-base font-bold text-foreground font-display tracking-tight">
               FBA Manager
             </h1>
-            <p className="text-[10px] text-muted-foreground tracking-[0.2em] uppercase font-display">
+            <p className="text-[10px] text-cyan-400/60 tracking-[0.2em] uppercase font-display">
               Command Center
             </p>
           </div>
@@ -93,21 +74,24 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
               className={`
                 relative flex items-center gap-3 px-3 py-2.5 rounded-xl
                 transition-all duration-200 group
+                animate-slide-in-left
                 ${active
-                  ? "text-primary bg-primary/[0.08]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  ? "text-cyan-400 bg-cyan-400/[0.05]"
+                  : "text-slate-500 hover:text-slate-300 hover:bg-white/[0.03]"
                 }
               `}
+              style={{ animationDelay: `${index * 50}ms` }}
             >
               {/* Active indicator bar */}
               {active && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary" />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-cyan-400 shadow-[4px_0_12px_rgba(0,212,255,0.3)]" />
               )}
               <item.icon
-                className={`w-[18px] h-[18px] transition-colors duration-200 ${active
-                    ? "text-primary"
-                    : "text-muted-foreground group-hover:text-foreground"
-                  }`}
+                className={`w-[18px] h-[18px] transition-colors duration-200 ${
+                  active
+                    ? "text-cyan-400"
+                    : "text-slate-600 group-hover:text-slate-400"
+                }`}
               />
               <span className="text-sm font-medium font-body">
                 {item.label}
@@ -117,7 +101,7 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
         })}
 
         {/* Divider */}
-        <div className="my-3 mx-3 border-t border-border" />
+        <div className="my-3 mx-3 border-t border-white/[0.06]" />
 
         {/* Settings */}
         {bottomNavItems.map((item) => {
@@ -130,19 +114,20 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
                 relative flex items-center gap-3 px-3 py-2.5 rounded-xl
                 transition-all duration-200 group
                 ${active
-                  ? "text-primary bg-primary/[0.08]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  ? "text-cyan-400 bg-cyan-400/[0.05]"
+                  : "text-slate-500 hover:text-slate-300 hover:bg-white/[0.03]"
                 }
               `}
             >
               {active && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary" />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-cyan-400 shadow-[4px_0_12px_rgba(0,212,255,0.3)]" />
               )}
               <item.icon
-                className={`w-[18px] h-[18px] transition-colors duration-200 ${active
-                    ? "text-primary"
-                    : "text-muted-foreground group-hover:text-foreground"
-                  }`}
+                className={`w-[18px] h-[18px] transition-colors duration-200 ${
+                  active
+                    ? "text-cyan-400"
+                    : "text-slate-600 group-hover:text-slate-400"
+                }`}
               />
               <span className="text-sm font-medium font-body">
                 {item.label}
@@ -152,37 +137,23 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
         })}
       </nav>
 
-      {/* User Section + Logout */}
-      <div className="px-3 pb-4 pt-2 border-t border-border space-y-1">
-        <Link
-          href="/settings"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/50 transition-colors"
-        >
-          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <span className="text-xs font-bold text-primary font-display">
+      {/* User Section */}
+      <div className="px-3 pb-4 pt-2 border-t border-white/[0.06]">
+        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/20 flex items-center justify-center">
+            <span className="text-xs font-bold text-cyan-400 font-display">
               {getInitial()}
             </span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate font-body">
-              {userName || "Usuario"}
+              {userName || "Admin User"}
             </p>
-            <p className="text-[11px] text-muted-foreground truncate">
-              {userEmail || ""}
+            <p className="text-[11px] text-slate-500 truncate">
+              {userEmail || "admin@fba.com"}
             </p>
           </div>
-        </Link>
-
-        <button
-          onClick={handleLogout}
-          disabled={loggingOut}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
-        >
-          <LogOut className="w-[18px] h-[18px]" />
-          <span className="text-sm font-medium font-body">
-            {loggingOut ? "Cerrando..." : "Cerrar sesión"}
-          </span>
-        </button>
+        </div>
       </div>
     </aside>
   );

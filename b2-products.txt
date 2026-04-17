@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fmt, fmtPct, roiColor, profitColor } from "@/lib/utils";
 import { Search, Plus, Filter, Package, TrendingUp, DollarSign, BarChart3, X } from "lucide-react";
@@ -52,6 +53,7 @@ export default function ProductsPage() {
     fetchProducts();
   }, []);
 
+  // Cerrar filtros al hacer click afuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
@@ -103,38 +105,40 @@ export default function ProductsPage() {
     <div>
       <PageHeader
         badge="INVENTARIO"
-        title="Catálogo de Productos"
+        title="CatÃ¡logo de Productos"
         subtitle={`${products.length} producto${products.length !== 1 ? "s" : ""} registrado${products.length !== 1 ? "s" : ""}`}
       >
+        {/* Contenedor relativo para el dropdown */}
         <div className="relative" ref={filterRef}>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all duration-200 ${showFilters || activeFiltersCount > 0
-                ? "bg-primary/10 border-primary/20 text-primary"
-                : "bg-muted/50 border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-400"
+                : "bg-white/5 border-white/10 text-white/50 hover:text-white/80 hover:bg-white/10"
               }`}
           >
             <Filter className="w-4 h-4" />
             Filtros
             {activeFiltersCount > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/20 text-[10px] font-bold text-primary">
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-[10px] font-bold text-cyan-400">
                 {activeFiltersCount}
               </span>
             )}
           </button>
 
+          {/* Dropdown flotante de filtros */}
           {showFilters && (
-            <div className="absolute right-0 top-full mt-2 z-50 w-[420px] rounded-2xl border border-border bg-card shadow-2xl shadow-black/20 p-5 space-y-4 animate-in fade-in-0 zoom-in-95 duration-150">
+            <div className="absolute right-0 top-full mt-2 z-50 w-[420px] rounded-2xl border border-white/[0.08] bg-[#0d1117] shadow-2xl shadow-black/40 p-5 space-y-4 animate-fade-in">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">Filtros</h3>
+                  <Filter className="h-4 w-4 text-cyan-400" />
+                  <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Filtros</h3>
                 </div>
                 <div className="flex items-center gap-2">
                   {activeFiltersCount > 0 && (
                     <button
                       onClick={clearFilters}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-red-500 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all"
                     >
                       <X className="h-3 w-3" />
                       Limpiar
@@ -142,7 +146,7 @@ export default function ProductsPage() {
                   )}
                   <button
                     onClick={() => setShowFilters(false)}
-                    className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                    className="p-1.5 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-all"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -151,29 +155,29 @@ export default function ProductsPage() {
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1.5 block">Estado</label>
+                  <label className="text-xs text-white/40 mb-1.5 block">Estado</label>
                   <select
                     value={filterStatus}
                     onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
-                    className="w-full rounded-xl bg-muted/50 border border-border text-foreground text-sm px-3 py-2.5 focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
+                    className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm px-3 py-2.5 focus:border-cyan-500/40 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
                   >
                     {STATUS_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
+                      <option key={opt.value} value={opt.value} className="bg-[#0a0e1a]">
                         {opt.label}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1.5 block">Categoría</label>
+                  <label className="text-xs text-white/40 mb-1.5 block">CategorÃ­a</label>
                   <select
                     value={filterCategory}
                     onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}
-                    className="w-full rounded-xl bg-muted/50 border border-border text-foreground text-sm px-3 py-2.5 focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
+                    className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm px-3 py-2.5 focus:border-cyan-500/40 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
                   >
-                    <option value="">Todas las categorías</option>
+                    <option value="" className="bg-[#0a0e1a]">Todas las categorÃ­as</option>
                     {categories.map((cat) => (
-                      <option key={cat} value={cat}>
+                      <option key={cat} value={cat} className="bg-[#0a0e1a]">
                         {cat}
                       </option>
                     ))}
@@ -182,20 +186,20 @@ export default function ProductsPage() {
               </div>
 
               {activeFiltersCount > 0 && (
-                <div className="flex items-center gap-2 pt-2 border-t border-border">
-                  <span className="text-xs text-muted-foreground/60">Activos:</span>
+                <div className="flex items-center gap-2 pt-2 border-t border-white/[0.06]">
+                  <span className="text-xs text-white/30">Activos:</span>
                   {filterStatus && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 text-xs text-primary">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-400">
                       {STATUS_OPTIONS.find((o) => o.value === filterStatus)?.label}
-                      <button onClick={() => setFilterStatus("")} className="hover:text-foreground transition-colors">
+                      <button onClick={() => setFilterStatus("")} className="hover:text-white transition-colors">
                         <X className="h-3 w-3" />
                       </button>
                     </span>
                   )}
                   {filterCategory && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs text-purple-500">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs text-purple-400">
                       {filterCategory}
-                      <button onClick={() => setFilterCategory("")} className="hover:text-foreground transition-colors">
+                      <button onClick={() => setFilterCategory("")} className="hover:text-white transition-colors">
                         <X className="h-3 w-3" />
                       </button>
                     </span>
@@ -207,7 +211,7 @@ export default function ProductsPage() {
         </div>
 
         <button
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-cyan-500 hover:bg-cyan-600 text-white transition-all duration-200"
           onClick={() => setShowNewModal(true)}
         >
           <Plus className="w-4 h-4" />
@@ -264,52 +268,51 @@ export default function ProductsPage() {
             setSearch(e.target.value);
             setCurrentPage(1);
           }}
-          className="pl-9 bg-muted/50 border-border"
+          className="pl-9 bg-white/[0.04] border-white/[0.08]"
         />
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-muted-foreground">Cargando productos...</p>
+            <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-white/40">Cargando productos...</p>
           </div>
         </div>
       ) : (
         <>
-          {/* Mobile cards */}
           <div className="lg:hidden space-y-3">
             {filtered.length === 0 ? (
-              <p className="text-center py-12 text-muted-foreground">
+              <p className="text-center py-12 text-white/40">
                 {search || activeFiltersCount > 0 ? "Sin resultados" : "No hay productos"}
               </p>
             ) : (
               paginated.map((product) => (
                 <div
                   key={product.id}
-                  className="rounded-2xl border border-border bg-card p-4 cursor-pointer active:scale-[0.98] transition-all hover:border-border/80"
+                  className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 cursor-pointer active:scale-[0.98] transition-all hover:border-white/[0.1]"
                   onClick={() => router.push(`/products/${product.id}`)}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-medium text-sm text-foreground">{product.name}</p>
-                      <p className="text-xs text-muted-foreground font-display">{product.sku}</p>
+                      <p className="font-medium text-sm text-white">{product.name}</p>
+                      <p className="text-xs text-white/40 font-display">{product.sku}</p>
                     </div>
                     <StatusBadge status={product.status} size="sm" />
                   </div>
                   <div className="grid grid-cols-3 gap-3 mt-3">
                     <div>
-                      <p className="font-display uppercase text-[10px] tracking-wider text-muted-foreground">Precio</p>
-                      <p className="text-sm font-medium text-foreground">{fmt(product.sale_price)}</p>
+                      <p className="font-display uppercase text-[10px] tracking-wider text-white/40">Precio</p>
+                      <p className="text-sm font-medium text-white">{fmt(product.sale_price)}</p>
                     </div>
                     <div>
-                      <p className="font-display uppercase text-[10px] tracking-wider text-muted-foreground">Ganancia</p>
+                      <p className="font-display uppercase text-[10px] tracking-wider text-white/40">Ganancia</p>
                       <p className={`text-sm font-medium ${profitColor(product.net_profit)}`}>
                         {fmt(product.net_profit)}
                       </p>
                     </div>
                     <div>
-                      <p className="font-display uppercase text-[10px] tracking-wider text-muted-foreground">ROI</p>
+                      <p className="font-display uppercase text-[10px] tracking-wider text-white/40">ROI</p>
                       <p className={`text-sm font-medium ${roiColor(product.roi)}`}>
                         {fmtPct(product.roi)}
                       </p>
@@ -320,18 +323,17 @@ export default function ProductsPage() {
             )}
           </div>
 
-          {/* Desktop table */}
           <div className="hidden lg:block">
             <DataTableWrapper>
               {filtered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-2">
-                  <p className="text-muted-foreground">
-                    {search || activeFiltersCount > 0 ? "Sin resultados" : "No hay productos aún"}
+                  <p className="text-white/40">
+                    {search || activeFiltersCount > 0 ? "Sin resultados" : "No hay productos aÃºn"}
                   </p>
                   {!search && activeFiltersCount === 0 && (
                     <button
                       onClick={() => setShowNewModal(true)}
-                      className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground transition-all"
+                      className="px-4 py-2 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-white/50 hover:text-white/80 transition-all"
                     >
                       Crear primero
                     </button>
@@ -340,9 +342,9 @@ export default function ProductsPage() {
               ) : (
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-border">
+                    <tr className="border-b border-white/[0.06]">
                       <th className={tableHeaderClass}>Producto</th>
-                      <th className={tableHeaderClass}>Categoría</th>
+                      <th className={tableHeaderClass}>CategorÃ­a</th>
                       <th className={`${tableHeaderClass} text-right`}>Precio / Costo</th>
                       <th className={`${tableHeaderClass} text-right`}>Ganancia</th>
                       <th className={`${tableHeaderClass} text-right`}>ROI</th>
@@ -359,21 +361,21 @@ export default function ProductsPage() {
                       >
                         <td className={tableCellClass}>
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-muted/50 border border-border flex items-center justify-center flex-shrink-0">
-                              <Package className="w-4 h-4 text-muted-foreground" />
+                            <div className="w-10 h-10 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center flex-shrink-0">
+                              <Package className="w-4 h-4 text-white/30" />
                             </div>
                             <div>
-                              <p className="font-medium text-sm text-foreground">{product.name}</p>
-                              <p className="text-xs text-muted-foreground font-display">{product.sku}</p>
+                              <p className="font-medium text-sm text-white">{product.name}</p>
+                              <p className="text-xs text-white/40 font-display">{product.sku}</p>
                             </div>
                           </div>
                         </td>
-                        <td className={`${tableCellClass} text-muted-foreground`}>
-                          {product.category || "—"}
+                        <td className={`${tableCellClass} text-white/40`}>
+                          {product.category || "â€”"}
                         </td>
                         <td className={`${tableCellClass} text-right`}>
-                          <p className="text-sm font-medium text-foreground">{fmt(product.sale_price)}</p>
-                          <p className="text-xs text-muted-foreground">{fmt(product.total_cost)}</p>
+                          <p className="text-sm font-medium text-white">{fmt(product.sale_price)}</p>
+                          <p className="text-xs text-white/40">{fmt(product.total_cost)}</p>
                         </td>
                         <td className={`${tableCellClass} text-right`}>
                           <span className={`font-medium ${profitColor(product.net_profit)}`}>
@@ -388,7 +390,7 @@ export default function ProductsPage() {
                           />
                         </td>
                         <td className={`${tableCellClass} text-center`}>
-                          <span className="font-display font-medium text-foreground">
+                          <span className="font-display font-medium text-white">
                             {product.stock_available ?? 0}
                           </span>
                         </td>

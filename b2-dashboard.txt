@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { fmt, fmtPct } from "@/lib/utils";
@@ -6,7 +6,7 @@ import { DashboardMetrics } from "@/types";
 import { Package, TrendingUp, DollarSign, AlertTriangle } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard } from "@/components/ui/kpi-card";
-import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
+import { DataTableWrapper, tableHeaderClass, tableRowClass, tableCellClass } from "@/components/ui/data-table-wrapper";
 
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -26,7 +26,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Cargando métricas...</p>
+          <p className="text-sm text-muted-foreground">Cargando mÃ©tricas...</p>
         </div>
       </div>
     );
@@ -40,7 +40,7 @@ export default function DashboardPage() {
       <PageHeader
         badge="GLOBAL DASHBOARD"
         title="Resumen del Negocio"
-        subtitle="Vista general de tu operación Amazon FBA"
+        subtitle="Vista general de tu operaciÃ³n Amazon FBA"
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -54,15 +54,15 @@ export default function DashboardPage() {
           progressBar={
             metrics?.total_products
               ? Math.round(
-                ((metrics?.active_products || 0) / metrics.total_products) * 100
-              )
+                  ((metrics?.active_products || 0) / metrics.total_products) * 100
+                )
               : 0
           }
         />
         <KpiCard
           label="Promedio ROI"
           value={fmtPct(metrics?.avg_roi)}
-          subtitle="retorno de inversión"
+          subtitle="retorno de inversiÃ³n"
           icon={TrendingUp}
           accentColor="green"
           trend={
@@ -105,7 +105,7 @@ export default function DashboardPage() {
                 {fmt(metrics?.revenue_last_30d)}
               </p>
               <p className="text-xs text-muted-foreground">
-                Revenue últimos 30 días
+                Revenue Ãºltimos 30 dÃ­as
               </p>
               <p className="font-display text-lg font-semibold text-foreground mt-3 mb-1">
                 {metrics?.units_sold_last_30d || 0} uds
@@ -122,19 +122,19 @@ export default function DashboardPage() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Stock Bajo</span>
-                <span className="font-display font-semibold text-amber-500">
+                <span className="font-display font-semibold text-amber-400">
                   {metrics?.low_stock_count || 0}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Sin Stock</span>
-                <span className="font-display font-semibold text-red-500">
+                <span className="font-display font-semibold text-rose-400">
                   {metrics?.out_of_stock_count || 0}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Sobrestock</span>
-                <span className="font-display font-semibold text-blue-500">
+                <span className="font-display font-semibold text-cyan-400">
                   {metrics?.overstock_count || 0}
                 </span>
               </div>

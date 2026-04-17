@@ -35,13 +35,13 @@ import {
 import { SupplierFormModal } from "@/components/supplier-form-modal";
 
 const renderStars = (rating: number | null) => {
-  if (!rating) return <span className="text-muted-foreground text-xs">Sin rating</span>;
+  if (!rating) return <span className="text-white/25 text-xs">Sin rating</span>;
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className={`h-3.5 w-3.5 ${i <= rating ? "fill-amber-500 text-amber-500" : "text-muted-foreground/30"
+          className={`h-3.5 w-3.5 ${i <= rating ? "fill-amber-400 text-amber-400" : "text-white/10"
             }`}
         />
       ))}
@@ -101,8 +101,8 @@ export default function SuppliersPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">Cargando proveedores...</span>
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+          <span className="text-sm text-white/40">Cargando proveedores...</span>
         </div>
       </div>
     );
@@ -113,11 +113,11 @@ export default function SuppliersPage() {
       <PageHeader
         badge="PROVEEDORES"
         title="Proveedores"
-        subtitle="Gestiona tus proveedores de Alibaba, 1688 y más"
+        subtitle="Gestiona tus proveedores de Alibaba, 1688 y mas"
       >
         <button
           onClick={() => setShowNewModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors"
         >
           <Plus className="h-4 w-4" />
           Nuevo Proveedor
@@ -147,7 +147,7 @@ export default function SuppliersPage() {
           progressBar={suppliers.length > 0 ? Math.round((activeCount / suppliers.length) * 100) : 0}
         />
         <KpiCard
-          label="Países"
+          label="Paises"
           value={String(countries.length)}
           icon={Globe}
           accentColor="purple"
@@ -164,17 +164,17 @@ export default function SuppliersPage() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
           <Input
-            placeholder="Buscar proveedor, contacto, país..."
+            placeholder="Buscar proveedor, contacto, pais..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-muted/50 border-border"
+            className="pl-9 bg-white/[0.04] border-white/[0.08]"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[160px] bg-muted/50 border-border">
-            <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
+          <SelectTrigger className="w-full sm:w-[160px] bg-white/[0.04] border-white/[0.08]">
+            <Filter className="mr-2 h-4 w-4 text-white/30" />
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>
@@ -186,20 +186,20 @@ export default function SuppliersPage() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="rounded-2xl border border-border bg-card p-12 text-center">
-          <Factory className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground/70 mb-1">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-12 text-center">
+          <Factory className="h-12 w-12 text-white/15 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-white/70 mb-1">
             {suppliers.length === 0 ? "No hay proveedores" : "Sin resultados"}
           </h3>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-sm text-white/35 mb-4">
             {suppliers.length === 0
               ? "Agrega tu primer proveedor de Alibaba"
-              : "Intenta cambiar los filtros de búsqueda"}
+              : "Intenta cambiar los filtros de busqueda"}
           </p>
           {suppliers.length === 0 && (
             <button
               onClick={() => setShowNewModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors"
             >
               <Plus className="h-4 w-4" />
               Agregar Proveedor
@@ -215,9 +215,9 @@ export default function SuppliersPage() {
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b border-white/[0.06]">
                   <th className={tableHeaderClass}>Proveedor</th>
-                  <th className={tableHeaderClass}>País</th>
+                  <th className={tableHeaderClass}>Pais</th>
                   <th className={tableHeaderClass}>Rating</th>
                   <th className={tableHeaderClass}>MOQ</th>
                   <th className={tableHeaderClass}>Lead Time</th>
@@ -233,22 +233,22 @@ export default function SuppliersPage() {
                     onClick={() => router.push(`/suppliers/${supplier.id}`)}
                   >
                     <td className={tableCellClass}>
-                      <p className="font-medium text-foreground/80">{supplier.name}</p>
+                      <p className="font-medium text-white/80">{supplier.name}</p>
                       {supplier.contact_name && (
-                        <p className="text-xs text-muted-foreground">{supplier.contact_name}</p>
+                        <p className="text-xs text-white/30">{supplier.contact_name}</p>
                       )}
                     </td>
-                    <td className={`${tableCellClass} text-muted-foreground`}>
+                    <td className={`${tableCellClass} text-white/40`}>
                       {supplier.country || "—"}
                     </td>
                     <td className={tableCellClass}>
                       {renderStars(supplier.rating)}
                     </td>
-                    <td className={`${tableCellClass} text-muted-foreground tabular-nums`}>
+                    <td className={`${tableCellClass} text-white/40 tabular-nums`}>
                       {supplier.min_order_qty ? `${supplier.min_order_qty} uds` : "—"}
                     </td>
-                    <td className={`${tableCellClass} text-muted-foreground tabular-nums`}>
-                      {supplier.lead_time_days ? `${supplier.lead_time_days} días` : "—"}
+                    <td className={`${tableCellClass} text-white/40 tabular-nums`}>
+                      {supplier.lead_time_days ? `${supplier.lead_time_days} dias` : "—"}
                     </td>
                     <td className={tableCellClass}>
                       <StatusBadge status={supplier.status} />
@@ -260,9 +260,9 @@ export default function SuppliersPage() {
                             e.stopPropagation();
                             window.open(supplier.alibaba_url!, "_blank");
                           }}
-                          className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
                         >
-                          <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                          <ExternalLink className="h-4 w-4 text-white/30 hover:text-cyan-400" />
                         </button>
                       )}
                     </td>
@@ -276,29 +276,29 @@ export default function SuppliersPage() {
             {filtered.map((supplier) => (
               <div
                 key={supplier.id}
-                className="rounded-xl border border-border bg-card p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 cursor-pointer hover:bg-white/[0.04] transition-colors"
                 onClick={() => router.push(`/suppliers/${supplier.id}`)}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <p className="font-medium text-foreground/80">{supplier.name}</p>
+                    <p className="font-medium text-white/80">{supplier.name}</p>
                     {supplier.contact_name && (
-                      <p className="text-xs text-muted-foreground">{supplier.contact_name}</p>
+                      <p className="text-xs text-white/30">{supplier.contact_name}</p>
                     )}
                   </div>
                   <StatusBadge status={supplier.status} />
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-3">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-xs text-white/40">
                     <Globe className="h-3.5 w-3.5" />
-                    {supplier.country || "Sin país"}
+                    {supplier.country || "Sin pais"}
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-xs text-white/40">
                     <Package className="h-3.5 w-3.5" />
                     MOQ: {supplier.min_order_qty || "—"}
                   </div>
                   <div>{renderStars(supplier.rating)}</div>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-xs text-white/40">
                     <Clock className="h-3.5 w-3.5" />
                     {supplier.lead_time_days ? `${supplier.lead_time_days}d` : "—"}
                   </div>

@@ -72,6 +72,7 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6 animate-fade-up">
+      {/* Header */}
       <PageHeader
         badge="INVENTARIO"
         title="Inventario"
@@ -79,13 +80,14 @@ export default function InventoryPage() {
       >
         <button
           onClick={fetchInventory}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/50 border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white/50 hover:text-white/70 hover:bg-white/10 transition-colors"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Actualizar
         </button>
       </PageHeader>
 
+      {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label="Total Unidades"
@@ -101,7 +103,7 @@ export default function InventoryPage() {
           accentColor="amber"
           animationDelay={75}
           trend={lowStockCount > 0 ? "down" : "neutral"}
-          trendValue={lowStockCount > 0 ? "Requiere atención" : "OK"}
+          trendValue={lowStockCount > 0 ? "Requiere atencion" : "OK"}
         />
         <KpiCard
           label="Sin Stock"
@@ -110,7 +112,7 @@ export default function InventoryPage() {
           accentColor="red"
           animationDelay={150}
           trend={outOfStockCount > 0 ? "down" : "neutral"}
-          trendValue={outOfStockCount > 0 ? "Crítico" : "OK"}
+          trendValue={outOfStockCount > 0 ? "Critico" : "OK"}
         />
         <KpiCard
           label="Exceso Stock"
@@ -121,41 +123,45 @@ export default function InventoryPage() {
         />
       </div>
 
+      {/* Search */}
       <form onSubmit={handleSearch} className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
           <Input
             placeholder="Buscar por SKU o nombre..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-muted/50 border-border"
+            className="pl-9 bg-white/[0.04] border-white/[0.08]"
           />
         </div>
         <button
           type="submit"
-          className="px-3 py-2 rounded-xl bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white/70 hover:bg-white/10 transition-colors"
         >
           <Search className="h-4 w-4" />
         </button>
       </form>
 
+      {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-16">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="text-sm text-muted-foreground">Cargando inventario...</span>
+            <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+            <span className="text-sm text-white/40">Cargando inventario...</span>
           </div>
         </div>
       )}
 
+      {/* Empty */}
       {!loading && inventory.length === 0 && (
-        <div className="rounded-2xl border border-border bg-card p-12 text-center">
-          <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground/70 mb-1">No hay datos de inventario</h3>
-          <p className="text-sm text-muted-foreground">Agrega productos para ver su stock aquí</p>
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-12 text-center">
+          <Package className="h-12 w-12 text-white/15 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-white/70 mb-1">No hay datos de inventario</h3>
+          <p className="text-sm text-white/35">Agrega productos para ver su stock aqui</p>
         </div>
       )}
 
+      {/* Table */}
       {!loading && inventory.length > 0 && (
         <DataTableWrapper
           title={`${inventory.length} producto${inventory.length !== 1 ? "s" : ""}`}
@@ -164,11 +170,11 @@ export default function InventoryPage() {
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b border-white/[0.06]">
                   <th className={tableHeaderClass}>SKU</th>
                   <th className={tableHeaderClass}>Producto</th>
                   <th className={`${tableHeaderClass} text-center`}>Disponible</th>
-                  <th className={`${tableHeaderClass} text-center`}>En Tránsito</th>
+                  <th className={`${tableHeaderClass} text-center`}>En Transito</th>
                   <th className={`${tableHeaderClass} text-center`}>Warehouse</th>
                   <th className={`${tableHeaderClass} text-center`}>Total</th>
                   <th className={`${tableHeaderClass} text-center`}>Estado</th>
@@ -179,22 +185,22 @@ export default function InventoryPage() {
                   const total = (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0);
                   return (
                     <tr key={p.id} className={tableRowClass}>
-                      <td className={`${tableCellClass} font-mono text-xs text-muted-foreground`}>
+                      <td className={`${tableCellClass} font-mono text-xs text-white/40`}>
                         {p.sku}
                       </td>
-                      <td className={`${tableCellClass} font-medium text-foreground/80`}>
+                      <td className={`${tableCellClass} font-medium text-white/80`}>
                         {p.name}
                       </td>
-                      <td className={`${tableCellClass} text-center text-foreground/60 tabular-nums`}>
+                      <td className={`${tableCellClass} text-center text-white/60 tabular-nums`}>
                         {p.stock_available || 0}
                       </td>
-                      <td className={`${tableCellClass} text-center text-foreground/60 tabular-nums`}>
+                      <td className={`${tableCellClass} text-center text-white/60 tabular-nums`}>
                         {p.stock_inbound || 0}
                       </td>
-                      <td className={`${tableCellClass} text-center text-foreground/60 tabular-nums`}>
+                      <td className={`${tableCellClass} text-center text-white/60 tabular-nums`}>
                         {p.stock_warehouse || 0}
                       </td>
-                      <td className={`${tableCellClass} text-center font-bold text-foreground tabular-nums`}>
+                      <td className={`${tableCellClass} text-center font-bold text-white/90 tabular-nums`}>
                         {total}
                       </td>
                       <td className={`${tableCellClass} text-center`}>
@@ -217,12 +223,12 @@ export default function InventoryPage() {
               return (
                 <div
                   key={p.id}
-                  className="rounded-xl border border-border bg-card p-4"
+                  className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="font-medium text-sm text-foreground/80">{p.name}</p>
-                      <p className="font-mono text-xs text-muted-foreground">{p.sku}</p>
+                      <p className="font-medium text-sm text-white/80">{p.name}</p>
+                      <p className="font-mono text-xs text-white/30">{p.sku}</p>
                     </div>
                     <StatusBadge
                       status={stockLabel(p.stock_status || "normal")}
@@ -231,20 +237,20 @@ export default function InventoryPage() {
                   </div>
                   <div className="grid grid-cols-4 gap-2 text-center">
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Disponible</p>
-                      <p className="font-bold text-sm text-foreground/70 tabular-nums">{p.stock_available || 0}</p>
+                      <p className="text-[10px] text-white/30">Disponible</p>
+                      <p className="font-bold text-sm text-white/70 tabular-nums">{p.stock_available || 0}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Tránsito</p>
-                      <p className="font-bold text-sm text-foreground/70 tabular-nums">{p.stock_inbound || 0}</p>
+                      <p className="text-[10px] text-white/30">Transito</p>
+                      <p className="font-bold text-sm text-white/70 tabular-nums">{p.stock_inbound || 0}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Warehouse</p>
-                      <p className="font-bold text-sm text-foreground/70 tabular-nums">{p.stock_warehouse || 0}</p>
+                      <p className="text-[10px] text-white/30">Warehouse</p>
+                      <p className="font-bold text-sm text-white/70 tabular-nums">{p.stock_warehouse || 0}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Total</p>
-                      <p className="font-bold text-sm text-primary tabular-nums">{total}</p>
+                      <p className="text-[10px] text-white/30">Total</p>
+                      <p className="font-bold text-sm text-cyan-400 tabular-nums">{total}</p>
                     </div>
                   </div>
                 </div>

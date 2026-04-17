@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,17 +9,15 @@ import {
   Warehouse,
   TrendingUp,
   Calculator,
-  Settings,
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/products", icon: Package, label: "Productos" },
   { href: "/suppliers", icon: Factory, label: "Proveed." },
   { href: "/inventory", icon: Warehouse, label: "Inventario" },
   { href: "/sales", icon: TrendingUp, label: "Ventas" },
   { href: "/calculator", icon: Calculator, label: "Calc." },
-  { href: "/settings", icon: Settings, label: "Config." },
 ];
 
 export function MobileBottomNav() {
@@ -31,7 +29,7 @@ export function MobileBottomNav() {
   };
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border px-1 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[hsl(225,43%,5%)]/95 backdrop-blur-xl border-t border-white/[0.06] px-1 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
       <div className="flex justify-around">
         {navItems.map((item) => {
           const active = isActive(item.href);
@@ -40,19 +38,20 @@ export function MobileBottomNav() {
               key={item.href}
               href={item.href}
               className={`
-                relative flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-xl
+                relative flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl
                 transition-all duration-200 min-w-0 flex-1
                 ${active
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "text-cyan-400"
+                  : "text-slate-600 hover:text-slate-400"
                 }
               `}
             >
+              {/* Active dot indicator */}
               {active && (
-                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-[2px] rounded-full bg-primary" />
+                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-5 h-[2px] rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,212,255,0.5)]" />
               )}
-              <item.icon className={`w-4 h-4 transition-colors ${active ? "text-primary" : ""}`} />
-              <span className={`text-[9px] font-medium truncate ${active ? "text-primary" : ""}`}>
+              <item.icon className={`w-5 h-5 transition-colors ${active ? "text-cyan-400" : ""}`} />
+              <span className={`text-[10px] font-medium truncate ${active ? "text-cyan-400" : ""}`}>
                 {item.label}
               </span>
             </Link>

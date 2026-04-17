@@ -89,38 +89,41 @@ export default function CalculatorPage() {
       ? (result.netProfit / parseFloat(salePrice)) * 100
       : 0;
 
-  const inputClass = "bg-muted/50 border-border";
-  const labelClass = "text-sm text-muted-foreground";
+  const inputClass = "bg-white/[0.04] border-white/[0.08]";
+  const labelClass = "text-sm text-white/50";
 
   return (
     <div className="max-w-2xl space-y-6 animate-fade-up">
+      {/* Header */}
       <PageHeader
         badge="CALCULADORA"
         title="Calculadora FBA"
         subtitle="Calcula ganancia, ROI y tarifas de Amazon"
       />
 
+      {/* Settings badges */}
       {!loadingDefaults && (
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-xs text-primary">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-400">
             <Target className="h-3 w-3" />
             ROI objetivo: {targetRoi}%
           </span>
-          <span className="inline-flex items-center px-3 py-1 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground">
+          <span className="inline-flex items-center px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/40">
             {currency}
           </span>
           {taxRate > 0 && (
-            <span className="inline-flex items-center px-3 py-1 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground">
+            <span className="inline-flex items-center px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/40">
               Tax: {taxRate}%
             </span>
           )}
         </div>
       )}
 
-      <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+      {/* Input Form */}
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-4">
         <div className="flex items-center gap-2 mb-2">
-          <Calculator className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+          <Calculator className="h-4 w-4 text-cyan-400" />
+          <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">
             Datos del Producto
           </h3>
         </div>
@@ -162,7 +165,7 @@ export default function CalculatorPage() {
         <button
           onClick={calculate}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 w-full sm:w-auto justify-center"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-50 w-full sm:w-auto justify-center"
         >
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -173,8 +176,10 @@ export default function CalculatorPage() {
         </button>
       </div>
 
+      {/* Results */}
       {result && (
         <>
+          {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <KpiCard
               label="Ganancia Neta"
@@ -204,37 +209,38 @@ export default function CalculatorPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-6">
+          {/* Fee Breakdown */}
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
             <div className="flex items-center gap-2 mb-5">
-              <DollarSign className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+              <DollarSign className="h-4 w-4 text-cyan-400" />
+              <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">
                 Desglose de Tarifas
               </h3>
             </div>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Tarifa Referencia (15%)</span>
-                <span className="text-sm font-medium text-foreground/80 tabular-nums">
+                <span className="text-sm text-white/40">Tarifa Referencia (15%)</span>
+                <span className="text-sm font-medium text-white/80 tabular-nums">
                   {fmt(result.referralFee)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Tarifa FBA</span>
-                <span className="text-sm font-medium text-foreground/80 tabular-nums">
+                <span className="text-sm text-white/40">Tarifa FBA</span>
+                <span className="text-sm font-medium text-white/80 tabular-nums">
                   {fmt(result.fbaFee)}
                 </span>
               </div>
               {taxRate > 0 && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Impuestos ({taxRate}%)</span>
-                  <span className="text-sm font-medium text-foreground/80 tabular-nums">
+                  <span className="text-sm text-white/40">Impuestos ({taxRate}%)</span>
+                  <span className="text-sm font-medium text-white/80 tabular-nums">
                     {fmt(result.netProfit * (taxRate / 100))}
                   </span>
                 </div>
               )}
-              <div className="border-t border-border pt-3 flex justify-between items-center">
-                <span className="text-sm font-semibold text-foreground/70">Total Tarifas</span>
-                <span className="text-sm font-bold text-primary tabular-nums">
+              <div className="border-t border-white/[0.06] pt-3 flex justify-between items-center">
+                <span className="text-sm font-semibold text-white/70">Total Tarifas</span>
+                <span className="text-sm font-bold text-cyan-400 tabular-nums">
                   {fmt(result.totalFees)}
                 </span>
               </div>

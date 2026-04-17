@@ -1,7 +1,10 @@
 "use client";
 
-import { Search, Bell } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Search, Bell, LogOut, Settings, User } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { createClient } from "@/lib/supabase/client";
 
 interface TopHeaderProps {
   userEmail?: string;
@@ -9,50 +12,143 @@ interface TopHeaderProps {
 }
 
 export function TopHeader({ userEmail, userName }: TopHeaderProps) {
+  const router = useRouter();
+  const [searchValue, setSearchValue] = useState("");
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   const getInitial = () => {
     if (userName) return userName.charAt(0).toUpperCase();
     if (userEmail) return userEmail.charAt(0).toUpperCase();
     return "U";
   };
 
+  // Cerrar dropdown al hacer click afuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    if (showUserMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showUserMenu]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchValue.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchValue.trim())}`);
+      setSearchValue("");
+    }
+  };
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push("/login");
+      router.refresh();
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
   return (
     <header className="hidden lg:flex sticky top-0 z-30 items-center justify-between h-14 px-8 bg-background/80 backdrop-blur-xl border-b border-border/50">
       {/* Search */}
-      <div className="relative w-full max-w-md">
+      <form onSubmit={handleSearch} className="relative w-full max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text"
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Buscar productos, proveedores..."
-          className="w-full h-9 pl-10 pr-4 rounded-xl bg-white/[0.04] border border-white/[0.06] text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-cyan-500/40 focus:border-cyan-500/40 transition-all font-body"
+          className="w-full h-9 pl-10 pr-4 rounded-xl bg-muted/50 border border-border text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all font-body"
         />
-      </div>
+      </form>
 
       {/* Right section */}
       <div className="flex items-center gap-3">
-        {/* Notifications bell */}
-        <button className="relative w-9 h-9 rounded-xl flex items-center justify-center hover:bg-white/[0.04] transition-colors">
-          <Bell className="w-[18px] h-[18px] text-muted-foreground" />
-          <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse-glow" />
-        </button>
-
         {/* Theme toggle */}
         <ThemeToggle compact />
 
-        {/* User avatar */}
-        <div className="flex items-center gap-2.5 pl-2 border-l border-border/50">
-          <div className="text-right hidden xl:block">
-            <p className="text-xs font-medium text-foreground font-body leading-tight">
-              {userName || "Admin User"}
-            </p>
-            <p className="text-[10px] text-muted-foreground leading-tight">
-              Premium Plan
-            </p>
-          </div>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/20 flex items-center justify-center">
-            <span className="text-xs font-bold text-cyan-400 font-display">
-              {getInitial()}
-            </span>
-          </div>
+        {/* User dropdown */}
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-2.5 pl-3 border-l border-border/50 hover:opacity-80 transition-opacity"
+          >
+            <div className="text-right hidden xl:block">
+              <p className="text-xs font-medium text-foreground font-body leading-tight">
+                {userName || "Usuario"}
+              </p>
+              <p className="text-[10px] text-muted-foreground leading-tight">
+                {userEmail || ""}
+              </p>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <span className="text-xs font-bold text-primary font-display">
+                {getInitial()}
+              </span>
+            </div>
+          </button>
+
+          {/* Dropdown menu */}
+          {showUserMenu && (
+            <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border bg-card shadow-xl shadow-black/20 py-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-150">
+              {/* User info */}
+              <div className="px-4 py-3 border-b border-border">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {userName || "Usuario"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {userEmail || ""}
+                </p>
+              </div>
+
+              {/* Menu items */}
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    router.push("/settings");
+                  }}
+                  className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  <User className="h-4 w-4" />
+                  Mi perfil
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    router.push("/settings");
+                  }}
+                  className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  <Settings className="h-4 w-4" />
+                  Configuración
+                </button>
+              </div>
+
+              {/* Logout */}
+              <div className="border-t border-border pt-1">
+                <button
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  {loggingOut ? "Cerrando sesión..." : "Cerrar sesión"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>
