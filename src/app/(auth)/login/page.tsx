@@ -48,7 +48,7 @@ export default function LoginPage() {
 
       <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
         <div className="w-14 h-14 rounded-2xl bg-[#0a0e1a]/40 backdrop-blur-xl flex items-center justify-center mb-3 border border-white/[0.15]">
-          <Package className="w-7 h-7 text-cyan-400" />
+          <Package className="w-7 h-7 text-primary" />
         </div>
         <h1 className="text-2xl font-bold text-white drop-shadow-lg">
           CosttasHolding Manager
@@ -80,7 +80,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:ring-cyan-500/20"
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
             />
           </div>
 
@@ -95,20 +95,20 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:ring-cyan-500/20"
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
             />
           </div>
 
           {error && (
-            <div className="rounded-xl bg-red-500/15 border border-red-500/25 px-4 py-3 text-center">
-              <p className="text-sm text-red-300">{error}</p>
+            <div className="rounded-xl bg-destructive/15 border border-destructive/25 px-4 py-3 text-center">
+              <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 shadow-lg shadow-cyan-500/25 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -124,7 +124,7 @@ export default function LoginPage() {
             ¿No tienes cuenta?{" "}
             <Link
               href="/register"
-              className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+              className="text-primary hover:text-primary/80 font-medium transition-colors"
             >
               Crear cuenta
             </Link>

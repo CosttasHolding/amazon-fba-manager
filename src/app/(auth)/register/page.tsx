@@ -61,7 +61,7 @@ export default function RegisterPage() {
 
       <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
         <div className="w-14 h-14 rounded-2xl bg-[#0a0e1a]/40 backdrop-blur-xl flex items-center justify-center mb-3 border border-white/[0.15]">
-          <Package className="w-7 h-7 text-cyan-400" />
+          <Package className="w-7 h-7 text-primary" />
         </div>
         <h1 className="text-2xl font-bold text-white drop-shadow-lg">
           CosttasHolding Manager
@@ -93,7 +93,7 @@ export default function RegisterPage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
-              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:ring-cyan-500/20"
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
             />
           </div>
 
@@ -108,7 +108,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:ring-cyan-500/20"
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
             />
           </div>
 
@@ -123,7 +123,7 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:ring-cyan-500/20"
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
             />
           </div>
 
@@ -138,14 +138,14 @@ export default function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:ring-cyan-500/20"
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 shadow-lg shadow-cyan-500/25 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -161,7 +161,7 @@ export default function RegisterPage() {
             ¿Ya tienes cuenta?{" "}
             <Link
               href="/login"
-              className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+              className="text-primary hover:text-primary/80 font-medium transition-colors"
             >
               Iniciar Sesión
             </Link>

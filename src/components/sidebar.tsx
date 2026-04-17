@@ -173,7 +173,7 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
         <button
           onClick={handleLogout}
           disabled={loggingOut}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
         >
           <LogOut className="w-[18px] h-[18px]" />
           <span className="text-sm font-medium font-body">
