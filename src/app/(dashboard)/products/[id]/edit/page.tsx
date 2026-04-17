@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,7 +34,7 @@ const productSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   asin: z.string().optional(),
   sku: z.string().min(1, "El SKU es requerido"),
-  category: z.enum(["Electronics","Toys","Home","Kitchen","Health","Beauty","Sports","Books","Other"]),
+  category: z.enum(["Electronics", "Toys", "Home", "Kitchen", "Health", "Beauty", "Sports", "Books", "Other"]),
   status: z.enum(["active", "paused", "discontinued"]).default("active"),
   unitCost: z.coerce.number().min(0).default(0),
   salePrice: z.coerce.number().min(0).default(0),
@@ -66,10 +67,11 @@ interface LinkedSupplier {
   suppliers: { id: string; name: string };
 }
 
-const sectionClass = "rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-4";
-const sectionTitleClass = "flex items-center gap-2 text-sm font-semibold text-white/80 uppercase tracking-wider mb-4";
-const labelClass = "text-sm text-white/50";
-const errorClass = "text-xs text-red-400 mt-1";
+const sectionClass = "rounded-2xl border border-border bg-card p-6 space-y-4";
+const sectionTitleClass = "flex items-center gap-2 text-sm font-semibold text-foreground uppercase tracking-wider mb-4";
+const labelClass = "text-sm text-muted-foreground";
+const errorClass = "text-xs text-destructive mt-1";
+const inputClass = "bg-muted/50 border-border";
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -219,8 +221,8 @@ export default function EditProductPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
-          <span className="text-sm text-white/40">Cargando producto...</span>
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="text-sm text-muted-foreground">Cargando producto...</span>
         </div>
       </div>
     );
@@ -239,31 +241,31 @@ export default function EditProductPage() {
       />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Info basica */}
+        {/* Información básica */}
         <div className={sectionClass}>
           <div className={sectionTitleClass}>
-            <Package className="h-4 w-4 text-cyan-400" />
-            Informacion basica
+            <Package className="h-4 w-4 text-primary" />
+            Información básica
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <Label className={labelClass}>Nombre del producto *</Label>
-              <Input {...register("name")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input {...register("name")} className={inputClass} />
               {errors.name && <p className={errorClass}>{errors.name.message}</p>}
             </div>
             <div>
               <Label className={labelClass}>ASIN</Label>
-              <Input {...register("asin")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input {...register("asin")} className={inputClass} />
             </div>
             <div>
               <Label className={labelClass}>SKU *</Label>
-              <Input {...register("sku")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input {...register("sku")} className={inputClass} />
               {errors.sku && <p className={errorClass}>{errors.sku.message}</p>}
             </div>
             <div>
-              <Label className={labelClass}>Categoria *</Label>
+              <Label className={labelClass}>Categoría *</Label>
               <Select value={category} onValueChange={(v) => setValue("category", v as ProductFormData["category"])}>
-                <SelectTrigger className="bg-white/[0.04] border-white/[0.08]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {CATEGORIES.map((cat) => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
@@ -274,7 +276,7 @@ export default function EditProductPage() {
             <div>
               <Label className={labelClass}>Estado</Label>
               <Select value={status} onValueChange={(v) => setValue("status", v as ProductFormData["status"])}>
-                <SelectTrigger className="bg-white/[0.04] border-white/[0.08]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {STATUSES.map((s) => (
                     <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
@@ -285,36 +287,36 @@ export default function EditProductPage() {
           </div>
         </div>
 
-        {/* Costos */}
+        {/* Costos y precios */}
         <div className={sectionClass}>
           <div className={sectionTitleClass}>
-            <DollarSign className="h-4 w-4 text-cyan-400" />
+            <DollarSign className="h-4 w-4 text-primary" />
             Costos y precios
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <Label className={labelClass}>Costo compra ($) *</Label>
-              <Input type="number" step="0.01" {...register("unitCost")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input type="number" step="0.01" {...register("unitCost")} className={inputClass} />
             </div>
             <div>
               <Label className={labelClass}>Precio venta ($) *</Label>
-              <Input type="number" step="0.01" {...register("salePrice")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input type="number" step="0.01" {...register("salePrice")} className={inputClass} />
             </div>
             <div>
               <Label className={labelClass}>Tarifa FBA ($)</Label>
-              <Input type="number" step="0.01" {...register("fbaFee")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input type="number" step="0.01" {...register("fbaFee")} className={inputClass} />
             </div>
             <div>
               <Label className={labelClass}>Tarifa referral ($)</Label>
-              <Input type="number" step="0.01" {...register("referralFee")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input type="number" step="0.01" {...register("referralFee")} className={inputClass} />
             </div>
             <div>
-              <Label className={labelClass}>Costo envio ($)</Label>
-              <Input type="number" step="0.01" {...register("shippingCost")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Label className={labelClass}>Costo envío ($)</Label>
+              <Input type="number" step="0.01" {...register("shippingCost")} className={inputClass} />
             </div>
             <div>
               <Label className={labelClass}>Almacenamiento ($)</Label>
-              <Input type="number" step="0.01" {...register("storageCost")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input type="number" step="0.01" {...register("storageCost")} className={inputClass} />
             </div>
           </div>
         </div>
@@ -322,13 +324,13 @@ export default function EditProductPage() {
         {/* Proveedor */}
         <div className={sectionClass}>
           <div className={sectionTitleClass}>
-            <Users className="h-4 w-4 text-cyan-400" />
+            <Users className="h-4 w-4 text-primary" />
             Proveedor
           </div>
           <div>
             <Label className={labelClass}>Seleccionar proveedor</Label>
             <Select value={selectedSupplier || "none"} onValueChange={setSelectedSupplier}>
-              <SelectTrigger className="bg-white/[0.04] border-white/[0.08]">
+              <SelectTrigger className={inputClass}>
                 <SelectValue placeholder="Sin proveedor" />
               </SelectTrigger>
               <SelectContent>
@@ -342,76 +344,72 @@ export default function EditProductPage() {
             </Select>
           </div>
           {selectedSupplier && selectedSupplier !== "none" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-white/[0.06]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border">
               <div>
                 <Label className={labelClass}>Costo unitario ($)</Label>
                 <Input type="number" step="0.01" value={supplierData.unit_cost}
                   onChange={(e) => setSupplierData((p) => ({ ...p, unit_cost: e.target.value }))}
-                  placeholder="0.00" className="bg-white/[0.04] border-white/[0.08]" />
+                  placeholder="0.00" className={inputClass} />
               </div>
               <div>
                 <Label className={labelClass}>MOQ</Label>
                 <Input type="number" value={supplierData.moq}
                   onChange={(e) => setSupplierData((p) => ({ ...p, moq: e.target.value }))}
-                  placeholder="100" className="bg-white/[0.04] border-white/[0.08]" />
+                  placeholder="100" className={inputClass} />
               </div>
               <div>
-                <Label className={labelClass}>Lead time (dias)</Label>
+                <Label className={labelClass}>Lead time (días)</Label>
                 <Input type="number" value={supplierData.lead_time_days}
                   onChange={(e) => setSupplierData((p) => ({ ...p, lead_time_days: e.target.value }))}
-                  placeholder="30" className="bg-white/[0.04] border-white/[0.08]" />
+                  placeholder="30" className={inputClass} />
               </div>
             </div>
           )}
         </div>
 
-        {/* Detalles */}
+        {/* Detalles adicionales */}
         <div className={sectionClass}>
           <div className={sectionTitleClass}>
-            <Info className="h-4 w-4 text-cyan-400" />
+            <Info className="h-4 w-4 text-primary" />
             Detalles adicionales
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label className={labelClass}>Peso (kg)</Label>
-              <Input type="number" step="0.01" {...register("weight")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input type="number" step="0.01" {...register("weight")} className={inputClass} />
             </div>
             <div>
               <Label className={labelClass}>Dimensiones</Label>
-              <Input {...register("dimensions")} placeholder="30x20x10 cm" className="bg-white/[0.04] border-white/[0.08]" />
+              <Input {...register("dimensions")} placeholder="30x20x10 cm" className={inputClass} />
             </div>
             <div>
-              <Label className={labelClass}>Stock minimo</Label>
-              <Input type="number" {...register("minStock")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Label className={labelClass}>Stock mínimo</Label>
+              <Input type="number" {...register("minStock")} className={inputClass} />
             </div>
           </div>
           <div>
             <Label className={labelClass}>URL de imagen</Label>
-            <Input {...register("imageUrl")} placeholder="https://..." className="bg-white/[0.04] border-white/[0.08]" />
+            <Input {...register("imageUrl")} placeholder="https://..." className={inputClass} />
           </div>
           <div>
             <Label className={labelClass}>Notas</Label>
-            <Textarea {...register("notes")} placeholder="Notas adicionales..." rows={3} className="bg-white/[0.04] border-white/[0.08]" />
+            <Textarea {...register("notes")} placeholder="Notas adicionales..." rows={3} className={inputClass} />
           </div>
         </div>
 
-        {/* Actions */}
+        {/* Acciones */}
         <div className="flex items-center gap-3 justify-end">
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => router.push(`/products/${params.id}`)}
-            className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white/50 hover:text-white/70 hover:bg-white/10 transition-colors"
           >
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          </Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
             Guardar cambios
-          </button>
+          </Button>
         </div>
       </form>
     </div>
