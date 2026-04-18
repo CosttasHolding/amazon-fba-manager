@@ -44,7 +44,7 @@ export default function LoginPage() {
         alt=""
         className="fixed inset-0 w-screen h-screen object-cover object-center z-0"
       />
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1]" />
+      <div className="fixed inset-0 bg-black/20 z-[1]" />
 
       <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
         <img
