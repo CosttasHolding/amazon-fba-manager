@@ -510,7 +510,7 @@ export default function SettingsPage() {
             </div>
           </Section>
           <Section icon={BarChart3} title="Vista previa">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
                 {
                   label: "ROI objetivo",
