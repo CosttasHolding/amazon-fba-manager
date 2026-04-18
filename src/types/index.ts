@@ -86,12 +86,15 @@ export interface DashboardMetrics {
     avg_roi: number;
     total_potential_profit: number;
     avg_profit: number;
+    avg_margin: number;
+    total_inventory_value: number;
     low_stock_count: number;
     overstock_count: number;
     out_of_stock_count: number;
     revenue_last_30d: number;
     units_sold_last_30d: number;
 }
+
 // ============================================
 // Suppliers (Fase 2)
 // ============================================
