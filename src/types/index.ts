@@ -134,3 +134,38 @@ export interface ProductSupplier {
 export interface SupplierWithProducts extends Supplier {
   product_suppliers?: (ProductSupplier & { product?: Product })[];
 }
+
+// ============================================
+// Notifications (Fase 4.6)
+// ============================================
+
+export type NotificationType =
+  | 'out_of_stock'
+  | 'low_stock'
+  | 'overstock'
+  | 'low_margin'
+  | 'import_complete'
+  | 'import_error'
+  | 'system';
+
+export type NotificationPriority = 'critical' | 'warning' | 'info' | 'success';
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  priority: NotificationPriority;
+  title: string;
+  message: string;
+  product_id?: string;
+  product_name?: string;
+  product_sku?: string;
+  read: boolean;
+  persistent: boolean;
+  created_at: string;
+}
+
+export interface NotificationsResponse {
+  notifications: Notification[];
+  unread_count: number;
+  total_count: number;
+}

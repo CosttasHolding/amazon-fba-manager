@@ -1,10 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, Settings, User } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { GlobalSearch } from "@/components/global-search";
+import { NotificationBell } from "@/components/notification-bell";
 import { createClient } from "@/lib/supabase/client";
 
 interface TopHeaderProps {
@@ -57,6 +58,9 @@ export function TopHeader({ userEmail, userName }: TopHeaderProps) {
 
       {/* Right section */}
       <div className="flex items-center gap-3">
+        {/* Notifications */}
+        <NotificationBell />
+
         {/* Theme toggle */}
         <ThemeToggle compact />
 

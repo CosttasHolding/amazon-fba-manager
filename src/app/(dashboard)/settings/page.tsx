@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,6 +36,8 @@ import {
   BarChart3,
   BoxesIcon,
   Tags,
+  Bell,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -132,6 +135,7 @@ function Field({
 const inputClass = "bg-muted/50 border-border";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>("profile");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -270,7 +274,7 @@ export default function SettingsPage() {
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">
-            Cargando configuración…
+            Cargando configuración …
           </p>
         </div>
       </div>
@@ -342,7 +346,7 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     setProfile((p) => ({ ...p, country: e.target.value }))
                   }
-                  placeholder="Tu país"
+                  placeholder="Tu País_LC"
                 />
               </Field>
             </div>
@@ -549,7 +553,7 @@ export default function SettingsPage() {
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}
-              Guardar cálculos
+              Guardar Cálculos_LC
             </Button>
           </div>
         </div>
@@ -620,25 +624,58 @@ export default function SettingsPage() {
           </Section>
 
           <Section icon={Upload} title="Importar datos">
-            <div className="flex items-center justify-center py-10 border-2 border-dashed border-border rounded-xl bg-muted/20">
-              <div className="text-center">
-                <div className="mx-auto mb-4 h-12 w-12 rounded-xl bg-muted/50 border border-border flex items-center justify-center">
-                  <Upload className="h-5 w-5 text-muted-foreground/60" />
-                </div>
-                <p className="text-sm text-muted-foreground font-medium">
-                  Función de importación en desarrollo
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-foreground font-medium">
+                  Importación de productos desde CSV/Excel
                 </p>
-                <p className="text-xs text-muted-foreground/60 mt-1.5 max-w-xs mx-auto">
-                  Pronto podrás importar productos y proveedores desde archivos
-                  CSV
+                <p className="text-xs text-muted-foreground mt-1">
+                  Sube archivos .csv o .xlsx para importar productos de forma masiva
                 </p>
-                <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-                  <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-                  <span className="text-xs text-amber-400 font-medium">
-                    Próximamente
-                  </span>
+              </div>
+              <Button
+                onClick={() => router.push("/import")}
+                variant="outline"
+                className="gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Ir a importar
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </Section>
+
+          <Section icon={Bell} title="Notificaciones">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-foreground font-medium">
+                  Alertas de inventario en tiempo real
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Stock bajo, sin stock, sobrestock y margen bajo se detectan automáticamente
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  <span className="text-xs text-emerald-400 font-medium">Activo</span>
                 </div>
               </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
+              {[
+                { label: "Sin stock", color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20" },
+                { label: "Stock bajo", color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+                { label: "Sobrestock", color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+                { label: "Margen bajo", color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+              ].map((alert) => (
+                <div
+                  key={alert.label}
+                  className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium ${alert.bg} border ${alert.border} ${alert.color}`}
+                >
+                  {alert.label}
+                </div>
+              ))}
             </div>
           </Section>
 
