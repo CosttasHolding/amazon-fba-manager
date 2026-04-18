@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Bell, LogOut, Settings, User } from "lucide-react";
+import { LogOut, Settings, User } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { GlobalSearch } from "@/components/global-search";
 import { createClient } from "@/lib/supabase/client";
 
 interface TopHeaderProps {
@@ -13,7 +14,6 @@ interface TopHeaderProps {
 
 export function TopHeader({ userEmail, userName }: TopHeaderProps) {
   const router = useRouter();
-  const [searchValue, setSearchValue] = useState("");
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -24,7 +24,6 @@ export function TopHeader({ userEmail, userName }: TopHeaderProps) {
     return "U";
   };
 
-  // Cerrar dropdown al hacer click afuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -36,14 +35,6 @@ export function TopHeader({ userEmail, userName }: TopHeaderProps) {
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showUserMenu]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchValue.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchValue.trim())}`);
-      setSearchValue("");
-    }
-  };
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -61,17 +52,8 @@ export function TopHeader({ userEmail, userName }: TopHeaderProps) {
 
   return (
     <header className="hidden lg:flex sticky top-0 z-30 items-center justify-between h-14 px-8 bg-background/80 backdrop-blur-xl border-b border-border/50">
-      {/* Search */}
-      <form onSubmit={handleSearch} className="relative w-full max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input
-          type="text"
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-          placeholder="Buscar productos, proveedores..."
-          className="w-full h-9 pl-10 pr-4 rounded-xl bg-muted/50 border border-border text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all font-body"
-        />
-      </form>
+      {/* Global Search */}
+      <GlobalSearch />
 
       {/* Right section */}
       <div className="flex items-center gap-3">
@@ -99,10 +81,8 @@ export function TopHeader({ userEmail, userName }: TopHeaderProps) {
             </div>
           </button>
 
-          {/* Dropdown menu */}
           {showUserMenu && (
             <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border bg-card shadow-xl shadow-black/20 py-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-150">
-              {/* User info */}
               <div className="px-4 py-3 border-b border-border">
                 <p className="text-sm font-medium text-foreground truncate">
                   {userName || "Usuario"}
@@ -112,7 +92,6 @@ export function TopHeader({ userEmail, userName }: TopHeaderProps) {
                 </p>
               </div>
 
-              {/* Menu items */}
               <div className="py-1">
                 <button
                   onClick={() => {
@@ -136,7 +115,6 @@ export function TopHeader({ userEmail, userName }: TopHeaderProps) {
                 </button>
               </div>
 
-              {/* Logout */}
               <div className="border-t border-border pt-1">
                 <button
                   onClick={handleLogout}
