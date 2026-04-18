@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useMemo } from "react";
 import {
@@ -8,7 +8,6 @@ import {
   TrendingDown,
   Archive,
   RefreshCw,
-  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ProductWithInventory } from "@/types";
@@ -23,6 +22,7 @@ import {
 } from "@/components/ui/data-table-wrapper";
 import { ExportButton } from "@/components/ui/export-button";
 import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 const stockVariant = (status: string): "success" | "warning" | "danger" | "info" | "neutral" => {
   switch (status) {
@@ -161,6 +161,10 @@ export default function InventoryPage() {
   const outOfStockCount = inventory.filter((p) => p.stock_status === "out_of_stock").length;
   const overstockCount = inventory.filter((p) => p.stock_status === "overstock").length;
 
+  if (loading) {
+    return <PageSkeleton kpiCount={4} rowCount={6} showSearch />;
+  }
+
   return (
     <div className="space-y-6 animate-fade-up">
       <PageHeader
@@ -182,7 +186,7 @@ export default function InventoryPage() {
           onClick={fetchInventory}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/50 border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         >
-          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className="h-4 w-4" />
           Actualizar
         </button>
       </PageHeader>
@@ -240,16 +244,7 @@ export default function InventoryPage() {
         </button>
       </form>
 
-      {loading && (
-        <div className="flex items-center justify-center py-16">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="text-sm text-muted-foreground">Cargando inventario...</span>
-          </div>
-        </div>
-      )}
-
-      {!loading && filtered.length === 0 && (
+      {filtered.length === 0 && (
         <div className="rounded-2xl border border-border bg-card p-12 text-center">
           <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground/70 mb-1">
@@ -261,7 +256,7 @@ export default function InventoryPage() {
         </div>
       )}
 
-      {!loading && filtered.length > 0 && (
+      {filtered.length > 0 && (
         <DataTableWrapper
           title={`${filtered.length} producto${filtered.length !== 1 ? "s" : ""}`}
         >

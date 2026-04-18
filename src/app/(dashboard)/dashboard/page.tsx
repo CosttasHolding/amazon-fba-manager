@@ -21,6 +21,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { SalesChart } from "@/components/charts/sales-chart";
 import { CategoryChart } from "@/components/charts/category-chart";
 import { ProfitBarChart } from "@/components/charts/profit-bar-chart";
@@ -75,14 +76,7 @@ export default function DashboardPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Cargando métricas...</p>
-        </div>
-      </div>
-    );
+    return <PageSkeleton kpiCount={4} rowCount={6} showCharts showSearch={false} />;
   }
 
   if (!data?.metrics) {
@@ -360,33 +354,15 @@ export default function DashboardPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left text-xs font-medium text-muted-foreground p-4">
-                      #
-                    </th>
-                    <th className="text-left text-xs font-medium text-muted-foreground p-4">
-                      Producto
-                    </th>
-                    <th className="text-right text-xs font-medium text-muted-foreground p-4">
-                      Precio Venta
-                    </th>
-                    <th className="text-right text-xs font-medium text-muted-foreground p-4">
-                      Beneficio
-                    </th>
-                    <th className="text-right text-xs font-medium text-muted-foreground p-4">
-                      ROI
-                    </th>
-                    <th className="text-right text-xs font-medium text-muted-foreground p-4 hidden sm:table-cell">
-                      Stock
-                    </th>
-                    <th className="text-right text-xs font-medium text-muted-foreground p-4 hidden md:table-cell">
-                      Vel. Ventas
-                    </th>
-                    <th className="text-center text-xs font-medium text-muted-foreground p-4 hidden lg:table-cell">
-                      Estado
-                    </th>
-                    <th className="text-center text-xs font-medium text-muted-foreground p-4">
-                      Ver
-                    </th>
+                    <th className="text-left text-xs font-medium text-muted-foreground p-4">#</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground p-4">Producto</th>
+                    <th className="text-right text-xs font-medium text-muted-foreground p-4">Precio Venta</th>
+                    <th className="text-right text-xs font-medium text-muted-foreground p-4">Beneficio</th>
+                    <th className="text-right text-xs font-medium text-muted-foreground p-4">ROI</th>
+                    <th className="text-right text-xs font-medium text-muted-foreground p-4 hidden sm:table-cell">Stock</th>
+                    <th className="text-right text-xs font-medium text-muted-foreground p-4 hidden md:table-cell">Vel. Ventas</th>
+                    <th className="text-center text-xs font-medium text-muted-foreground p-4 hidden lg:table-cell">Estado</th>
+                    <th className="text-center text-xs font-medium text-muted-foreground p-4">Ver</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -395,17 +371,13 @@ export default function DashboardPage() {
                       key={product.id}
                       className="border-b border-border/50 hover:bg-muted/30 transition-colors"
                     >
-                      <td className="p-4 text-sm text-muted-foreground font-mono">
-                        {index + 1}
-                      </td>
+                      <td className="p-4 text-sm text-muted-foreground font-mono">{index + 1}</td>
                       <td className="p-4">
                         <div>
                           <p className="text-sm font-medium text-foreground truncate max-w-[200px] sm:max-w-[300px]">
                             {product.name}
                           </p>
-                          <p className="text-xs text-muted-foreground font-mono">
-                            {product.sku}
-                          </p>
+                          <p className="text-xs text-muted-foreground font-mono">{product.sku}</p>
                         </div>
                       </td>
                       <td className="p-4 text-right">
@@ -414,13 +386,7 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="p-4 text-right">
-                        <span
-                          className={`text-sm font-display font-semibold ${
-                            (product.net_profit || 0) >= 0
-                              ? "text-emerald-500"
-                              : "text-red-500"
-                          }`}
-                        >
+                        <span className={`text-sm font-display font-semibold ${(product.net_profit || 0) >= 0 ? "text-emerald-500" : "text-red-500"}`}>
                           {fmt(product.net_profit)}
                         </span>
                       </td>
@@ -433,28 +399,16 @@ export default function DashboardPage() {
                           ) : (
                             <ArrowDownRight className="w-3 h-3 text-red-500" />
                           )}
-                          <span
-                            className={`text-sm font-display font-semibold ${
-                              (product.roi || 0) >= 20
-                                ? "text-emerald-500"
-                                : (product.roi || 0) > 0
-                                  ? "text-amber-500"
-                                  : "text-red-500"
-                            }`}
-                          >
+                          <span className={`text-sm font-display font-semibold ${(product.roi || 0) >= 20 ? "text-emerald-500" : (product.roi || 0) > 0 ? "text-amber-500" : "text-red-500"}`}>
                             {fmtPct(product.roi)}
                           </span>
                         </div>
                       </td>
                       <td className="p-4 text-right hidden sm:table-cell">
-                        <span className="text-sm text-foreground">
-                          {product.stock_available ?? 0}
-                        </span>
+                        <span className="text-sm text-foreground">{product.stock_available ?? 0}</span>
                       </td>
                       <td className="p-4 text-right hidden md:table-cell">
-                        <span className="text-sm text-muted-foreground">
-                          {product.sales_velocity_30d ?? 0} uds/mes
-                        </span>
+                        <span className="text-sm text-muted-foreground">{product.sales_velocity_30d ?? 0} uds/mes</span>
                       </td>
                       <td className="p-4 text-center hidden lg:table-cell">
                         <StatusBadge status={product.status as any} />
@@ -484,71 +438,40 @@ export default function DashboardPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left text-xs font-medium text-muted-foreground p-4">
-                      Producto
-                    </th>
-                    <th className="text-center text-xs font-medium text-muted-foreground p-4">
-                      Tipo
-                    </th>
-                    <th className="text-right text-xs font-medium text-muted-foreground p-4">
-                      Stock Actual
-                    </th>
-                    <th className="text-right text-xs font-medium text-muted-foreground p-4 hidden sm:table-cell">
-                      Punto Reorden
-                    </th>
-                    <th className="text-center text-xs font-medium text-muted-foreground p-4">
-                      Acción
-                    </th>
+                    <th className="text-left text-xs font-medium text-muted-foreground p-4">Producto</th>
+                    <th className="text-center text-xs font-medium text-muted-foreground p-4">Tipo</th>
+                    <th className="text-right text-xs font-medium text-muted-foreground p-4">Stock Actual</th>
+                    <th className="text-right text-xs font-medium text-muted-foreground p-4 hidden sm:table-cell">Punto Reorden</th>
+                    <th className="text-center text-xs font-medium text-muted-foreground p-4">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
                   {alerts.map((alert) => (
-                    <tr
-                      key={alert.id}
-                      className="border-b border-border/50 hover:bg-muted/30 transition-colors"
-                    >
+                    <tr key={alert.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                       <td className="p-4">
                         <div>
-                          <p className="text-sm font-medium text-foreground truncate max-w-[200px] sm:max-w-[300px]">
-                            {alert.product_name}
-                          </p>
-                          <p className="text-xs text-muted-foreground font-mono">
-                            {alert.sku}
-                          </p>
+                          <p className="text-sm font-medium text-foreground truncate max-w-[200px] sm:max-w-[300px]">{alert.product_name}</p>
+                          <p className="text-xs text-muted-foreground font-mono">{alert.sku}</p>
                         </div>
                       </td>
                       <td className="p-4 text-center">
                         {alert.type === "out_of_stock" && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive">
-                            Sin Stock
-                          </span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive">Sin Stock</span>
                         )}
                         {alert.type === "low_stock" && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-500">
-                            Stock Bajo
-                          </span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-500">Stock Bajo</span>
                         )}
                         {alert.type === "overstock" && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-500">
-                            Sobrestock
-                          </span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-500">Sobrestock</span>
                         )}
                       </td>
                       <td className="p-4 text-right">
-                        <span
-                          className={`text-sm font-display font-semibold ${
-                            alert.current_stock === 0
-                              ? "text-destructive"
-                              : "text-foreground"
-                          }`}
-                        >
+                        <span className={`text-sm font-display font-semibold ${alert.current_stock === 0 ? "text-destructive" : "text-foreground"}`}>
                           {alert.current_stock ?? 0}
                         </span>
                       </td>
                       <td className="p-4 text-right hidden sm:table-cell">
-                        <span className="text-sm text-muted-foreground">
-                          {alert.threshold ?? "—"}
-                        </span>
+                        <span className="text-sm text-muted-foreground">{alert.threshold ?? "—"}</span>
                       </td>
                       <td className="p-4 text-center">
                         <Link
@@ -575,7 +498,7 @@ export default function DashboardPage() {
               No hay productos todavía
             </p>
             <p className="text-sm text-muted-foreground mb-6">
-              Agregá tu primer producto para ver métricasRICAS reales aquí
+              Agregá tu primer producto para ver métricas reales aquí
             </p>
             <Link
               href="/products"

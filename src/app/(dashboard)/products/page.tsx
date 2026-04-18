@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,7 @@ import { PaginationControl } from "@/components/ui/pagination-control";
 import { ProductFormModal } from "@/components/product-form-modal";
 import { ExportButton } from "@/components/ui/export-button";
 import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -212,6 +213,10 @@ export default function ProductsPage() {
       ? products.reduce((sum, p) => sum + (p.sale_price || 0), 0) / products.length
       : 0;
 
+  if (loading) {
+    return <PageSkeleton kpiCount={4} rowCount={8} showSearch />;
+  }
+
   return (
     <div>
       <PageHeader
@@ -293,151 +298,138 @@ export default function ProductsPage() {
         />
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-muted-foreground">Cargando productos...</p>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Mobile cards */}
-          <div className="lg:hidden space-y-3">
-            {filtered.length === 0 ? (
-              <p className="text-center py-12 text-muted-foreground">
-                {search || Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay productos"}
-              </p>
-            ) : (
-              paginated.map((product) => (
-                <div
-                  key={product.id}
-                  className="rounded-2xl border border-border bg-card p-4 cursor-pointer active:scale-[0.98] transition-all hover:border-border/80"
-                  onClick={() => router.push(`/products/${product.id}`)}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-medium text-sm text-foreground">{product.name}</p>
-                      <p className="text-xs text-muted-foreground font-display">{product.sku}</p>
-                    </div>
-                    <StatusBadge status={product.status} size="sm" />
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 mt-3">
-                    <div>
-                      <p className="font-display uppercase text-[10px] tracking-wider text-muted-foreground">Precio</p>
-                      <p className="text-sm font-medium text-foreground">{fmt(product.sale_price)}</p>
-                    </div>
-                    <div>
-                      <p className="font-display uppercase text-[10px] tracking-wider text-muted-foreground">Ganancia</p>
-                      <p className={`text-sm font-medium ${profitColor(product.net_profit)}`}>
-                        {fmt(product.net_profit)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-display uppercase text-[10px] tracking-wider text-muted-foreground">ROI</p>
-                      <p className={`text-sm font-medium ${roiColor(product.roi)}`}>
-                        {fmtPct(product.roi)}
-                      </p>
-                    </div>
-                  </div>
+      {/* Mobile cards */}
+      <div className="lg:hidden space-y-3">
+        {filtered.length === 0 ? (
+          <p className="text-center py-12 text-muted-foreground">
+            {search || Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay productos"}
+          </p>
+        ) : (
+          paginated.map((product) => (
+            <div
+              key={product.id}
+              className="rounded-2xl border border-border bg-card p-4 cursor-pointer active:scale-[0.98] transition-all hover:border-border/80"
+              onClick={() => router.push(`/products/${product.id}`)}
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <p className="font-medium text-sm text-foreground">{product.name}</p>
+                  <p className="text-xs text-muted-foreground font-display">{product.sku}</p>
                 </div>
-              ))
-            )}
-          </div>
-
-          {/* Desktop table */}
-          <div className="hidden lg:block">
-            <DataTableWrapper>
-              {filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-2">
-                  <p className="text-muted-foreground">
-                    {search || Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay productos aun"}
+                <StatusBadge status={product.status} size="sm" />
+              </div>
+              <div className="grid grid-cols-3 gap-3 mt-3">
+                <div>
+                  <p className="font-display uppercase text-[10px] tracking-wider text-muted-foreground">Precio</p>
+                  <p className="text-sm font-medium text-foreground">{fmt(product.sale_price)}</p>
+                </div>
+                <div>
+                  <p className="font-display uppercase text-[10px] tracking-wider text-muted-foreground">Ganancia</p>
+                  <p className={`text-sm font-medium ${profitColor(product.net_profit)}`}>
+                    {fmt(product.net_profit)}
                   </p>
-                  {!search && !Object.values(filterValues).some(Boolean) && (
-                    <button
-                      onClick={() => setShowNewModal(true)}
-                      className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground transition-all"
-                    >
-                      Crear primero
-                    </button>
-                  )}
                 </div>
-              ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className={tableHeaderClass}>Producto</th>
-                      <th className={tableHeaderClass}>Categoria</th>
-                      <th className={`${tableHeaderClass} text-right`}>Precio / Costo</th>
-                      <th className={`${tableHeaderClass} text-right`}>Ganancia</th>
-                      <th className={`${tableHeaderClass} text-right`}>ROI</th>
-                      <th className={`${tableHeaderClass} text-center`}>Stock</th>
-                      <th className={`${tableHeaderClass} text-center`}>Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginated.map((product) => (
-                      <tr
-                        key={product.id}
-                        className={`${tableRowClass} cursor-pointer`}
-                        onClick={() => router.push(`/products/${product.id}`)}
-                      >
-                        <td className={tableCellClass}>
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-muted/50 border border-border flex items-center justify-center flex-shrink-0">
-                              <Package className="w-4 h-4 text-muted-foreground" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-sm text-foreground">{product.name}</p>
-                              <p className="text-xs text-muted-foreground font-display">{product.sku}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className={`${tableCellClass} text-muted-foreground`}>
-                          {product.category || "\u2014"}
-                        </td>
-                        <td className={`${tableCellClass} text-right`}>
-                          <p className="text-sm font-medium text-foreground">{fmt(product.sale_price)}</p>
-                          <p className="text-xs text-muted-foreground">{fmt(product.total_cost)}</p>
-                        </td>
-                        <td className={`${tableCellClass} text-right`}>
-                          <span className={`font-medium ${profitColor(product.net_profit)}`}>
-                            {fmt(product.net_profit)}
-                          </span>
-                        </td>
-                        <td className={`${tableCellClass} text-right`}>
-                          <StatusBadge
-                            status={fmtPct(product.roi)}
-                            variant="info"
-                            size="sm"
-                          />
-                        </td>
-                        <td className={`${tableCellClass} text-center`}>
-                          <span className="font-display font-medium text-foreground">
-                            {product.stock_available ?? 0}
-                          </span>
-                        </td>
-                        <td className={`${tableCellClass} text-center`}>
-                          <StatusBadge status={product.status} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </DataTableWrapper>
-          </div>
+                <div>
+                  <p className="font-display uppercase text-[10px] tracking-wider text-muted-foreground">ROI</p>
+                  <p className={`text-sm font-medium ${roiColor(product.roi)}`}>
+                    {fmtPct(product.roi)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
 
-          {filtered.length > ITEMS_PER_PAGE && (
-            <PaginationControl
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={filtered.length}
-              itemsPerPage={ITEMS_PER_PAGE}
-              onPageChange={setCurrentPage}
-            />
+      {/* Desktop table */}
+      <div className="hidden lg:block">
+        <DataTableWrapper>
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-2">
+              <p className="text-muted-foreground">
+                {search || Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay productos aun"}
+              </p>
+              {!search && !Object.values(filterValues).some(Boolean) && (
+                <button
+                  onClick={() => setShowNewModal(true)}
+                  className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground transition-all"
+                >
+                  Crear primero
+                </button>
+              )}
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className={tableHeaderClass}>Producto</th>
+                  <th className={tableHeaderClass}>Categoria</th>
+                  <th className={`${tableHeaderClass} text-right`}>Precio / Costo</th>
+                  <th className={`${tableHeaderClass} text-right`}>Ganancia</th>
+                  <th className={`${tableHeaderClass} text-right`}>ROI</th>
+                  <th className={`${tableHeaderClass} text-center`}>Stock</th>
+                  <th className={`${tableHeaderClass} text-center`}>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.map((product) => (
+                  <tr
+                    key={product.id}
+                    className={`${tableRowClass} cursor-pointer`}
+                    onClick={() => router.push(`/products/${product.id}`)}
+                  >
+                    <td className={tableCellClass}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-muted/50 border border-border flex items-center justify-center flex-shrink-0">
+                          <Package className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm text-foreground">{product.name}</p>
+                          <p className="text-xs text-muted-foreground font-display">{product.sku}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className={`${tableCellClass} text-muted-foreground`}>
+                      {product.category || "\u2014"}
+                    </td>
+                    <td className={`${tableCellClass} text-right`}>
+                      <p className="text-sm font-medium text-foreground">{fmt(product.sale_price)}</p>
+                      <p className="text-xs text-muted-foreground">{fmt(product.total_cost)}</p>
+                    </td>
+                    <td className={`${tableCellClass} text-right`}>
+                      <span className={`font-medium ${profitColor(product.net_profit)}`}>
+                        {fmt(product.net_profit)}
+                      </span>
+                    </td>
+                    <td className={`${tableCellClass} text-right`}>
+                      <span className={`font-medium ${roiColor(product.roi)}`}>
+                        {fmtPct(product.roi)}
+                      </span>
+                    </td>
+                    <td className={`${tableCellClass} text-center`}>
+                      <span className="font-display font-medium text-foreground">
+                        {product.stock_available ?? 0}
+                      </span>
+                    </td>
+                    <td className={`${tableCellClass} text-center`}>
+                      <StatusBadge status={product.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
-        </>
+        </DataTableWrapper>
+      </div>
+
+      {filtered.length > ITEMS_PER_PAGE && (
+        <PaginationControl
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+        />
       )}
     </div>
   );
