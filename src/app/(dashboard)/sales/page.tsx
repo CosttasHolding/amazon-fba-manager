@@ -128,7 +128,7 @@ export default function SalesPage() {
                     <td className={`${tableCellClass} text-right text-foreground/70 tabular-nums`}>
                       {fmt((s.sale_price || 0) * (s.units_sold || 0))}
                     </td>
-                    <td className={`${tableCellClass} text-right text-red-500 tabular-nums`}>
+                    <td className={`${tableCellClass} text-right text-destructive tabular-nums`}>
                       {fmt(s.amazon_fees)}
                     </td>
                     <td className={`${tableCellClass} text-right font-semibold tabular-nums ${(s.profit || 0) >= 0 ? "text-emerald-500" : "text-red-500"
@@ -175,7 +175,7 @@ export default function SalesPage() {
                   </div>
                   <div>
                     <p className="text-[10px] text-muted-foreground">Fees</p>
-                    <p className="font-bold text-sm text-red-500 tabular-nums">{fmt(s.amazon_fees)}</p>
+                    <p className="font-bold text-sm text-destructive tabular-nums">{fmt(s.amazon_fees)}</p>
                   </div>
                 </div>
               </div>

@@ -141,7 +141,7 @@ export function TopHeader({ userEmail, userName }: TopHeaderProps) {
                 <button
                   onClick={handleLogout}
                   disabled={loggingOut}
-                  className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
                 >
                   <LogOut className="h-4 w-4" />
                   {loggingOut ? "Cerrando sesión..." : "Cerrar sesión"}

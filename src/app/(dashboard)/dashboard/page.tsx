@@ -128,7 +128,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Sin Stock</span>
-                <span className="font-display font-semibold text-red-500">
+                <span className="font-display font-semibold text-destructive">
                   {metrics?.out_of_stock_count || 0}
                 </span>
               </div>
