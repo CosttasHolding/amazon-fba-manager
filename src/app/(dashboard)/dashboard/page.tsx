@@ -14,11 +14,16 @@ import {
   ArrowDownRight,
   Minus,
   ExternalLink,
+  PieChart as PieChartIcon,
+  Activity,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { SalesChart } from "@/components/charts/sales-chart";
+import { CategoryChart } from "@/components/charts/category-chart";
+import { ProfitBarChart } from "@/components/charts/profit-bar-chart";
 import Link from "next/link";
 
 interface TopProduct {
@@ -42,10 +47,17 @@ interface StockAlert {
   threshold: number;
 }
 
+interface ChartData {
+  salesChartData: { date: string; revenue: number; units: number }[];
+  categoryChartData: { name: string; value: number; count: number }[];
+  profitChartData: { name: string; profit: number; roi: number; sku: string }[];
+}
+
 interface DashboardData {
   metrics: DashboardMetrics;
   topProducts: TopProduct[];
   alerts: StockAlert[];
+  charts: ChartData;
 }
 
 export default function DashboardPage() {
@@ -88,7 +100,7 @@ export default function DashboardPage() {
     );
   }
 
-  const { metrics, topProducts, alerts } = data;
+  const { metrics, topProducts, alerts, charts } = data;
 
   const alertCount =
     (metrics?.low_stock_count || 0) + (metrics?.out_of_stock_count || 0);
@@ -156,6 +168,35 @@ export default function DashboardPage() {
           trendValue={alertCount > 0 ? `${alertCount} alertas` : "Sin alertas"}
         />
       </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <div className="lg:col-span-2">
+          <DataTableWrapper title="Ventas últimos 30 días" icon={Activity}>
+            <div className="p-4">
+              <SalesChart data={charts?.salesChartData || []} />
+            </div>
+          </DataTableWrapper>
+        </div>
+        <div>
+          <DataTableWrapper title="Distribución por Categoría" icon={PieChartIcon}>
+            <div className="p-4">
+              <CategoryChart data={charts?.categoryChartData || []} />
+            </div>
+          </DataTableWrapper>
+        </div>
+      </div>
+
+      {/* Profit Bar Chart */}
+      {charts?.profitChartData && charts.profitChartData.length > 0 && (
+        <div className="mb-8">
+          <DataTableWrapper title="Top 10 Productos por Beneficio" icon={BarChart3}>
+            <div className="p-4">
+              <ProfitBarChart data={charts.profitChartData} />
+            </div>
+          </DataTableWrapper>
+        </div>
+      )}
 
       {/* Sales Performance + Inventory Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
@@ -314,7 +355,7 @@ export default function DashboardPage() {
       {/* Top Products Table */}
       {topProducts && topProducts.length > 0 && (
         <div className="mb-8">
-          <DataTableWrapper title="Top 10 Productos por Beneficio" icon={TrendingUp}>
+          <DataTableWrapper title="Detalle Top 10 Productos" icon={TrendingUp}>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -526,7 +567,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Empty state when no products */}
       {(metrics?.total_products || 0) === 0 && (
         <DataTableWrapper title="Comenzá a usar el Dashboard">
           <div className="p-8 text-center">
@@ -535,7 +575,7 @@ export default function DashboardPage() {
               No hay productos todavía
             </p>
             <p className="text-sm text-muted-foreground mb-6">
-              Agregá tu primer producto para ver métricas reales aquí
+              Agregá tu primer producto para ver métricasRICAS reales aquí
             </p>
             <Link
               href="/products"

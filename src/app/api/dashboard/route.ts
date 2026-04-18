@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(req: NextRequest) {
@@ -87,7 +87,93 @@ export async function GET(req: NextRequest) {
         threshold: p.reorder_point,
       }));
 
-    return NextResponse.json({ metrics, topProducts, alerts });
+    // ============================================
+    // Chart Data: Sales last 30 days (from sales table)
+    // ============================================
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { data: salesData } = await supabase
+      .from('sales')
+      .select('sale_date, revenue, units_sold')
+      .eq('user_id', user.id)
+      .gte('sale_date', thirtyDaysAgo.toISOString().split('T')[0])
+      .order('sale_date', { ascending: true });
+
+    // Group sales by date
+    const salesByDate: Record<string, { revenue: number; units: number }> = {};
+
+    // Fill all 30 days
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      salesByDate[key] = { revenue: 0, units: 0 };
+    }
+
+    // Aggregate real data
+    if (salesData) {
+      for (const sale of salesData) {
+        const key = sale.sale_date;
+        if (salesByDate[key]) {
+          salesByDate[key].revenue += sale.revenue || 0;
+          salesByDate[key].units += sale.units_sold || 0;
+        }
+      }
+    }
+
+    const salesChartData = Object.entries(salesByDate).map(([date, vals]) => ({
+      date: new Date(date + 'T12:00:00').toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'short',
+      }),
+      revenue: Math.round(vals.revenue * 100) / 100,
+      units: vals.units,
+    }));
+
+    // ============================================
+    // Chart Data: Category distribution
+    // ============================================
+    const categoryMap: Record<string, { profit: number; count: number }> = {};
+
+    for (const p of activeProducts) {
+      const cat = p.category || 'Sin categoría';
+      if (!categoryMap[cat]) {
+        categoryMap[cat] = { profit: 0, count: 0 };
+      }
+      categoryMap[cat].profit += p.net_profit || 0;
+      categoryMap[cat].count += 1;
+    }
+
+    const categoryChartData = Object.entries(categoryMap)
+      .map(([name, vals]) => ({
+        name,
+        value: Math.round(Math.abs(vals.profit) * 100) / 100,
+        count: vals.count,
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+
+    // ============================================
+    // Chart Data: Profit bar chart (top 10)
+    // ============================================
+    const profitChartData = topProducts.map((p) => ({
+      name: p.name,
+      profit: Math.round((p.net_profit || 0) * 100) / 100,
+      roi: Math.round((p.roi || 0) * 100) / 100,
+      sku: p.sku,
+    }));
+
+    return NextResponse.json({
+      metrics,
+      topProducts,
+      alerts,
+      charts: {
+        salesChartData,
+        categoryChartData,
+        profitChartData,
+      },
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
