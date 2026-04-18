@@ -20,12 +20,12 @@ export default function RegisterPage() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast.error("Las contrase\u00f1as no coinciden");
+      toast.error("Las contraseñas no coinciden");
       return;
     }
 
     if (password.length < 8) {
-      toast.error("La contrase\u00f1a debe tener al menos 8 caracteres");
+      toast.error("La contraseña debe tener al menos 8 caracteres");
       return;
     }
 
@@ -63,7 +63,7 @@ export default function RegisterPage() {
         <img
           src="/logo_solo.png"
           alt="CosttasHolding"
-          className="w-14 h-14 rounded-2xl object-contain mb-3"
+          className="w-16 h-12 rounded-2xl object-contain mb-3"
         />
         <h1 className="text-2xl font-bold text-white drop-shadow-lg">
           CosttasHolding Manager
@@ -117,11 +117,11 @@ export default function RegisterPage() {
           <div className="space-y-1.5">
             <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
               <Lock className="h-3.5 w-3.5 text-white/40" />
-              Contrase\u00f1a
+              Contraseña
             </label>
             <Input
               type="password"
-              placeholder="M\u00ednimo 8 caracteres"
+              placeholder="Mínimo 8 caracteres"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -132,11 +132,11 @@ export default function RegisterPage() {
           <div className="space-y-1.5">
             <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
               <Lock className="h-3.5 w-3.5 text-white/40" />
-              Confirmar contrase\u00f1a
+              Confirmar contraseña
             </label>
             <Input
               type="password"
-              placeholder="Repite la contrase\u00f1a"
+              placeholder="Repite la contraseña"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -160,12 +160,12 @@ export default function RegisterPage() {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-white/50">
-            {"\u00BF"}Ya tienes cuenta?{" "}
+            {"¿"}Ya tienes cuenta?{" "}
             <Link
               href="/login"
               className="text-primary hover:text-primary/80 font-medium transition-colors"
             >
-              Iniciar Sesi\u00f3n
+              Iniciar Sesión
             </Link>
           </p>
         </div>

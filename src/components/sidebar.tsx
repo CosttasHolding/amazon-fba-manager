@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -25,7 +25,7 @@ const navItems = [
 ];
 
 const bottomNavItems = [
-  { href: "/settings", icon: Settings, label: "Configuraci\u00f3n" },
+  { href: "/settings", icon: Settings, label: "Configuración" },
 ];
 
 interface SidebarProps {
@@ -57,7 +57,7 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
       router.push("/login");
       router.refresh();
     } catch (error) {
-      console.error("Error al cerrar sesi\u00f3n:", error);
+      console.error("Error al cerrar sesión:", error);
     } finally {
       setLoggingOut(false);
     }
@@ -71,7 +71,7 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
           <img
             src="/logo_solo.png"
             alt="CosttasHolding"
-            className="w-9 h-9 rounded-xl object-contain"
+            className="w-10 h-8 rounded-lg object-contain"
           />
           <div>
             <h1 className="text-sm font-bold text-foreground font-display tracking-tight leading-tight">
@@ -179,7 +179,7 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
         >
           <LogOut className="w-[18px] h-[18px]" />
           <span className="text-sm font-medium font-body">
-            {loggingOut ? "Cerrando..." : "Cerrar sesi\u00f3n"}
+            {loggingOut ? "Cerrando..." : "Cerrar sesión"}
           </span>
         </button>
       </div>
