@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Package, Mail, Lock, User, UserPlus, Loader2 } from "lucide-react";
+import { Mail, Lock, User, UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RegisterPage() {
@@ -20,12 +20,12 @@ export default function RegisterPage() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast.error("Las contraseñas no coinciden");
+      toast.error("Las contrase\u00f1as no coinciden");
       return;
     }
 
     if (password.length < 8) {
-      toast.error("La contraseña debe tener al menos 8 caracteres");
+      toast.error("La contrase\u00f1a debe tener al menos 8 caracteres");
       return;
     }
 
@@ -60,9 +60,11 @@ export default function RegisterPage() {
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1]" />
 
       <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
-        <div className="w-14 h-14 rounded-2xl bg-[#0a0e1a]/40 backdrop-blur-xl flex items-center justify-center mb-3 border border-white/[0.15]">
-          <Package className="w-7 h-7 text-primary" />
-        </div>
+        <img
+          src="/logo_solo.png"
+          alt="CosttasHolding"
+          className="w-14 h-14 rounded-2xl object-contain mb-3"
+        />
         <h1 className="text-2xl font-bold text-white drop-shadow-lg">
           CosttasHolding Manager
         </h1>
@@ -115,11 +117,11 @@ export default function RegisterPage() {
           <div className="space-y-1.5">
             <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
               <Lock className="h-3.5 w-3.5 text-white/40" />
-              Contraseña
+              Contrase\u00f1a
             </label>
             <Input
               type="password"
-              placeholder="Mínimo 8 caracteres"
+              placeholder="M\u00ednimo 8 caracteres"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -130,11 +132,11 @@ export default function RegisterPage() {
           <div className="space-y-1.5">
             <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
               <Lock className="h-3.5 w-3.5 text-white/40" />
-              Confirmar contraseña
+              Confirmar contrase\u00f1a
             </label>
             <Input
               type="password"
-              placeholder="Repite la contraseña"
+              placeholder="Repite la contrase\u00f1a"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -158,12 +160,12 @@ export default function RegisterPage() {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-white/50">
-            ¿Ya tienes cuenta?{" "}
+            {"\u00BF"}Ya tienes cuenta?{" "}
             <Link
               href="/login"
               className="text-primary hover:text-primary/80 font-medium transition-colors"
             >
-              Iniciar Sesión
+              Iniciar Sesi\u00f3n
             </Link>
           </p>
         </div>

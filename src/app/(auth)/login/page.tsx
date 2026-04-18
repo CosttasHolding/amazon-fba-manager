@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Package, Mail, Lock, LogIn, Loader2 } from "lucide-react";
+import { Mail, Lock, LogIn, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -32,7 +32,7 @@ export default function LoginPage() {
 
       window.location.href = "/dashboard";
     } catch {
-      setError("Error al iniciar sesión");
+      setError("Error al iniciar sesi\u00f3n");
       setLoading(false);
     }
   };
@@ -47,21 +47,23 @@ export default function LoginPage() {
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1]" />
 
       <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
-        <div className="w-14 h-14 rounded-2xl bg-[#0a0e1a]/40 backdrop-blur-xl flex items-center justify-center mb-3 border border-white/[0.15]">
-          <Package className="w-7 h-7 text-primary" />
-        </div>
+        <img
+          src="/logo_solo.png"
+          alt="CosttasHolding"
+          className="w-14 h-14 rounded-2xl object-contain mb-3"
+        />
         <h1 className="text-2xl font-bold text-white drop-shadow-lg">
           CosttasHolding Manager
         </h1>
         <p className="text-sm text-white/70 drop-shadow-md">
-          Gestión profesional de productos Amazon FBA
+          Gesti\u00f3n profesional de productos Amazon FBA
         </p>
       </div>
 
       <div className="relative z-10 w-full max-w-[400px] bg-[#0a0e1a]/30 backdrop-blur-2xl rounded-2xl border border-white/[0.12] p-7 shadow-2xl shadow-black/30 animate-fade-in">
         <div className="text-center mb-6">
           <h2 className="text-lg font-semibold text-white drop-shadow-md">
-            Iniciar Sesión
+            Iniciar Sesi\u00f3n
           </h2>
           <p className="text-sm text-white/60 mt-1">
             Ingresa tus credenciales para continuar
@@ -87,11 +89,11 @@ export default function LoginPage() {
           <div className="space-y-1.5">
             <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
               <Lock className="h-3.5 w-3.5 text-white/40" />
-              Contraseña
+              Contrase\u00f1a
             </label>
             <Input
               type="password"
-              placeholder="••••••••"
+              placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -121,7 +123,7 @@ export default function LoginPage() {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-white/50">
-            ¿No tienes cuenta?{" "}
+            {"\u00BF"}No tienes cuenta?{" "}
             <Link
               href="/register"
               className="text-primary hover:text-primary/80 font-medium transition-colors"

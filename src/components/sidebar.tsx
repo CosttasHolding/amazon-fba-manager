@@ -25,7 +25,7 @@ const navItems = [
 ];
 
 const bottomNavItems = [
-  { href: "/settings", icon: Settings, label: "Configuración" },
+  { href: "/settings", icon: Settings, label: "Configuraci\u00f3n" },
 ];
 
 interface SidebarProps {
@@ -57,7 +57,7 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
       router.push("/login");
       router.refresh();
     } catch (error) {
-      console.error("Error al cerrar sesión:", error);
+      console.error("Error al cerrar sesi\u00f3n:", error);
     } finally {
       setLoggingOut(false);
     }
@@ -68,9 +68,11 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
       {/* Logo */}
       <div className="px-5 pt-6 pb-5">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
-            <Package className="w-5 h-5 text-primary-foreground" />
-          </div>
+          <img
+            src="/logo_solo.png"
+            alt="CosttasHolding"
+            className="w-9 h-9 rounded-xl object-contain"
+          />
           <div>
             <h1 className="text-sm font-bold text-foreground font-display tracking-tight leading-tight">
               CosttasHolding
@@ -177,7 +179,7 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
         >
           <LogOut className="w-[18px] h-[18px]" />
           <span className="text-sm font-medium font-body">
-            {loggingOut ? "Cerrando..." : "Cerrar sesión"}
+            {loggingOut ? "Cerrando..." : "Cerrar sesi\u00f3n"}
           </span>
         </button>
       </div>
