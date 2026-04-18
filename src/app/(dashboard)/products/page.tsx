@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { DataTableWrapper, tableHeaderClass, tableRowClass, tableCellClass } from "@/components/ui/data-table-wrapper";
 import { PaginationControl } from "@/components/ui/pagination-control";
 import { ProductFormModal } from "@/components/product-form-modal";
+import { ExportButton } from "@/components/ui/export-button";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -206,6 +207,8 @@ export default function ProductsPage() {
           )}
         </div>
 
+        <ExportButton type="products" />
+
         <button
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200"
           onClick={() => setShowNewModal(true)}
@@ -326,7 +329,7 @@ export default function ProductsPage() {
               {filtered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-2">
                   <p className="text-muted-foreground">
-                    {search || activeFiltersCount > 0 ? "Sin resultados" : "No hay productos aún"}
+                    {search || activeFiltersCount > 0 ? "Sin resultados" : "No hay productos aaún"}
                   </p>
                   {!search && activeFiltersCount === 0 && (
                     <button

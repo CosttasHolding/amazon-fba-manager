@@ -21,6 +21,7 @@ import {
   tableCellClass,
   tableRowClass,
 } from "@/components/ui/data-table-wrapper";
+import { ExportButton } from "@/components/ui/export-button";
 
 const stockVariant = (status: string): "success" | "warning" | "danger" | "info" | "neutral" => {
   switch (status) {
@@ -77,6 +78,7 @@ export default function InventoryPage() {
         title="Inventario"
         subtitle="Control de stock de tus productos"
       >
+        <ExportButton type="inventory" />
         <button
           onClick={fetchInventory}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/50 border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
