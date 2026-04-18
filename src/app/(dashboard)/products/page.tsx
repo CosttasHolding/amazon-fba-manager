@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { fmt, fmtPct, roiColor, profitColor } from "@/lib/utils";
-import { Search, Plus, Filter, Package, TrendingUp, DollarSign, BarChart3, X } from "lucide-react";
+import { Search, Plus, Package, TrendingUp, DollarSign, BarChart3 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -12,6 +12,7 @@ import { DataTableWrapper, tableHeaderClass, tableRowClass, tableCellClass } fro
 import { PaginationControl } from "@/components/ui/pagination-control";
 import { ProductFormModal } from "@/components/product-form-modal";
 import { ExportButton } from "@/components/ui/export-button";
+import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -22,28 +23,59 @@ const STATUS_OPTIONS = [
   { value: "out_of_stock", label: "Sin stock" },
 ];
 
+const MARKETPLACE_OPTIONS = [
+  { value: "", label: "Todos" },
+  { value: "US", label: "US" },
+  { value: "MX", label: "MX" },
+  { value: "CA", label: "CA" },
+  { value: "UK", label: "UK" },
+  { value: "DE", label: "DE" },
+  { value: "FR", label: "FR" },
+  { value: "IT", label: "IT" },
+  { value: "ES", label: "ES" },
+];
+
+const SORT_OPTIONS = [
+  { value: "newest", label: "Mas recientes primero" },
+  { value: "oldest", label: "Mas antiguos primero" },
+  { value: "name_asc", label: "Nombre A-Z" },
+  { value: "name_desc", label: "Nombre Z-A" },
+  { value: "price_asc", label: "Precio: menor a mayor" },
+  { value: "price_desc", label: "Precio: mayor a menor" },
+  { value: "profit_asc", label: "Ganancia: menor a mayor" },
+  { value: "profit_desc", label: "Ganancia: mayor a menor" },
+  { value: "roi_asc", label: "ROI: menor a mayor" },
+  { value: "roi_desc", label: "ROI: mayor a menor" },
+  { value: "stock_asc", label: "Stock: menor a mayor" },
+  { value: "stock_desc", label: "Stock: mayor a menor" },
+];
+
 export default function ProductsPage() {
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
-  const [filterStatus, setFilterStatus] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
-  const [categories, setCategories] = useState<string[]>([]);
   const [showNewModal, setShowNewModal] = useState(false);
-  const filterRef = useRef<HTMLDivElement>(null);
+  const [sortValue, setSortValue] = useState("newest");
+
+  // Filter values
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+    status: "",
+    category: "",
+    marketplace: "",
+    priceMin: "",
+    priceMax: "",
+    roiMin: "",
+    roiMax: "",
+  });
 
   const fetchProducts = () => {
     setLoading(true);
     fetch("/api/products")
       .then((r) => r.json())
       .then((d) => {
-        const data = d.data || [];
-        setProducts(data);
-        const cats = [...new Set(data.map((p: any) => p.category).filter(Boolean))] as string[];
-        setCategories(cats);
+        setProducts(d.data || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -53,27 +85,115 @@ export default function ProductsPage() {
     fetchProducts();
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-        setShowFilters(false);
-      }
-    };
-    if (showFilters) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showFilters]);
+  // Extract unique categories from data
+  const categories = useMemo(() => {
+    const cats = [...new Set(products.map((p: any) => p.category).filter(Boolean))] as string[];
+    return cats.sort();
+  }, [products]);
 
-  const filtered = products.filter((p) => {
-    const matchSearch =
-      p.name?.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku?.toLowerCase().includes(search.toLowerCase()) ||
-      p.asin?.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = !filterStatus || p.status === filterStatus;
-    const matchCategory = !filterCategory || p.category === filterCategory;
-    return matchSearch && matchStatus && matchCategory;
-  });
+  // Build filter config dynamically (categories depend on data)
+  const filterConfig: FilterConfig[] = useMemo(() => [
+    {
+      type: "select",
+      key: "status",
+      label: "Estado",
+      options: STATUS_OPTIONS,
+      color: "primary",
+    },
+    {
+      type: "select",
+      key: "category",
+      label: "Categoria",
+      options: [
+        { value: "", label: "Todas las categorias" },
+        ...categories.map((c) => ({ value: c, label: c })),
+      ],
+      color: "purple",
+    },
+    {
+      type: "select",
+      key: "marketplace",
+      label: "Marketplace",
+      options: MARKETPLACE_OPTIONS,
+      color: "green",
+    },
+    {
+      type: "range",
+      key: "price",
+      label: "Precio de venta",
+      prefix: "$",
+      step: 0.01,
+    },
+    {
+      type: "range",
+      key: "roi",
+      label: "ROI",
+      suffix: "%",
+      step: 1,
+    },
+  ], [categories]);
+
+  const handleFilterChange = (key: string, value: any) => {
+    setFilterValues((prev) => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
+  };
+
+  const clearFilters = () => {
+    setFilterValues({
+      status: "",
+      category: "",
+      marketplace: "",
+      priceMin: "",
+      priceMax: "",
+      roiMin: "",
+      roiMax: "",
+    });
+    setCurrentPage(1);
+  };
+
+  // Filter + sort
+  const filtered = useMemo(() => {
+    let result = products.filter((p) => {
+      const matchSearch =
+        p.name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(search.toLowerCase()) ||
+        p.asin?.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = !filterValues.status || p.status === filterValues.status;
+      const matchCategory = !filterValues.category || p.category === filterValues.category;
+      const matchMarketplace = !filterValues.marketplace || p.marketplace === filterValues.marketplace;
+
+      const price = p.sale_price || 0;
+      const matchPriceMin = filterValues.priceMin === "" || price >= parseFloat(filterValues.priceMin);
+      const matchPriceMax = filterValues.priceMax === "" || price <= parseFloat(filterValues.priceMax);
+
+      const roi = p.roi || 0;
+      const matchRoiMin = filterValues.roiMin === "" || roi >= parseFloat(filterValues.roiMin);
+      const matchRoiMax = filterValues.roiMax === "" || roi <= parseFloat(filterValues.roiMax);
+
+      return matchSearch && matchStatus && matchCategory && matchMarketplace && matchPriceMin && matchPriceMax && matchRoiMin && matchRoiMax;
+    });
+
+    // Sort
+    result.sort((a, b) => {
+      switch (sortValue) {
+        case "newest": return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        case "oldest": return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+        case "name_asc": return (a.name || "").localeCompare(b.name || "");
+        case "name_desc": return (b.name || "").localeCompare(a.name || "");
+        case "price_asc": return (a.sale_price || 0) - (b.sale_price || 0);
+        case "price_desc": return (b.sale_price || 0) - (a.sale_price || 0);
+        case "profit_asc": return (a.net_profit || 0) - (b.net_profit || 0);
+        case "profit_desc": return (b.net_profit || 0) - (a.net_profit || 0);
+        case "roi_asc": return (a.roi || 0) - (b.roi || 0);
+        case "roi_desc": return (b.roi || 0) - (a.roi || 0);
+        case "stock_asc": return (a.stock_available || 0) - (b.stock_available || 0);
+        case "stock_desc": return (b.stock_available || 0) - (a.stock_available || 0);
+        default: return 0;
+      }
+    });
+
+    return result;
+  }, [products, search, filterValues, sortValue]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice(
@@ -92,120 +212,22 @@ export default function ProductsPage() {
       ? products.reduce((sum, p) => sum + (p.sale_price || 0), 0) / products.length
       : 0;
 
-  const activeFiltersCount = [filterStatus, filterCategory].filter(Boolean).length;
-
-  const clearFilters = () => {
-    setFilterStatus("");
-    setFilterCategory("");
-    setCurrentPage(1);
-  };
-
   return (
     <div>
       <PageHeader
         badge="INVENTARIO"
-        title="Catálogo de Productos"
+        title="Catalogo de Productos"
         subtitle={`${products.length} producto${products.length !== 1 ? "s" : ""} registrado${products.length !== 1 ? "s" : ""}`}
       >
-        <div className="relative" ref={filterRef}>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all duration-200 ${showFilters || activeFiltersCount > 0
-                ? "bg-primary/10 border-primary/20 text-primary"
-                : "bg-muted/50 border-border text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-          >
-            <Filter className="w-4 h-4" />
-            Filtros
-            {activeFiltersCount > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/20 text-[10px] font-bold text-primary">
-                {activeFiltersCount}
-              </span>
-            )}
-          </button>
-
-          {showFilters && (
-            <div className="absolute right-0 top-full mt-2 z-50 w-[420px] rounded-2xl border border-border bg-card shadow-2xl shadow-black/20 p-5 space-y-4 animate-in fade-in-0 zoom-in-95 duration-150">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">Filtros</h3>
-                </div>
-                <div className="flex items-center gap-2">
-                  {activeFiltersCount > 0 && (
-                    <button
-                      onClick={clearFilters}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 transition-all"
-                    >
-                      <X className="h-3 w-3" />
-                      Limpiar
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setShowFilters(false)}
-                    className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1.5 block">Estado</label>
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
-                    className="w-full rounded-xl bg-muted/50 border border-border text-foreground text-sm px-3 py-2.5 focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
-                  >
-                    {STATUS_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1.5 block">Categoría</label>
-                  <select
-                    value={filterCategory}
-                    onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}
-                    className="w-full rounded-xl bg-muted/50 border border-border text-foreground text-sm px-3 py-2.5 focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
-                  >
-                    <option value="">Todas las categorías</option>
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {activeFiltersCount > 0 && (
-                <div className="flex items-center gap-2 pt-2 border-t border-border">
-                  <span className="text-xs text-muted-foreground/60">Activos:</span>
-                  {filterStatus && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 text-xs text-primary">
-                      {STATUS_OPTIONS.find((o) => o.value === filterStatus)?.label}
-                      <button onClick={() => setFilterStatus("")} className="hover:text-foreground transition-colors">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  )}
-                  {filterCategory && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs text-purple-500">
-                      {filterCategory}
-                      <button onClick={() => setFilterCategory("")} className="hover:text-foreground transition-colors">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <FilterPanel
+          filters={filterConfig}
+          values={filterValues}
+          onChange={handleFilterChange}
+          onClear={clearFilters}
+          sortOptions={SORT_OPTIONS}
+          sortValue={sortValue}
+          onSortChange={setSortValue}
+        />
 
         <ExportButton type="products" />
 
@@ -284,7 +306,7 @@ export default function ProductsPage() {
           <div className="lg:hidden space-y-3">
             {filtered.length === 0 ? (
               <p className="text-center py-12 text-muted-foreground">
-                {search || activeFiltersCount > 0 ? "Sin resultados" : "No hay productos"}
+                {search || Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay productos"}
               </p>
             ) : (
               paginated.map((product) => (
@@ -329,9 +351,9 @@ export default function ProductsPage() {
               {filtered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-2">
                   <p className="text-muted-foreground">
-                    {search || activeFiltersCount > 0 ? "Sin resultados" : "No hay productos aaún"}
+                    {search || Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay productos aun"}
                   </p>
-                  {!search && activeFiltersCount === 0 && (
+                  {!search && !Object.values(filterValues).some(Boolean) && (
                     <button
                       onClick={() => setShowNewModal(true)}
                       className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground transition-all"
@@ -345,7 +367,7 @@ export default function ProductsPage() {
                   <thead>
                     <tr className="border-b border-border">
                       <th className={tableHeaderClass}>Producto</th>
-                      <th className={tableHeaderClass}>Categoría</th>
+                      <th className={tableHeaderClass}>Categoria</th>
                       <th className={`${tableHeaderClass} text-right`}>Precio / Costo</th>
                       <th className={`${tableHeaderClass} text-right`}>Ganancia</th>
                       <th className={`${tableHeaderClass} text-right`}>ROI</th>
@@ -372,7 +394,7 @@ export default function ProductsPage() {
                           </div>
                         </td>
                         <td className={`${tableCellClass} text-muted-foreground`}>
-                          {product.category || "—"}
+                          {product.category || "\u2014"}
                         </td>
                         <td className={`${tableCellClass} text-right`}>
                           <p className="text-sm font-medium text-foreground">{fmt(product.sale_price)}</p>

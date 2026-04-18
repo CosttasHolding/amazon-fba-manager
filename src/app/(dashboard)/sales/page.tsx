@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   DollarSign,
   TrendingUp,
@@ -17,10 +17,53 @@ import {
   tableCellClass,
   tableRowClass,
 } from "@/components/ui/data-table-wrapper";
+import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
+
+const SORT_OPTIONS = [
+  { value: "date_desc", label: "Fecha: mas reciente" },
+  { value: "date_asc", label: "Fecha: mas antigua" },
+  { value: "revenue_desc", label: "Revenue: mayor a menor" },
+  { value: "revenue_asc", label: "Revenue: menor a mayor" },
+  { value: "profit_desc", label: "Profit: mayor a menor" },
+  { value: "profit_asc", label: "Profit: menor a mayor" },
+  { value: "units_desc", label: "Unidades: mayor a menor" },
+  { value: "units_asc", label: "Unidades: menor a mayor" },
+];
+
+const FILTER_CONFIG: FilterConfig[] = [
+  {
+    type: "dateRange",
+    key: "date",
+    label: "Rango de fechas",
+  },
+  {
+    type: "range",
+    key: "revenue",
+    label: "Revenue",
+    prefix: "$",
+    step: 0.01,
+  },
+  {
+    type: "range",
+    key: "profit",
+    label: "Profit",
+    prefix: "$",
+    step: 0.01,
+  },
+];
 
 export default function SalesPage() {
   const [sales, setSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortValue, setSortValue] = useState("date_desc");
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+    dateFrom: "",
+    dateTo: "",
+    revenueMin: "",
+    revenueMax: "",
+    profitMin: "",
+    profitMax: "",
+  });
 
   useEffect(() => {
     fetch("/api/sales")
@@ -30,6 +73,57 @@ export default function SalesPage() {
         setLoading(false);
       });
   }, []);
+
+  const handleFilterChange = (key: string, value: any) => {
+    setFilterValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilterValues({
+      dateFrom: "",
+      dateTo: "",
+      revenueMin: "",
+      revenueMax: "",
+      profitMin: "",
+      profitMax: "",
+    });
+  };
+
+  // Filter + sort
+  const filtered = useMemo(() => {
+    let result = sales.filter((s) => {
+      const revenue = (s.sale_price || 0) * (s.units_sold || 0);
+      const profit = s.profit || 0;
+      const saleDate = s.sale_date || "";
+
+      const matchDateFrom = !filterValues.dateFrom || saleDate >= filterValues.dateFrom;
+      const matchDateTo = !filterValues.dateTo || saleDate <= filterValues.dateTo;
+      const matchRevenueMin = filterValues.revenueMin === "" || revenue >= parseFloat(filterValues.revenueMin);
+      const matchRevenueMax = filterValues.revenueMax === "" || revenue <= parseFloat(filterValues.revenueMax);
+      const matchProfitMin = filterValues.profitMin === "" || profit >= parseFloat(filterValues.profitMin);
+      const matchProfitMax = filterValues.profitMax === "" || profit <= parseFloat(filterValues.profitMax);
+
+      return matchDateFrom && matchDateTo && matchRevenueMin && matchRevenueMax && matchProfitMin && matchProfitMax;
+    });
+
+    result.sort((a, b) => {
+      const revA = (a.sale_price || 0) * (a.units_sold || 0);
+      const revB = (b.sale_price || 0) * (b.units_sold || 0);
+      switch (sortValue) {
+        case "date_desc": return new Date(b.sale_date || 0).getTime() - new Date(a.sale_date || 0).getTime();
+        case "date_asc": return new Date(a.sale_date || 0).getTime() - new Date(b.sale_date || 0).getTime();
+        case "revenue_desc": return revB - revA;
+        case "revenue_asc": return revA - revB;
+        case "profit_desc": return (b.profit || 0) - (a.profit || 0);
+        case "profit_asc": return (a.profit || 0) - (b.profit || 0);
+        case "units_desc": return (b.units_sold || 0) - (a.units_sold || 0);
+        case "units_asc": return (a.units_sold || 0) - (b.units_sold || 0);
+        default: return 0;
+      }
+    });
+
+    return result;
+  }, [sales, filterValues, sortValue]);
 
   const totalRevenue = sales.reduce((sum, s) => sum + (s.sale_price || 0) * (s.units_sold || 0), 0);
   const totalUnits = sales.reduce((sum, s) => sum + (s.units_sold || 0), 0);
@@ -53,7 +147,17 @@ export default function SalesPage() {
         badge="VENTAS"
         title="Ventas"
         subtitle="Historial de ventas de tus productos"
-      />
+      >
+        <FilterPanel
+          filters={FILTER_CONFIG}
+          values={filterValues}
+          onChange={handleFilterChange}
+          onClear={clearFilters}
+          sortOptions={SORT_OPTIONS}
+          sortValue={sortValue}
+          onSortChange={setSortValue}
+        />
+      </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
@@ -92,13 +196,13 @@ export default function SalesPage() {
         <div className="rounded-2xl border border-border bg-card p-12 text-center">
           <ShoppingCart className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground/70 mb-1">No hay ventas registradas</h3>
-          <p className="text-sm text-muted-foreground">Las ventas aparecerán aquí cuando se registren</p>
+          <p className="text-sm text-muted-foreground">Las ventas apareceran aqui cuando se registren</p>
         </div>
       )}
 
-      {sales.length > 0 && (
+      {filtered.length > 0 && (
         <DataTableWrapper
-          title={`${sales.length} venta${sales.length !== 1 ? "s" : ""}`}
+          title={`${filtered.length} venta${filtered.length !== 1 ? "s" : ""}`}
         >
           {/* Desktop */}
           <div className="hidden md:block overflow-x-auto">
@@ -114,7 +218,7 @@ export default function SalesPage() {
                 </tr>
               </thead>
               <tbody>
-                {sales.map((s) => (
+                {filtered.map((s) => (
                   <tr key={s.id} className={tableRowClass}>
                     <td className={`${tableCellClass} text-muted-foreground`}>
                       {new Date(s.sale_date).toLocaleDateString("es-ES")}
@@ -131,8 +235,9 @@ export default function SalesPage() {
                     <td className={`${tableCellClass} text-right text-destructive tabular-nums`}>
                       {fmt(s.amazon_fees)}
                     </td>
-                    <td className={`${tableCellClass} text-right font-semibold tabular-nums ${(s.profit || 0) >= 0 ? "text-emerald-500" : "text-red-500"
-                      }`}>
+                    <td className={`${tableCellClass} text-right font-semibold tabular-nums ${
+                      (s.profit || 0) >= 0 ? "text-emerald-500" : "text-red-500"
+                    }`}>
                       {fmt(s.profit)}
                     </td>
                   </tr>
@@ -143,7 +248,7 @@ export default function SalesPage() {
 
           {/* Mobile */}
           <div className="md:hidden space-y-3 p-4">
-            {sales.map((s) => (
+            {filtered.map((s) => (
               <div
                 key={s.id}
                 className="rounded-xl border border-border bg-card p-4"
@@ -157,8 +262,9 @@ export default function SalesPage() {
                       {new Date(s.sale_date).toLocaleDateString("es-ES")}
                     </p>
                   </div>
-                  <p className={`font-bold text-sm tabular-nums ${(s.profit || 0) >= 0 ? "text-emerald-500" : "text-red-500"
-                    }`}>
+                  <p className={`font-bold text-sm tabular-nums ${
+                    (s.profit || 0) >= 0 ? "text-emerald-500" : "text-red-500"
+                  }`}>
                     {fmt(s.profit)}
                   </p>
                 </div>
@@ -182,6 +288,14 @@ export default function SalesPage() {
             ))}
           </div>
         </DataTableWrapper>
+      )}
+
+      {sales.length > 0 && filtered.length === 0 && (
+        <div className="rounded-2xl border border-border bg-card p-12 text-center">
+          <ShoppingCart className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground/70 mb-1">Sin resultados</h3>
+          <p className="text-sm text-muted-foreground">Intenta con otros filtros</p>
+        </div>
       )}
     </div>
   );

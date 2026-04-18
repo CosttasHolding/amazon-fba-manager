@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Package,
   Search,
@@ -22,6 +22,7 @@ import {
   tableRowClass,
 } from "@/components/ui/data-table-wrapper";
 import { ExportButton } from "@/components/ui/export-button";
+import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
 
 const stockVariant = (status: string): "success" | "warning" | "danger" | "info" | "neutral" => {
   switch (status) {
@@ -34,10 +35,49 @@ const stockVariant = (status: string): "success" | "warning" | "danger" | "info"
 
 const stockLabel = (status: string) => (status || "normal").replace("_", " ");
 
+const STOCK_STATUS_OPTIONS = [
+  { value: "", label: "Todos los estados" },
+  { value: "normal", label: "Normal" },
+  { value: "low_stock", label: "Stock Bajo" },
+  { value: "out_of_stock", label: "Sin Stock" },
+  { value: "overstock", label: "Sobrestock" },
+];
+
+const SORT_OPTIONS = [
+  { value: "name_asc", label: "Nombre A-Z" },
+  { value: "name_desc", label: "Nombre Z-A" },
+  { value: "stock_asc", label: "Stock: menor a mayor" },
+  { value: "stock_desc", label: "Stock: mayor a menor" },
+  { value: "available_asc", label: "Disponible: menor a mayor" },
+  { value: "available_desc", label: "Disponible: mayor a menor" },
+];
+
+const FILTER_CONFIG: FilterConfig[] = [
+  {
+    type: "select",
+    key: "stockStatus",
+    label: "Estado de stock",
+    options: STOCK_STATUS_OPTIONS,
+    color: "amber",
+  },
+  {
+    type: "range",
+    key: "available",
+    label: "Unidades disponibles",
+    step: 1,
+  },
+];
+
 export default function InventoryPage() {
   const [inventory, setInventory] = useState<ProductWithInventory[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [sortValue, setSortValue] = useState("name_asc");
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+    stockStatus: "",
+    availableMin: "",
+    availableMax: "",
+  });
 
   const fetchInventory = async () => {
     setLoading(true);
@@ -63,6 +103,56 @@ export default function InventoryPage() {
     fetchInventory();
   };
 
+  const handleFilterChange = (key: string, value: any) => {
+    setFilterValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilterValues({
+      stockStatus: "",
+      availableMin: "",
+      availableMax: "",
+    });
+  };
+
+  // Filter + sort
+  const filtered = useMemo(() => {
+    let result = inventory.filter((p) => {
+      const matchSearch =
+        !search ||
+        p.name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(search.toLowerCase());
+
+      const matchStockStatus =
+        !filterValues.stockStatus ||
+        (p.stock_status || "normal") === filterValues.stockStatus;
+
+      const available = p.stock_available || 0;
+      const matchAvailableMin =
+        filterValues.availableMin === "" || available >= parseFloat(filterValues.availableMin);
+      const matchAvailableMax =
+        filterValues.availableMax === "" || available <= parseFloat(filterValues.availableMax);
+
+      return matchSearch && matchStockStatus && matchAvailableMin && matchAvailableMax;
+    });
+
+    result.sort((a, b) => {
+      const totalA = (a.stock_available || 0) + (a.stock_inbound || 0) + (a.stock_warehouse || 0);
+      const totalB = (b.stock_available || 0) + (b.stock_inbound || 0) + (b.stock_warehouse || 0);
+      switch (sortValue) {
+        case "name_asc": return (a.name || "").localeCompare(b.name || "");
+        case "name_desc": return (b.name || "").localeCompare(a.name || "");
+        case "stock_asc": return totalA - totalB;
+        case "stock_desc": return totalB - totalA;
+        case "available_asc": return (a.stock_available || 0) - (b.stock_available || 0);
+        case "available_desc": return (b.stock_available || 0) - (a.stock_available || 0);
+        default: return 0;
+      }
+    });
+
+    return result;
+  }, [inventory, search, filterValues, sortValue]);
+
   const totalUnits = inventory.reduce(
     (sum, p) => sum + (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0),
     0
@@ -78,6 +168,15 @@ export default function InventoryPage() {
         title="Inventario"
         subtitle="Control de stock de tus productos"
       >
+        <FilterPanel
+          filters={FILTER_CONFIG}
+          values={filterValues}
+          onChange={handleFilterChange}
+          onClear={clearFilters}
+          sortOptions={SORT_OPTIONS}
+          sortValue={sortValue}
+          onSortChange={setSortValue}
+        />
         <ExportButton type="inventory" />
         <button
           onClick={fetchInventory}
@@ -103,7 +202,7 @@ export default function InventoryPage() {
           accentColor="amber"
           animationDelay={75}
           trend={lowStockCount > 0 ? "down" : "neutral"}
-          trendValue={lowStockCount > 0 ? "Requiere atención" : "OK"}
+          trendValue={lowStockCount > 0 ? "Requiere atencion" : "OK"}
         />
         <KpiCard
           label="Sin Stock"
@@ -112,7 +211,7 @@ export default function InventoryPage() {
           accentColor="red"
           animationDelay={150}
           trend={outOfStockCount > 0 ? "down" : "neutral"}
-          trendValue={outOfStockCount > 0 ? "Crítico" : "OK"}
+          trendValue={outOfStockCount > 0 ? "Critico" : "OK"}
         />
         <KpiCard
           label="Exceso Stock"
@@ -150,17 +249,21 @@ export default function InventoryPage() {
         </div>
       )}
 
-      {!loading && inventory.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <div className="rounded-2xl border border-border bg-card p-12 text-center">
           <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground/70 mb-1">No hay datos de inventario</h3>
-          <p className="text-sm text-muted-foreground">Agrega productos para ver su stock aquí</p>
+          <h3 className="text-lg font-semibold text-foreground/70 mb-1">
+            {Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay datos de inventario"}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {Object.values(filterValues).some(Boolean) ? "Intenta con otros filtros" : "Agrega productos para ver su stock aqui"}
+          </p>
         </div>
       )}
 
-      {!loading && inventory.length > 0 && (
+      {!loading && filtered.length > 0 && (
         <DataTableWrapper
-          title={`${inventory.length} producto${inventory.length !== 1 ? "s" : ""}`}
+          title={`${filtered.length} producto${filtered.length !== 1 ? "s" : ""}`}
         >
           {/* Desktop */}
           <div className="hidden md:block overflow-x-auto">
@@ -170,14 +273,14 @@ export default function InventoryPage() {
                   <th className={tableHeaderClass}>SKU</th>
                   <th className={tableHeaderClass}>Producto</th>
                   <th className={`${tableHeaderClass} text-center`}>Disponible</th>
-                  <th className={`${tableHeaderClass} text-center`}>En Tránsito</th>
+                  <th className={`${tableHeaderClass} text-center`}>En Transito</th>
                   <th className={`${tableHeaderClass} text-center`}>Warehouse</th>
                   <th className={`${tableHeaderClass} text-center`}>Total</th>
                   <th className={`${tableHeaderClass} text-center`}>Estado</th>
                 </tr>
               </thead>
               <tbody>
-                {inventory.map((p) => {
+                {filtered.map((p) => {
                   const total = (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0);
                   return (
                     <tr key={p.id} className={tableRowClass}>
@@ -214,7 +317,7 @@ export default function InventoryPage() {
 
           {/* Mobile */}
           <div className="md:hidden space-y-3 p-4">
-            {inventory.map((p) => {
+            {filtered.map((p) => {
               const total = (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0);
               return (
                 <div
@@ -237,7 +340,7 @@ export default function InventoryPage() {
                       <p className="font-bold text-sm text-foreground/70 tabular-nums">{p.stock_available || 0}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Tránsito</p>
+                      <p className="text-[10px] text-muted-foreground">Transito</p>
                       <p className="font-bold text-sm text-foreground/70 tabular-nums">{p.stock_inbound || 0}</p>
                     </div>
                     <div>
