@@ -122,8 +122,8 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
               <Tag className="h-3 w-3" />
               Información básica
             </div>
-            <div className="grid grid-cols-4 gap-3">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="sm:col-span-2">
                 <Label className={labelClass}>Nombre *</Label>
                 <Input {...form.register("name")} placeholder="Nombre del producto" className={inputClass} />
                 {form.formState.errors.name && (
@@ -202,7 +202,7 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
               <DollarSign className="h-3 w-3" />
               Costos
             </div>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
                 <Label className={labelClass}>Costo unitario *</Label>
                 <Input
@@ -252,7 +252,7 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
               <DollarSign className="h-3 w-3" />
               Precio de venta y tarifas Amazon
             </div>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               <div>
                 <Label className={labelClass}>Precio venta *</Label>
                 <Input

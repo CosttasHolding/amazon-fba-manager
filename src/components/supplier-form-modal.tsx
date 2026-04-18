@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -106,8 +106,8 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
               <Factory className="h-3 w-3" />
               Información del proveedor
             </div>
-            <div className="grid grid-cols-4 gap-3">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="sm:col-span-2">
                 <Label className={labelClass}>Nombre *</Label>
                 <Input {...form.register("name")} placeholder="Nombre del proveedor" className={inputClass} />
                 {form.formState.errors.name && (
@@ -141,7 +141,7 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
                   </SelectContent>
                 </Select>
               </div>
-              <div className="col-span-3">
+              <div className="sm:col-span-2 lg:col-span-3">
                 <Label className={labelClass}>URL Alibaba / 1688</Label>
                 <Input {...form.register("alibaba_url")} placeholder="https://www.alibaba.com/..." className={inputClass} />
                 {form.formState.errors.alibaba_url && (
@@ -171,7 +171,7 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
               <Mail className="h-3 w-3" />
               Contacto
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <Label className={labelClass}>Nombre contacto</Label>
                 <Input {...form.register("contact_name")} placeholder="John Doe" className={inputClass} />
@@ -196,7 +196,7 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
               <Package className="h-3 w-3" />
               Condiciones comerciales
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <Label className={labelClass}>Términos de pago</Label>
                 <Input {...form.register("payment_terms")} placeholder="30/70, T/T..." className={inputClass} />
