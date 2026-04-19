@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { supplierSchema, SupplierFormData } from "@/validations/supplier";
 import { Supplier } from "@/types";
 import { PageHeader } from "@/components/ui/page-header";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const COUNTRIES = [
   "China",
@@ -41,11 +42,29 @@ const labelClass = "text-sm text-muted-foreground";
 const errorClass = "text-xs text-destructive mt-1";
 const inputClass = "bg-muted/50 border-border";
 
+function EditSkeleton() {
+  return (
+    <div className="space-y-6 animate-fade-up">
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-48 rounded" />
+        <Skeleton className="h-5 w-28 rounded-full" />
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-44" />
+      </div>
+      <Skeleton className="h-72 w-full rounded-2xl" />
+      <Skeleton className="h-40 w-full rounded-2xl" />
+      <Skeleton className="h-40 w-full rounded-2xl" />
+      <Skeleton className="h-32 w-full rounded-2xl" />
+    </div>
+  );
+}
+
 export default function EditSupplierPage() {
   const params = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [supplierName, setSupplierName] = useState("");
 
   const {
     register,
@@ -67,6 +86,7 @@ export default function EditSupplierPage() {
       const res = await fetch(`/api/suppliers/${params.id}`);
       if (res.ok) {
         const data: Supplier = await res.json();
+        setSupplierName(data.name || "Proveedor");
         reset({
           name: data.name,
           alibaba_url: data.alibaba_url || "",
@@ -119,26 +139,18 @@ export default function EditSupplierPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">
-            Cargando proveedor...
-          </span>
-        </div>
-      </div>
-    );
+    return <EditSkeleton />;
   }
 
   return (
     <div className="space-y-6 animate-fade-up">
       <PageHeader
         badge="EDITAR PROVEEDOR"
-        title="Editar Proveedor"
+        title={supplierName}
         subtitle="Modifica los datos del proveedor"
         breadcrumbs={[
           { label: "Proveedores", href: "/suppliers" },
+          { label: supplierName, href: `/suppliers/${params.id}` },
           { label: "Editar" },
         ]}
       />

@@ -44,9 +44,7 @@ function CustomTooltip({ active, payload, label }: any) {
           <span className="font-display font-semibold text-foreground">
             {entry.name === "units"
               ? entry.value
-              : `
-$$
-{Number(entry.value).toLocaleString("en-US", {
+              : `$${Number(entry.value).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}`}
@@ -65,6 +63,11 @@ export function RevenueTrendChart({ data }: RevenueTrendChartProps) {
       </div>
     );
   }
+
+  const formatYAxis = (v: number) => {
+    if (v >= 1000) return `$${(v / 1000).toFixed(0)}k`;
+    return `$v`;
+  };
 
   return (
     <div className="w-full h-[280px]">
@@ -98,9 +101,7 @@ export function RevenueTrendChart({ data }: RevenueTrendChartProps) {
             tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(v) => `
-$$
-{v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
+            tickFormatter={formatYAxis}
           />
           <Tooltip content={<CustomTooltip />} />
           <Area

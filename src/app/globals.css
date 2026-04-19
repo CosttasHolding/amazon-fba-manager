@@ -1,10 +1,10 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* ===== LIGHT THEME — Beige/Cream cálido y NOTORIO ===== */
+    /* ===== LIGHT THEME ===== */
     --background: 36 33% 89%;
     --foreground: 25 15% 12%;
     --card: 38 28% 96%;
@@ -92,7 +92,6 @@
     opacity: 0;
     transform: translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -103,9 +102,9 @@
   from {
     opacity: 0;
   }
-
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -113,7 +112,6 @@
   0% {
     background-position: -200% 0;
   }
-
   100% {
     background-position: 200% 0;
   }
@@ -124,7 +122,6 @@
   100% {
     opacity: 1;
   }
-
   50% {
     opacity: 0.7;
   }
@@ -134,7 +131,6 @@
   from {
     width: 0%;
   }
-
   to {
     width: var(--progress-width, 100%);
   }
@@ -145,7 +141,6 @@
     opacity: 0;
     transform: translateX(-8px);
   }
-
   to {
     opacity: 1;
     transform: translateX(0);
@@ -157,7 +152,50 @@
     opacity: 0;
     transform: translateY(4px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
+@keyframes staggerFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
   to {
     opacity: 1;
     transform: translateY(0);
@@ -177,6 +215,18 @@
 
   .animate-slide-in-left {
     animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   .animate-count-up {
@@ -200,6 +250,44 @@
     animation: progressFill 1s ease-out both;
   }
 
+  /* Stagger fade-up: smoother cascading animation */
+  .animate-stagger-fade-up {
+    animation: staggerFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .stagger-1 {
+    animation-delay: 50ms;
+  }
+
+  .stagger-2 {
+    animation-delay: 100ms;
+  }
+
+  .stagger-3 {
+    animation-delay: 150ms;
+  }
+
+  .stagger-4 {
+    animation-delay: 200ms;
+  }
+
+  .stagger-5 {
+    animation-delay: 250ms;
+  }
+
+  .stagger-6 {
+    animation-delay: 300ms;
+  }
+
+  .stagger-7 {
+    animation-delay: 350ms;
+  }
+
+  .stagger-8 {
+    animation-delay: 400ms;
+  }
+
+  /* Legacy animation delays (keep for existing KPI cards) */
   .animation-delay-75 {
     animation-delay: 75ms;
   }
@@ -301,7 +389,7 @@
 [role="listbox"],
 [data-radix-select-viewport],
 [data-radix-select-content],
-[data-radix-popper-content-wrapper]>div {
+[data-radix-popper-content-wrapper] > div {
   background-color: hsl(var(--popover)) !important;
   border: 1px solid hsl(var(--border)) !important;
   border-radius: 0.5rem;

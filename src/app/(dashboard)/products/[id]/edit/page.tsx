@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -19,6 +19,7 @@ import {
 import { Save, Loader2, Package, DollarSign, Info, Users } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const CATEGORIES = [
   "Electronics", "Toys", "Home", "Kitchen", "Health", "Beauty", "Sports", "Books", "Other",
@@ -73,11 +74,29 @@ const labelClass = "text-sm text-muted-foreground";
 const errorClass = "text-xs text-destructive mt-1";
 const inputClass = "bg-muted/50 border-border";
 
+function EditSkeleton() {
+  return (
+    <div className="space-y-6 animate-fade-up">
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-48 rounded" />
+        <Skeleton className="h-5 w-24 rounded-full" />
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-44" />
+      </div>
+      <Skeleton className="h-72 w-full rounded-2xl" />
+      <Skeleton className="h-48 w-full rounded-2xl" />
+      <Skeleton className="h-40 w-full rounded-2xl" />
+      <Skeleton className="h-48 w-full rounded-2xl" />
+    </div>
+  );
+}
+
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [productName, setProductName] = useState("");
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [originalSupplier, setOriginalSupplier] = useState("");
@@ -111,6 +130,7 @@ export default function EditProductPage() {
       const res = await fetch(`/api/products/${params.id}`);
       if (!res.ok) throw new Error("Error");
       const d = await res.json();
+      setProductName(d.name || "Producto");
       reset({
         name: d.name || "",
         asin: d.asin || "",
@@ -218,24 +238,18 @@ export default function EditProductPage() {
   const category = watch("category");
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">Cargando producto...</span>
-        </div>
-      </div>
-    );
+    return <EditSkeleton />;
   }
 
   return (
     <div className="space-y-6 animate-fade-up">
       <PageHeader
         badge="EDITAR PRODUCTO"
-        title="Editar Producto"
+        title={productName}
         subtitle="Modifica los datos del producto"
         breadcrumbs={[
           { label: "Productos", href: "/products" },
+          { label: productName, href: `/products/${params.id}` },
           { label: "Editar" },
         ]}
       />

@@ -1,11 +1,6 @@
 import React from "react";
-import Link from "next/link";
+import { Breadcrumbs, BreadcrumbItem } from "@/components/ui/breadcrumbs";
 import { cn } from "@/lib/utils";
-
-interface BreadcrumbItem {
-  label: string;
-  href?: string;
-}
 
 interface PageHeaderProps {
   badge?: string;
@@ -25,29 +20,13 @@ export function PageHeader({
   return (
     <div className="mb-8">
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-3">
-          {breadcrumbs.map((crumb, index) => (
-            <React.Fragment key={index}>
-              {index > 0 && <span className="text-muted-foreground/50">›</span>}
-              {crumb.href ? (
-                <Link
-                  href={crumb.href}
-                  className="hover:text-cyan-400 transition-colors"
-                >
-                  {crumb.label}
-                </Link>
-              ) : (
-                <span className="text-foreground/70">{crumb.label}</span>
-              )}
-            </React.Fragment>
-          ))}
-        </nav>
+        <Breadcrumbs items={breadcrumbs} className="mb-3" />
       )}
 
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
           {badge && (
-            <p className="font-display uppercase text-[11px] tracking-[0.2em] text-cyan-400 mb-1">
+            <p className="font-display uppercase text-[11px] tracking-[0.2em] text-primary mb-1">
               {badge}
             </p>
           )}

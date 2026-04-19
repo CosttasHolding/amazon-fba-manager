@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
 import {
   LayoutDashboard,
   Package,
@@ -10,6 +11,7 @@ import {
   TrendingUp,
   Calculator,
   Settings,
+  Bell,
 } from "lucide-react";
 
 const navItems = [
@@ -24,6 +26,29 @@ const navItems = [
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const [notifCount, setNotifCount] = useState(0);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await fetch("/api/notifications");
+      if (res.ok) {
+        const data = await res.json();
+        const total =
+          (data.notifications?.critical?.length || 0) +
+          (data.notifications?.warning?.length || 0) +
+          (data.notifications?.info?.length || 0);
+        setNotifCount(total);
+      }
+    } catch {
+      // silent fail
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -35,6 +60,8 @@ export function MobileBottomNav() {
       <div className="flex justify-around">
         {navItems.map((item) => {
           const active = isActive(item.href);
+          const showBadge = item.href === "/inventory" && notifCount > 0;
+
           return (
             <Link
               key={item.href}
@@ -43,16 +70,31 @@ export function MobileBottomNav() {
                 relative flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-xl
                 transition-all duration-200 min-w-0 flex-1
                 ${active
-                  ? "text-primary"
+                  ? "text-primary bg-primary/8"
                   : "text-muted-foreground hover:text-foreground"
                 }
               `}
             >
               {active && (
-                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-[2px] rounded-full bg-primary" />
+                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-6 h-[2.5px] rounded-full bg-primary animate-scale-in" />
               )}
-              <item.icon className={`w-4 h-4 transition-colors ${active ? "text-primary" : ""}`} />
-              <span className={`text-[9px] font-medium truncate ${active ? "text-primary" : ""}`}>
+              <div className="relative">
+                <item.icon
+                  className={`w-4 h-4 transition-all duration-200 ${
+                    active ? "text-primary scale-110" : ""
+                  }`}
+                />
+                {showBadge && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-red-500 text-white text-[8px] font-bold leading-none px-0.5 animate-scale-in">
+                    {notifCount > 99 ? "99+" : notifCount}
+                  </span>
+                )}
+              </div>
+              <span
+                className={`text-[9px] font-medium truncate transition-all duration-200 ${
+                  active ? "text-primary font-semibold" : ""
+                }`}
+              >
                 {item.label}
               </span>
             </Link>
