@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
@@ -68,10 +69,12 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
       {/* Logo */}
       <div className="px-5 pt-6 pb-5">
         <div className="flex items-center gap-3">
-          <img
+          <Image
             src="/logo_solo.png"
             alt="CosttasHolding"
-            className="w-10 h-8 rounded-lg object-contain"
+            width={40}
+            height={32}
+            className="rounded-lg object-contain"
           />
           <div>
             <h1 className="text-sm font-bold text-foreground font-display tracking-tight leading-tight">

@@ -20,10 +20,9 @@ import {
   tableRowClass,
 } from "@/components/ui/data-table-wrapper";
 import { ExportButton } from "@/components/ui/export-button";
-import { PDFButton } from "@/components/ui/pdf-button";
 import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
-import { generateInventoryPDF } from "@/lib/pdf-generator";
+import { exportInventoryExcel } from "@/lib/export";
 import { useInventory } from "@/hooks/use-data";
 
 const stockVariant = (status: string): "success" | "warning" | "danger" | "info" | "neutral" => {
@@ -56,6 +55,7 @@ const SORT_OPTIONS = [
 
 const FILTER_CONFIG: FilterConfig[] = [
   {
+    type: "select",
     key: "stockStatus",
     label: "Estado de stock",
     options: STOCK_STATUS_OPTIONS,
@@ -136,25 +136,8 @@ export default function InventoryPage() {
   const outOfStockCount = inventory.filter((p: any) => p.stock_status === "out_of_stock").length;
   const overstockCount = inventory.filter((p: any) => p.stock_status === "overstock").length;
 
-  const handleExportPDF = () => {
-    const rows = filtered.map((p: any) => {
-      const total = (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0);
-      const costPerUnit = p.total_cost || p.product_cost || 0;
-      const statusMap: Record<string, string> = {
-        low_stock: "Stock Bajo",
-        out_of_stock: "Sin Stock",
-        overstock: "Sobrestock",
-        normal: "Normal",
-      };
-      return {
-        product_name: p.name || "",
-        quantity: total,
-        min_stock: p.min_stock || 0,
-        status: statusMap[p.stock_status || "normal"] || "Normal",
-        valuation: total * costPerUnit,
-      };
-    });
-    generateInventoryPDF(rows);
+  const handleExport = () => {
+    exportInventoryExcel(filtered);
   };
 
   if (isLoading) {
@@ -177,8 +160,7 @@ export default function InventoryPage() {
           sortValue={sortValue}
           onSortChange={setSortValue}
         />
-        <PDFButton onClick={handleExportPDF} label="PDF" />
-        <ExportButton type="inventory" />
+        <ExportButton onClick={handleExport} />
         <button
           onClick={() => mutate()}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/50 border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -223,16 +205,14 @@ export default function InventoryPage() {
         />
       </div>
 
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por SKU o nombre..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-muted/50 border-border"
-          />
-        </div>
+      <div className="relative max-w-sm mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por SKU o nombre..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9 bg-muted/50 border-border"
+        />
       </div>
 
       {filtered.length === 0 && (

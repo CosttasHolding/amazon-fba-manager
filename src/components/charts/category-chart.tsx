@@ -1,61 +1,54 @@
 "use client";
 
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
 
-interface SalesDataPoint {
-  date: string;
-  revenue: number;
-  units: number;
+interface CategoryDataPoint {
+  name: string;
+  value: number;
+  count: number;
 }
 
-interface SalesChartProps {
-  data: SalesDataPoint[];
+interface CategoryChartProps {
+  data: CategoryDataPoint[];
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+const COLORS = [
+  "hsl(192, 100%, 50%)",
+  "hsl(142, 71%, 45%)",
+  "hsl(45, 93%, 47%)",
+  "hsl(262, 80%, 58%)",
+  "hsl(343, 81%, 59%)",
+  "hsl(228, 25%, 45%)",
+  "hsl(188, 80%, 42%)",
+  "hsl(38, 92%, 50%)",
+];
+
+function CustomTooltip({ active, payload }: any) {
   if (!active || !payload || !payload.length) return null;
+  const data = payload[0].payload;
 
   return (
     <div className="rounded-xl border border-border bg-card p-3 shadow-lg">
-      <p className="text-xs font-medium text-muted-foreground mb-2">{label}</p>
-      {payload.map((entry: any, index: number) => (
-        <div key={index} className="flex items-center gap-2 text-sm">
-          <span
-            className="w-2 h-2 rounded-full"
-            style={{ backgroundColor: entry.color }}
-          />
-          <span className="text-muted-foreground">
-            {entry.name === "revenue" ? "Revenue" : "Unidades"}:
-          </span>
-          <span className="font-display font-semibold text-foreground">
-            {entry.name === "revenue"
-              ? `
-$$
-{Number(entry.value).toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}`
-              : entry.value}
-          </span>
-        </div>
-      ))}
+      <p className="text-xs font-medium text-foreground mb-1">{data.name}</p>
+      <p className="text-sm text-muted-foreground">
+        ${Number(data.value).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+        <span className="text-xs ml-1">({data.count} productos)</span>
+      </p>
     </div>
   );
 }
 
-export function SalesChart({ data }: SalesChartProps) {
+export function CategoryChart({ data }: CategoryChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-[280px] text-sm text-muted-foreground">
-        No hay datos de ventas disponibles
+        No hay datos de categorías disponibles
       </div>
     );
   }
@@ -63,77 +56,31 @@ export function SalesChart({ data }: SalesChartProps) {
   return (
     <div className="w-full h-[280px]">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={data}
-          margin={{ top: 8, right: 8, left: -10, bottom: 0 }}
-        >
-          <defs>
-            <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="hsl(192, 100%, 50%)" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="hsl(192, 100%, 50%)" stopOpacity={0} />
-            </linearGradient>
-            <linearGradient id="unitsGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="hsl(var(--border))"
-            strokeOpacity={0.5}
-          />
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-            tickLine={false}
-            axisLine={false}
-          />
-          <YAxis
-            yAxisId="revenue"
-            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-            tickLine={false}
-            axisLine={false}
-            tickFormatter={(v) => `
-$$
-{v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
-          />
-          <YAxis
-            yAxisId="units"
-            orientation="right"
-            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-            tickLine={false}
-            axisLine={false}
-          />
+        <PieChart>
+          <Pie
+            data={data}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            innerRadius={50}
+            outerRadius={90}
+            paddingAngle={2}
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
           <Tooltip content={<CustomTooltip />} />
-          <Area
-            yAxisId="revenue"
-            type="monotone"
-            dataKey="revenue"
-            stroke="hsl(192, 100%, 50%)"
-            strokeWidth={2}
-            fill="url(#revenueGradient)"
-            name="revenue"
-          />
-          <Area
-            yAxisId="units"
-            type="monotone"
-            dataKey="units"
-            stroke="hsl(142, 71%, 45%)"
-            strokeWidth={2}
-            fill="url(#unitsGradient)"
-            name="units"
-          />
-        </AreaChart>
+        </PieChart>
       </ResponsiveContainer>
-      <div className="flex items-center justify-center gap-6 mt-2">
-        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span className="w-3 h-0.5 rounded-full bg-[hsl(192,100%,50%)]" />
-          Revenue
-        </span>
-        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span className="w-3 h-0.5 rounded-full bg-[hsl(142,71%,45%)]" />
-          Unidades
-        </span>
+      <div className="flex flex-wrap justify-center gap-3 mt-2">
+        {data.slice(0, 6).map((entry, index) => (
+          <span key={entry.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+            {entry.name}
+          </span>
+        ))}
       </div>
     </div>
   );

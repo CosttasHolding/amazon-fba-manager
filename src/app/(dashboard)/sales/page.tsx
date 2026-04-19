@@ -9,8 +9,8 @@ import { DataTableWrapper, tableHeaderClass, tableCellClass, tableRowClass } fro
 import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { RevenueTrendChart } from "@/components/charts/revenue-trend-chart";
-import { PDFButton } from "@/components/ui/pdf-button";
-import { generateSalesPDF } from "@/lib/pdf-generator";
+import { ExportButton } from "@/components/ui/export-button";
+import { exportSalesExcel } from "@/lib/export";
 import { useSales } from "@/hooks/use-data";
 
 const SORT_OPTIONS = [
@@ -116,16 +116,8 @@ export default function SalesPage() {
   const totalFees = sales.reduce((sum: number, s: any) => sum + (s.amazon_fees || 0), 0);
   const totalProfit = sales.reduce((sum: number, s: any) => sum + (s.profit || 0), 0);
 
-  const handleExportPDF = () => {
-    const rows = filtered.map((s: any) => ({
-      date: new Date(s.sale_date).toLocaleDateString("es-ES"),
-      product_name: s.products?.name || "N/A",
-      quantity: s.units_sold || 0,
-      revenue: (s.sale_price || 0) * (s.units_sold || 0),
-      profit: s.profit || 0,
-      channel: s.channel || "Amazon",
-    }));
-    generateSalesPDF(rows);
+  const handleExport = () => {
+    exportSalesExcel(filtered);
   };
 
   if (isLoading) {
@@ -144,7 +136,7 @@ export default function SalesPage() {
           sortValue={sortValue}
           onSortChange={setSortValue}
         />
-        <PDFButton onClick={handleExportPDF} label="PDF" />
+        <ExportButton onClick={handleExport} />
       </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

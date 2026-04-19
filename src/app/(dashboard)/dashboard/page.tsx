@@ -24,8 +24,8 @@ import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { SalesChart } from "@/components/charts/sales-chart";
 import { CategoryChart } from "@/components/charts/category-chart";
 import { ProfitBarChart } from "@/components/charts/profit-bar-chart";
-import { PDFButton } from "@/components/ui/pdf-button";
-import { generateDashboardPDF } from "@/lib/pdf-generator";
+import { ExportButton } from "@/components/ui/export-button";
+import { exportToExcelPro } from "@/lib/export";
 import { useDashboard } from "@/hooks/use-data";
 import Link from "next/link";
 
@@ -86,15 +86,45 @@ export default function DashboardPage() {
   const alertCount =
     (metrics?.low_stock_count || 0) + (metrics?.out_of_stock_count || 0);
 
-  const handleExportPDF = () => {
-    generateDashboardPDF({
-      totalProducts: metrics?.total_products || 0,
-      totalRevenue: metrics?.revenue_last_30d || 0,
-      totalProfit: metrics?.total_potential_profit || 0,
-      totalUnits: metrics?.units_sold_last_30d || 0,
-      avgMargin: metrics?.avg_margin || 0,
-      lowStockCount: (metrics?.low_stock_count || 0) + (metrics?.out_of_stock_count || 0),
-    });
+  const handleExport = () => {
+    const data = [
+      {
+        metric: "Productos Activos",
+        value: String(metrics?.active_products || 0),
+        detail: `de ${metrics?.total_products || 0} total`,
+      },
+      {
+        metric: "Revenue (30 días)",
+        value: fmt(metrics?.revenue_last_30d || 0),
+        detail: "",
+      },
+      {
+        metric: "Unidades Vendidas (30 días)",
+        value: String(metrics?.units_sold_last_30d || 0),
+        detail: "",
+      },
+      {
+        metric: "Ganancia Potencial Total",
+        value: fmt(metrics?.total_potential_profit || 0),
+        detail: "",
+      },
+      {
+        metric: "Margen Promedio",
+        value: fmtPct(metrics?.avg_margin || 0),
+        detail: "",
+      },
+      {
+        metric: "Stock Bajo",
+        value: String(metrics?.low_stock_count || 0),
+        detail: "requiere atención",
+      },
+      {
+        metric: "Sin Stock",
+        value: String(metrics?.out_of_stock_count || 0),
+        detail: "crítico",
+      },
+    ];
+    exportToExcelPro(data, "dashboard-resumen");
   };
 
   return (
@@ -104,7 +134,7 @@ export default function DashboardPage() {
         title="Resumen del Negocio"
         subtitle="Vista general de tu operación en Amazon FBA"
       >
-        <PDFButton onClick={handleExportPDF} label="PDF Resumen" />
+        <ExportButton onClick={handleExport} />
       </PageHeader>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

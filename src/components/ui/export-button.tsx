@@ -5,14 +5,22 @@ import { Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface ExportButtonProps {
-  type: "products" | "inventory" | "sales" | "suppliers";
+  type?: "products" | "inventory" | "sales" | "suppliers";
+  onClick?: () => void;
   label?: string;
 }
 
-export function ExportButton({ type, label = "Exportar" }: ExportButtonProps) {
+export function ExportButton({ type, onClick, label = "Exportar" }: ExportButtonProps) {
   const [exporting, setExporting] = useState(false);
 
   const handleExport = async () => {
+    if (onClick) {
+      onClick();
+      return;
+    }
+
+    if (!type) return;
+
     try {
       setExporting(true);
       const res = await fetch(`/api/export?type=${type}`);
@@ -38,7 +46,7 @@ export function ExportButton({ type, label = "Exportar" }: ExportButtonProps) {
       window.URL.revokeObjectURL(url);
 
       toast.success("Archivo exportado correctamente");
-    } catch (error) {
+    } catch {
       toast.error("Error al exportar los datos");
     } finally {
       setExporting(false);
@@ -49,7 +57,7 @@ export function ExportButton({ type, label = "Exportar" }: ExportButtonProps) {
     <button
       onClick={handleExport}
       disabled={exporting}
-      className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {exporting ? (
         <Loader2 className="w-4 h-4 animate-spin" />

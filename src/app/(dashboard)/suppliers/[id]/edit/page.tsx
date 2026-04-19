@@ -77,6 +77,7 @@ export default function EditSupplierPage() {
     resolver: zodResolver(supplierSchema),
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (params.id) fetchSupplier();
   }, [params.id]);

@@ -117,6 +117,7 @@ export default function EditProductPage() {
     resolver: zodResolver(productSchema),
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (params.id) {
       fetchProduct();

@@ -12,10 +12,9 @@ import { DataTableWrapper, tableHeaderClass, tableRowClass, tableCellClass } fro
 import { PaginationControl } from "@/components/ui/pagination-control";
 import { ProductFormModal } from "@/components/product-form-modal";
 import { ExportButton } from "@/components/ui/export-button";
-import { PDFButton } from "@/components/ui/pdf-button";
 import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
-import { generateProductsPDF } from "@/lib/pdf-generator";
+import { exportProductsExcel } from "@/lib/export";
 import { useProducts } from "@/hooks/use-data";
 
 const ITEMS_PER_PAGE = 10;
@@ -195,17 +194,8 @@ export default function ProductsPage() {
       ? products.reduce((sum, p) => sum + (p.sale_price || 0), 0) / products.length
       : 0;
 
-  const handleExportPDF = () => {
-    const rows = filtered.map((p) => ({
-      name: p.name || "",
-      category: p.category || "Sin categoría",
-      price: p.sale_price || 0,
-      cost: p.total_cost || 0,
-      profit: p.net_profit || 0,
-      margin: p.sale_price > 0 ? ((p.net_profit || 0) / p.sale_price) * 100 : 0,
-      status: p.status === "active" ? "Activo" : p.status === "paused" ? "Pausado" : "Sin stock",
-    }));
-    generateProductsPDF(rows);
+  const handleExport = () => {
+    exportProductsExcel(filtered);
   };
 
   if (isLoading) {
@@ -229,8 +219,7 @@ export default function ProductsPage() {
           onSortChange={setSortValue}
         />
 
-        <PDFButton onClick={handleExportPDF} label="PDF" />
-        <ExportButton type="products" />
+        <ExportButton onClick={handleExport} />
 
         <button
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200"

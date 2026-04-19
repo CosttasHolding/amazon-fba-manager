@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Mail, Lock, LogIn, Loader2 } from "lucide-react";
@@ -39,18 +40,21 @@ export default function LoginPage() {
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center overflow-auto p-4">
-      <img
+      <Image
         src="/banner.png"
         alt=""
-        className="fixed inset-0 w-screen h-screen object-cover object-center z-0"
+        fill
+        className="object-cover object-center z-0"
       />
       <div className="fixed inset-0 bg-black/20 z-[1]" />
 
       <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
-        <img
+        <Image
           src="/logo_solo.png"
           alt="CosttasHolding"
-          className="w-16 h-12 rounded-2xl object-contain mb-3"
+          width={64}
+          height={48}
+          className="rounded-2xl object-contain mb-3"
         />
         <h1 className="text-2xl font-bold text-white drop-shadow-lg">
           CosttasHolding Manager
