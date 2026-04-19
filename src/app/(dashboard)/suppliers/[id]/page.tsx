@@ -40,6 +40,8 @@ import {
   tableCellClass,
   tableRowClass,
 } from "@/components/ui/data-table-wrapper";
+import { TableSkeleton } from "@/components/ui/page-skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface LinkedProduct {
   id: string;
@@ -53,7 +55,6 @@ interface LinkedProduct {
     name: string;
     sku: string;
     asin: string | null;
-    sale_price: number;
     status: string;
   };
 }
@@ -83,6 +84,23 @@ const renderStars = (rating: number | null) => {
     </div>
   );
 };
+
+function DetailSkeleton() {
+  return (
+    <div className="space-y-6 animate-fade-up">
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-24 rounded-full" />
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-48" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Skeleton className="h-64 w-full rounded-2xl" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
+      </div>
+      <TableSkeleton rows={3} />
+    </div>
+  );
+}
 
 export default function SupplierDetailPage() {
   const params = useParams();
@@ -147,16 +165,7 @@ export default function SupplierDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">
-            Cargando proveedor...
-          </span>
-        </div>
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!supplier) {
@@ -399,14 +408,10 @@ export default function SupplierDetailPage() {
                   <tr className="border-b border-border">
                     <th className={tableHeaderClass}>Producto</th>
                     <th className={tableHeaderClass}>SKU</th>
-                    <th className={`${tableHeaderClass} text-right`}>
-                      Costo unit.
-                    </th>
+                    <th className={`${tableHeaderClass} text-right`}>Costo unit.</th>
                     <th className={`${tableHeaderClass} text-right`}>MOQ</th>
                     <th className={tableHeaderClass}>Estado</th>
-                    <th className={`${tableHeaderClass} text-center`}>
-                      Principal
-                    </th>
+                    <th className={`${tableHeaderClass} text-center`}>Principal</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -414,9 +419,7 @@ export default function SupplierDetailPage() {
                     <tr
                       key={item.id}
                       className={`${tableRowClass} cursor-pointer`}
-                      onClick={() =>
-                        router.push(`/products/${item.products.id}`)
-                      }
+                      onClick={() => router.push(`/products/${item.products.id}`)}
                     >
                       <td className={tableCellClass}>
                         <p className="font-medium text-foreground">
@@ -428,19 +431,13 @@ export default function SupplierDetailPage() {
                           </p>
                         )}
                       </td>
-                      <td
-                        className={`${tableCellClass} text-muted-foreground font-mono text-xs`}
-                      >
+                      <td className={`${tableCellClass} text-muted-foreground font-mono text-xs`}>
                         {item.products.sku}
                       </td>
-                      <td
-                        className={`${tableCellClass} text-right font-medium text-foreground tabular-nums`}
-                      >
+                      <td className={`${tableCellClass} text-right font-medium text-foreground tabular-nums`}>
                         {fmt(item.unit_cost)}
                       </td>
-                      <td
-                        className={`${tableCellClass} text-right text-muted-foreground tabular-nums`}
-                      >
+                      <td className={`${tableCellClass} text-right text-muted-foreground tabular-nums`}>
                         {item.moq || "—"}
                       </td>
                       <td className={tableCellClass}>
@@ -463,9 +460,7 @@ export default function SupplierDetailPage() {
                 <div
                   key={item.id}
                   className="rounded-xl border border-border bg-card p-4 cursor-pointer hover:bg-muted/30 transition-colors"
-                  onClick={() =>
-                    router.push(`/products/${item.products.id}`)
-                  }
+                  onClick={() => router.push(`/products/${item.products.id}`)}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>

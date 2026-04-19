@@ -190,7 +190,6 @@ export {
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogOverlay,
   AlertDialogPortal,

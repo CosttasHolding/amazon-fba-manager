@@ -41,6 +41,8 @@ import {
   tableCellClass,
   tableRowClass,
 } from "@/components/ui/data-table-wrapper";
+import { KpiSkeleton, TableSkeleton } from "@/components/ui/page-skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Product {
   id: string;
@@ -100,6 +102,25 @@ const platformVariants: Record<string, "warning" | "danger" | "info" | "neutral"
   global_sources: "info",
 };
 
+function DetailSkeleton() {
+  return (
+    <div className="space-y-6 animate-fade-up">
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-24 rounded-full" />
+        <Skeleton className="h-8 w-72" />
+        <Skeleton className="h-4 w-56" />
+      </div>
+      <KpiSkeleton count={4} />
+      <Skeleton className="h-24 w-full rounded-2xl" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Skeleton className="h-64 w-full rounded-2xl" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
+      </div>
+      <TableSkeleton rows={3} />
+    </div>
+  );
+}
+
 export default function ProductDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -158,14 +179,7 @@ export default function ProductDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">Cargando producto...</span>
-        </div>
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!product) {

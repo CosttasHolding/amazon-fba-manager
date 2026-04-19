@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -11,7 +11,6 @@ import {
   Clock,
   Package,
   ExternalLink,
-  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Supplier } from "@/types";
@@ -28,6 +27,7 @@ import { PaginationControl } from "@/components/ui/pagination-control";
 import { SupplierFormModal } from "@/components/supplier-form-modal";
 import { ExportButton } from "@/components/ui/export-button";
 import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -121,7 +121,7 @@ export default function SuppliersPage() {
       key: "country",
       label: "País",
       options: [
-        { value: "", label: "Todos los Países_LC" },
+        { value: "", label: "Todos los Países" },
         ...countries.map((c) => ({ value: c, label: c })),
       ],
       color: "purple",
@@ -231,14 +231,7 @@ export default function SuppliersPage() {
       : "N/A";
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">Cargando proveedores...</span>
-        </div>
-      </div>
-    );
+    return <PageSkeleton kpiCount={4} rowCount={6} showSearch />;
   }
 
   return (
@@ -310,7 +303,7 @@ export default function SuppliersPage() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar proveedor, contacto, País_LC..."
+          placeholder="Buscar proveedor, contacto, país..."
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -427,13 +420,12 @@ export default function SuppliersPage() {
                   <div className="grid grid-cols-2 gap-2 mt-3">
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Globe className="h-3.5 w-3.5" />
-                      {supplier.country || "Sin País_LC"}
+                      {supplier.country || "Sin país"}
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Package className="h-3.5 w-3.5" />
                       MOQ: {supplier.min_order_qty || "—"}
                     </div>
-                    <div>{renderStars(supplier.rating)}</div>
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Clock className="h-3.5 w-3.5" />
                       {supplier.lead_time_days ? `${supplier.lead_time_days}d` : "—"}
