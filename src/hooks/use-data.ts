@@ -6,6 +6,8 @@ const SWR_CONFIG = {
   revalidateOnReconnect: true,
   dedupingInterval: 10000,
   errorRetryCount: 3,
+  refreshInterval: 0,
+  shouldRetryOnError: true,
 };
 
 export function useProducts() {
