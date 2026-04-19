@@ -25,6 +25,8 @@ import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { SalesChart } from "@/components/charts/sales-chart";
 import { CategoryChart } from "@/components/charts/category-chart";
 import { ProfitBarChart } from "@/components/charts/profit-bar-chart";
+import { PDFButton } from "@/components/ui/pdf-button";
+import { generateDashboardPDF } from "@/lib/pdf-generator";
 import Link from "next/link";
 
 interface TopProduct {
@@ -99,13 +101,26 @@ export default function DashboardPage() {
   const alertCount =
     (metrics?.low_stock_count || 0) + (metrics?.out_of_stock_count || 0);
 
+  const handleExportPDF = () => {
+    generateDashboardPDF({
+      totalProducts: metrics?.total_products || 0,
+      totalRevenue: metrics?.revenue_last_30d || 0,
+      totalProfit: metrics?.total_potential_profit || 0,
+      totalUnits: metrics?.units_sold_last_30d || 0,
+      avgMargin: metrics?.avg_margin || 0,
+      lowStockCount: (metrics?.low_stock_count || 0) + (metrics?.out_of_stock_count || 0),
+    });
+  };
+
   return (
     <div>
       <PageHeader
         badge="GLOBAL DASHBOARD"
         title="Resumen del Negocio"
         subtitle="Vista general de tu operación en Amazon FBA"
-      />
+      >
+        <PDFButton onClick={handleExportPDF} label="PDF Resumen" />
+      </PageHeader>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -471,7 +486,7 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="p-4 text-right hidden sm:table-cell">
-                        <span className="text-sm text-muted-foreground">{alert.threshold ?? "—"}</span>
+                        <span className="text-sm text-muted-foreground">{alert.threshold ?? "\u2014"}</span>
                       </td>
                       <td className="p-4 text-center">
                         <Link

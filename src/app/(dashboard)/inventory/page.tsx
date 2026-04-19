@@ -21,8 +21,10 @@ import {
   tableRowClass,
 } from "@/components/ui/data-table-wrapper";
 import { ExportButton } from "@/components/ui/export-button";
+import { PDFButton } from "@/components/ui/pdf-button";
 import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
+import { generateInventoryPDF } from "@/lib/pdf-generator";
 
 const stockVariant = (status: string): "success" | "warning" | "danger" | "info" | "neutral" => {
   switch (status) {
@@ -54,7 +56,6 @@ const SORT_OPTIONS = [
 
 const FILTER_CONFIG: FilterConfig[] = [
   {
-    type: "select",
     key: "stockStatus",
     label: "Estado de stock",
     options: STOCK_STATUS_OPTIONS,
@@ -161,6 +162,27 @@ export default function InventoryPage() {
   const outOfStockCount = inventory.filter((p) => p.stock_status === "out_of_stock").length;
   const overstockCount = inventory.filter((p) => p.stock_status === "overstock").length;
 
+  const handleExportPDF = () => {
+    const rows = filtered.map((p) => {
+      const total = (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0);
+      const costPerUnit = (p as any).total_cost || (p as any).product_cost || 0;
+      const statusMap: Record<string, string> = {
+        low_stock: "Stock Bajo",
+        out_of_stock: "Sin Stock",
+        overstock: "Sobrestock",
+        normal: "Normal",
+      };
+      return {
+        product_name: p.name || "",
+        quantity: total,
+        min_stock: (p as any).min_stock || 0,
+        status: statusMap[p.stock_status || "normal"] || "Normal",
+        valuation: total * costPerUnit,
+      };
+    });
+    generateInventoryPDF(rows);
+  };
+
   if (loading) {
     return <PageSkeleton kpiCount={4} rowCount={6} showSearch />;
   }
@@ -181,6 +203,7 @@ export default function InventoryPage() {
           sortValue={sortValue}
           onSortChange={setSortValue}
         />
+        <PDFButton onClick={handleExportPDF} label="PDF" />
         <ExportButton type="inventory" />
         <button
           onClick={fetchInventory}
