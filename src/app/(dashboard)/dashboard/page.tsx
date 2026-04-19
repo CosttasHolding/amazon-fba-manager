@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { fmt, fmtPct } from "@/lib/utils";
 import { DashboardMetrics } from "@/types";
 import {
@@ -27,6 +26,7 @@ import { CategoryChart } from "@/components/charts/category-chart";
 import { ProfitBarChart } from "@/components/charts/profit-bar-chart";
 import { PDFButton } from "@/components/ui/pdf-button";
 import { generateDashboardPDF } from "@/lib/pdf-generator";
+import { useDashboard } from "@/hooks/use-data";
 import Link from "next/link";
 
 interface TopProduct {
@@ -56,28 +56,10 @@ interface ChartData {
   profitChartData: { name: string; profit: number; roi: number; sku: string }[];
 }
 
-interface DashboardData {
-  metrics: DashboardMetrics;
-  topProducts: TopProduct[];
-  alerts: StockAlert[];
-  charts: ChartData;
-}
-
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading } = useDashboard();
 
-  useEffect(() => {
-    fetch("/api/dashboard")
-      .then((r) => r.json())
-      .then((d) => {
-        setData(d);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return <PageSkeleton kpiCount={4} rowCount={6} showCharts showSearch={false} />;
   }
 
@@ -96,7 +78,10 @@ export default function DashboardPage() {
     );
   }
 
-  const { metrics, topProducts, alerts, charts } = data;
+  const metrics: DashboardMetrics = data.metrics;
+  const topProducts: TopProduct[] = data.topProducts || [];
+  const alerts: StockAlert[] = data.alerts || [];
+  const charts: ChartData = data.charts || { salesChartData: [], categoryChartData: [], profitChartData: [] };
 
   const alertCount =
     (metrics?.low_stock_count || 0) + (metrics?.out_of_stock_count || 0);
@@ -122,7 +107,6 @@ export default function DashboardPage() {
         <PDFButton onClick={handleExportPDF} label="PDF Resumen" />
       </PageHeader>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <KpiCard
           label="Productos Activos"
@@ -134,8 +118,7 @@ export default function DashboardPage() {
           progressBar={
             metrics?.total_products
               ? Math.round(
-                  ((metrics?.active_products || 0) / metrics.total_products) *
-                    100
+                  ((metrics?.active_products || 0) / metrics.total_products) * 100
                 )
               : 0
           }
@@ -178,7 +161,6 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
         <div className="lg:col-span-2">
           <DataTableWrapper title="Ventas últimos 30 días" icon={Activity}>
@@ -196,7 +178,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Profit Bar Chart */}
       {charts?.profitChartData && charts.profitChartData.length > 0 && (
         <div className="mb-8">
           <DataTableWrapper title="Top 10 Productos por Beneficio" icon={BarChart3}>
@@ -207,7 +188,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Sales Performance + Inventory Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
         <DataTableWrapper title="Rendimiento de Ventas" icon={BarChart3}>
           <div className="p-6">
@@ -264,9 +244,7 @@ export default function DashboardPage() {
           <div className="p-6">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">
-                  Stock Normal
-                </span>
+                <span className="text-sm text-muted-foreground">Stock Normal</span>
                 <span className="font-display font-semibold text-emerald-500">
                   {(metrics?.total_products || 0) -
                     (metrics?.low_stock_count || 0) -
@@ -275,40 +253,31 @@ export default function DashboardPage() {
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">
-                  Stock Bajo
-                </span>
+                <span className="text-sm text-muted-foreground">Stock Bajo</span>
                 <span className="font-display font-semibold text-amber-500">
                   {metrics?.low_stock_count || 0}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">
-                  Sin Stock
-                </span>
+                <span className="text-sm text-muted-foreground">Sin Stock</span>
                 <span className="font-display font-semibold text-destructive">
                   {metrics?.out_of_stock_count || 0}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">
-                  Sobrestock
-                </span>
+                <span className="text-sm text-muted-foreground">Sobrestock</span>
                 <span className="font-display font-semibold text-blue-500">
                   {metrics?.overstock_count || 0}
                 </span>
               </div>
               <div className="flex justify-between items-center pt-3 border-t border-border">
-                <span className="text-sm font-medium text-foreground">
-                  Total Productos
-                </span>
+                <span className="text-sm font-medium text-foreground">Total Productos</span>
                 <span className="font-display font-bold text-foreground">
                   {metrics?.total_products || 0}
                 </span>
               </div>
             </div>
 
-            {/* Visual bar */}
             {(metrics?.total_products || 0) > 0 && (
               <div className="mt-5">
                 <div className="flex h-3 rounded-full overflow-hidden bg-muted/50">
@@ -361,7 +330,6 @@ export default function DashboardPage() {
         </DataTableWrapper>
       </div>
 
-      {/* Top Products Table */}
       {topProducts && topProducts.length > 0 && (
         <div className="mb-8">
           <DataTableWrapper title="Detalle Top 10 Productos" icon={TrendingUp}>
@@ -445,7 +413,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Stock Alerts */}
       {alerts && alerts.length > 0 && (
         <div className="mb-8">
           <DataTableWrapper title="Alertas de Stock" icon={AlertTriangle}>

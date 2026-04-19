@@ -1,4 +1,4 @@
-﻿import { redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Package, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Sidebar } from "@/components/sidebar";
 import { TopHeader } from "@/components/top-header";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
+import { ErrorBoundaryWrapper } from "@/components/error-boundary-wrapper";
 
 export default async function DashboardLayout({
   children,
@@ -71,7 +72,9 @@ export default async function DashboardLayout({
 
       <main className="lg:ml-64 min-h-screen pb-24 lg:pb-0">
         <TopHeader userEmail={user.email} userName={userName} />
-        <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+        <div className="p-4 sm:p-6 lg:p-8">
+          <ErrorBoundaryWrapper>{children}</ErrorBoundaryWrapper>
+        </div>
       </main>
 
       <Toaster richColors position="top-right" />

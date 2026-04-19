@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { fmt, fmtPct, roiColor, profitColor } from "@/lib/utils";
@@ -16,6 +16,7 @@ import { PDFButton } from "@/components/ui/pdf-button";
 import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { generateProductsPDF } from "@/lib/pdf-generator";
+import { useProducts } from "@/hooks/use-data";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -55,14 +56,12 @@ const SORT_OPTIONS = [
 
 export default function ProductsPage() {
   const router = useRouter();
-  const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products, isLoading, mutate } = useProducts();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showNewModal, setShowNewModal] = useState(false);
   const [sortValue, setSortValue] = useState("newest");
 
-  // Filter values
   const [filterValues, setFilterValues] = useState<Record<string, any>>({
     status: "",
     category: "",
@@ -73,28 +72,11 @@ export default function ProductsPage() {
     roiMax: "",
   });
 
-  const fetchProducts = () => {
-    setLoading(true);
-    fetch("/api/products")
-      .then((r) => r.json())
-      .then((d) => {
-        setProducts(d.data || []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  // Extract unique categories from data
   const categories = useMemo(() => {
     const cats = [...new Set(products.map((p: any) => p.category).filter(Boolean))] as string[];
     return cats.sort();
   }, [products]);
 
-  // Build filter config dynamically (categories depend on data)
   const filterConfig: FilterConfig[] = useMemo(() => [
     {
       type: "select",
@@ -154,7 +136,6 @@ export default function ProductsPage() {
     setCurrentPage(1);
   };
 
-  // Filter + sort
   const filtered = useMemo(() => {
     let result = products.filter((p) => {
       const matchSearch =
@@ -176,7 +157,6 @@ export default function ProductsPage() {
       return matchSearch && matchStatus && matchCategory && matchMarketplace && matchPriceMin && matchPriceMax && matchRoiMin && matchRoiMax;
     });
 
-    // Sort
     result.sort((a, b) => {
       switch (sortValue) {
         case "newest": return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
@@ -228,7 +208,7 @@ export default function ProductsPage() {
     generateProductsPDF(rows);
   };
 
-  if (loading) {
+  if (isLoading) {
     return <PageSkeleton kpiCount={4} rowCount={8} showSearch />;
   }
 
@@ -264,7 +244,7 @@ export default function ProductsPage() {
       <ProductFormModal
         open={showNewModal}
         onOpenChange={setShowNewModal}
-        onSuccess={fetchProducts}
+        onSuccess={() => mutate()}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

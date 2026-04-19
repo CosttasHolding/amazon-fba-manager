@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { DollarSign, TrendingUp, ShoppingCart, BarChart3, Activity } from "lucide-react";
 import { fmt } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
@@ -11,6 +11,7 @@ import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { RevenueTrendChart } from "@/components/charts/revenue-trend-chart";
 import { PDFButton } from "@/components/ui/pdf-button";
 import { generateSalesPDF } from "@/lib/pdf-generator";
+import { useSales } from "@/hooks/use-data";
 
 const SORT_OPTIONS = [
   { value: "date_desc", label: "Fecha: mas reciente" },
@@ -30,8 +31,7 @@ const FILTER_CONFIG: FilterConfig[] = [
 ];
 
 export default function SalesPage() {
-  const [sales, setSales] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { sales, isLoading } = useSales();
   const [sortValue, setSortValue] = useState("date_desc");
   const [filterValues, setFilterValues] = useState<Record<string, any>>({
     dateFrom: "",
@@ -41,16 +41,6 @@ export default function SalesPage() {
     profitMin: "",
     profitMax: "",
   });
-
-  useEffect(() => {
-    fetch("/api/sales")
-      .then((r) => r.json())
-      .then((d) => {
-        setSales(d.data || []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
 
   const handleFilterChange = (key: string, value: any) => {
     setFilterValues((prev) => ({ ...prev, [key]: value }));
@@ -68,7 +58,7 @@ export default function SalesPage() {
   };
 
   const filtered = useMemo(() => {
-    let result = sales.filter((s) => {
+    let result = sales.filter((s: any) => {
       const revenue = (s.sale_price || 0) * (s.units_sold || 0);
       const profit = s.profit || 0;
       const saleDate = s.sale_date || "";
@@ -81,7 +71,7 @@ export default function SalesPage() {
       return matchDateFrom && matchDateTo && matchRevenueMin && matchRevenueMax && matchProfitMin && matchProfitMax;
     });
 
-    result.sort((a, b) => {
+    result.sort((a: any, b: any) => {
       const revA = (a.sale_price || 0) * (a.units_sold || 0);
       const revB = (b.sale_price || 0) * (b.units_sold || 0);
       switch (sortValue) {
@@ -103,12 +93,12 @@ export default function SalesPage() {
   const chartData = useMemo(() => {
     const byDate: Record<string, { revenue: number; profit: number; units: number }> = {};
     for (const s of sales) {
-      const date = s.sale_date || "";
+      const date = (s as any).sale_date || "";
       if (!date) continue;
       if (!byDate[date]) byDate[date] = { revenue: 0, profit: 0, units: 0 };
-      byDate[date].revenue += (s.sale_price || 0) * (s.units_sold || 0);
-      byDate[date].profit += s.profit || 0;
-      byDate[date].units += s.units_sold || 0;
+      byDate[date].revenue += ((s as any).sale_price || 0) * ((s as any).units_sold || 0);
+      byDate[date].profit += (s as any).profit || 0;
+      byDate[date].units += (s as any).units_sold || 0;
     }
     return Object.entries(byDate)
       .sort(([a], [b]) => a.localeCompare(b))
@@ -121,13 +111,13 @@ export default function SalesPage() {
       }));
   }, [sales]);
 
-  const totalRevenue = sales.reduce((sum, s) => sum + (s.sale_price || 0) * (s.units_sold || 0), 0);
-  const totalUnits = sales.reduce((sum, s) => sum + (s.units_sold || 0), 0);
-  const totalFees = sales.reduce((sum, s) => sum + (s.amazon_fees || 0), 0);
-  const totalProfit = sales.reduce((sum, s) => sum + (s.profit || 0), 0);
+  const totalRevenue = sales.reduce((sum: number, s: any) => sum + (s.sale_price || 0) * (s.units_sold || 0), 0);
+  const totalUnits = sales.reduce((sum: number, s: any) => sum + (s.units_sold || 0), 0);
+  const totalFees = sales.reduce((sum: number, s: any) => sum + (s.amazon_fees || 0), 0);
+  const totalProfit = sales.reduce((sum: number, s: any) => sum + (s.profit || 0), 0);
 
   const handleExportPDF = () => {
-    const rows = filtered.map((s) => ({
+    const rows = filtered.map((s: any) => ({
       date: new Date(s.sale_date).toLocaleDateString("es-ES"),
       product_name: s.products?.name || "N/A",
       quantity: s.units_sold || 0,
@@ -138,7 +128,7 @@ export default function SalesPage() {
     generateSalesPDF(rows);
   };
 
-  if (loading) {
+  if (isLoading) {
     return <PageSkeleton kpiCount={4} rowCount={8} showCharts showSearch={false} />;
   }
 
@@ -193,7 +183,7 @@ export default function SalesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((s) => (
+                {filtered.map((s: any) => (
                   <tr key={s.id} className={tableRowClass}>
                     <td className={`${tableCellClass} text-muted-foreground`}>{new Date(s.sale_date).toLocaleDateString("es-ES")}</td>
                     <td className={`${tableCellClass} font-medium text-foreground/80`}>{s.products?.name || "N/A"}</td>
@@ -207,7 +197,7 @@ export default function SalesPage() {
             </table>
           </div>
           <div className="md:hidden space-y-3 p-4">
-            {filtered.map((s) => (
+            {filtered.map((s: any) => (
               <div key={s.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div>

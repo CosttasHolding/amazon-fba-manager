@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Package,
   Search,
@@ -10,7 +10,6 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { ProductWithInventory } from "@/types";
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -25,6 +24,7 @@ import { PDFButton } from "@/components/ui/pdf-button";
 import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { generateInventoryPDF } from "@/lib/pdf-generator";
+import { useInventory } from "@/hooks/use-data";
 
 const stockVariant = (status: string): "success" | "warning" | "danger" | "info" | "neutral" => {
   switch (status) {
@@ -70,8 +70,7 @@ const FILTER_CONFIG: FilterConfig[] = [
 ];
 
 export default function InventoryPage() {
-  const [inventory, setInventory] = useState<ProductWithInventory[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { inventory, isLoading, mutate } = useInventory();
   const [search, setSearch] = useState("");
   const [sortValue, setSortValue] = useState("name_asc");
   const [filterValues, setFilterValues] = useState<Record<string, any>>({
@@ -79,30 +78,6 @@ export default function InventoryPage() {
     availableMin: "",
     availableMax: "",
   });
-
-  const fetchInventory = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (search) params.set("search", search);
-      const res = await fetch("/api/inventory?" + params.toString());
-      const json = await res.json();
-      setInventory(json.data || []);
-    } catch (err) {
-      console.error("Error fetching inventory:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchInventory();
-  }, []);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchInventory();
-  };
 
   const handleFilterChange = (key: string, value: any) => {
     setFilterValues((prev) => ({ ...prev, [key]: value }));
@@ -116,9 +91,8 @@ export default function InventoryPage() {
     });
   };
 
-  // Filter + sort
   const filtered = useMemo(() => {
-    let result = inventory.filter((p) => {
+    let result = inventory.filter((p: any) => {
       const matchSearch =
         !search ||
         p.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -137,7 +111,7 @@ export default function InventoryPage() {
       return matchSearch && matchStockStatus && matchAvailableMin && matchAvailableMax;
     });
 
-    result.sort((a, b) => {
+    result.sort((a: any, b: any) => {
       const totalA = (a.stock_available || 0) + (a.stock_inbound || 0) + (a.stock_warehouse || 0);
       const totalB = (b.stock_available || 0) + (b.stock_inbound || 0) + (b.stock_warehouse || 0);
       switch (sortValue) {
@@ -155,17 +129,17 @@ export default function InventoryPage() {
   }, [inventory, search, filterValues, sortValue]);
 
   const totalUnits = inventory.reduce(
-    (sum, p) => sum + (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0),
+    (sum: number, p: any) => sum + (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0),
     0
   );
-  const lowStockCount = inventory.filter((p) => p.stock_status === "low_stock").length;
-  const outOfStockCount = inventory.filter((p) => p.stock_status === "out_of_stock").length;
-  const overstockCount = inventory.filter((p) => p.stock_status === "overstock").length;
+  const lowStockCount = inventory.filter((p: any) => p.stock_status === "low_stock").length;
+  const outOfStockCount = inventory.filter((p: any) => p.stock_status === "out_of_stock").length;
+  const overstockCount = inventory.filter((p: any) => p.stock_status === "overstock").length;
 
   const handleExportPDF = () => {
-    const rows = filtered.map((p) => {
+    const rows = filtered.map((p: any) => {
       const total = (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0);
-      const costPerUnit = (p as any).total_cost || (p as any).product_cost || 0;
+      const costPerUnit = p.total_cost || p.product_cost || 0;
       const statusMap: Record<string, string> = {
         low_stock: "Stock Bajo",
         out_of_stock: "Sin Stock",
@@ -175,7 +149,7 @@ export default function InventoryPage() {
       return {
         product_name: p.name || "",
         quantity: total,
-        min_stock: (p as any).min_stock || 0,
+        min_stock: p.min_stock || 0,
         status: statusMap[p.stock_status || "normal"] || "Normal",
         valuation: total * costPerUnit,
       };
@@ -183,7 +157,7 @@ export default function InventoryPage() {
     generateInventoryPDF(rows);
   };
 
-  if (loading) {
+  if (isLoading) {
     return <PageSkeleton kpiCount={4} rowCount={6} showSearch />;
   }
 
@@ -206,7 +180,7 @@ export default function InventoryPage() {
         <PDFButton onClick={handleExportPDF} label="PDF" />
         <ExportButton type="inventory" />
         <button
-          onClick={fetchInventory}
+          onClick={() => mutate()}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/50 border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         >
           <RefreshCw className="h-4 w-4" />
@@ -249,7 +223,7 @@ export default function InventoryPage() {
         />
       </div>
 
-      <form onSubmit={handleSearch} className="flex gap-2">
+      <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -259,13 +233,7 @@ export default function InventoryPage() {
             className="pl-9 bg-muted/50 border-border"
           />
         </div>
-        <button
-          type="submit"
-          className="px-3 py-2 rounded-xl bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-        >
-          <Search className="h-4 w-4" />
-        </button>
-      </form>
+      </div>
 
       {filtered.length === 0 && (
         <div className="rounded-2xl border border-border bg-card p-12 text-center">
@@ -298,7 +266,7 @@ export default function InventoryPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((p) => {
+                {filtered.map((p: any) => {
                   const total = (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0);
                   return (
                     <tr key={p.id} className={tableRowClass}>
@@ -335,7 +303,7 @@ export default function InventoryPage() {
 
           {/* Mobile */}
           <div className="md:hidden space-y-3 p-4">
-            {filtered.map((p) => {
+            {filtered.map((p: any) => {
               const total = (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0);
               return (
                 <div
