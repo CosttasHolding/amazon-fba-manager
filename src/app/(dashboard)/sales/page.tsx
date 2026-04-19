@@ -1,23 +1,14 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import {
-  DollarSign,
-  TrendingUp,
-  ShoppingCart,
-  BarChart3,
-  Loader2,
-} from "lucide-react";
+import { DollarSign, TrendingUp, ShoppingCart, BarChart3, Activity } from "lucide-react";
 import { fmt } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard } from "@/components/ui/kpi-card";
-import {
-  DataTableWrapper,
-  tableHeaderClass,
-  tableCellClass,
-  tableRowClass,
-} from "@/components/ui/data-table-wrapper";
+import { DataTableWrapper, tableHeaderClass, tableCellClass, tableRowClass } from "@/components/ui/data-table-wrapper";
 import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
+import { RevenueTrendChart } from "@/components/charts/revenue-trend-chart";
 
 const SORT_OPTIONS = [
   { value: "date_desc", label: "Fecha: mas reciente" },
@@ -31,81 +22,37 @@ const SORT_OPTIONS = [
 ];
 
 const FILTER_CONFIG: FilterConfig[] = [
-  {
-    type: "dateRange",
-    key: "date",
-    label: "Rango de fechas",
-  },
-  {
-    type: "range",
-    key: "revenue",
-    label: "Revenue",
-    prefix: "$",
-    step: 0.01,
-  },
-  {
-    type: "range",
-    key: "profit",
-    label: "Profit",
-    prefix: "$",
-    step: 0.01,
-  },
+  { type: "dateRange", key: "date", label: "Rango de fechas" },
+  { type: "range", key: "revenue", label: "Revenue", prefix: "$", step: 0.01 },
+  { type: "range", key: "profit", label: "Profit", prefix: "$", step: 0.01 },
 ];
 
 export default function SalesPage() {
   const [sales, setSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortValue, setSortValue] = useState("date_desc");
-  const [filterValues, setFilterValues] = useState<Record<string, any>>({
-    dateFrom: "",
-    dateTo: "",
-    revenueMin: "",
-    revenueMax: "",
-    profitMin: "",
-    profitMax: "",
-  });
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({ dateFrom: "", dateTo: "", revenueMin: "", revenueMax: "", profitMin: "", profitMax: "" });
 
   useEffect(() => {
-    fetch("/api/sales")
-      .then((r) => r.json())
-      .then((d) => {
-        setSales(d.data || []);
-        setLoading(false);
-      });
+    fetch("/api/sales").then((r) => r.json()).then((d) => { setSales(d.data || []); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
-  const handleFilterChange = (key: string, value: any) => {
-    setFilterValues((prev) => ({ ...prev, [key]: value }));
-  };
+  const handleFilterChange = (key: string, value: any) => { setFilterValues((prev) => ({ ...prev, [key]: value })); };
+  const clearFilters = () => { setFilterValues({ dateFrom: "", dateTo: "", revenueMin: "", revenueMax: "", profitMin: "", profitMax: "" }); };
 
-  const clearFilters = () => {
-    setFilterValues({
-      dateFrom: "",
-      dateTo: "",
-      revenueMin: "",
-      revenueMax: "",
-      profitMin: "",
-      profitMax: "",
-    });
-  };
-
-  // Filter + sort
   const filtered = useMemo(() => {
     let result = sales.filter((s) => {
       const revenue = (s.sale_price || 0) * (s.units_sold || 0);
       const profit = s.profit || 0;
       const saleDate = s.sale_date || "";
-
       const matchDateFrom = !filterValues.dateFrom || saleDate >= filterValues.dateFrom;
       const matchDateTo = !filterValues.dateTo || saleDate <= filterValues.dateTo;
       const matchRevenueMin = filterValues.revenueMin === "" || revenue >= parseFloat(filterValues.revenueMin);
       const matchRevenueMax = filterValues.revenueMax === "" || revenue <= parseFloat(filterValues.revenueMax);
       const matchProfitMin = filterValues.profitMin === "" || profit >= parseFloat(filterValues.profitMin);
       const matchProfitMax = filterValues.profitMax === "" || profit <= parseFloat(filterValues.profitMax);
-
       return matchDateFrom && matchDateTo && matchRevenueMin && matchRevenueMax && matchProfitMin && matchProfitMax;
     });
-
     result.sort((a, b) => {
       const revA = (a.sale_price || 0) * (a.units_sold || 0);
       const revB = (b.sale_price || 0) * (b.units_sold || 0);
@@ -121,76 +68,52 @@ export default function SalesPage() {
         default: return 0;
       }
     });
-
     return result;
   }, [sales, filterValues, sortValue]);
+
+  const chartData = useMemo(() => {
+    const byDate: Record<string, { revenue: number; profit: number; units: number }> = {};
+    for (const s of sales) {
+      const date = s.sale_date || "";
+      if (!date) continue;
+      if (!byDate[date]) byDate[date] = { revenue: 0, profit: 0, units: 0 };
+      byDate[date].revenue += (s.sale_price || 0) * (s.units_sold || 0);
+      byDate[date].profit += s.profit || 0;
+      byDate[date].units += s.units_sold || 0;
+    }
+    return Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b)).slice(-30).map(([date, vals]) => ({
+      date: new Date(date + "T12:00:00").toLocaleDateString("es-ES", { day: "2-digit", month: "short" }),
+      revenue: Math.round(vals.revenue * 100) / 100,
+      profit: Math.round(vals.profit * 100) / 100,
+      units: vals.units,
+    }));
+  }, [sales]);
 
   const totalRevenue = sales.reduce((sum, s) => sum + (s.sale_price || 0) * (s.units_sold || 0), 0);
   const totalUnits = sales.reduce((sum, s) => sum + (s.units_sold || 0), 0);
   const totalFees = sales.reduce((sum, s) => sum + (s.amazon_fees || 0), 0);
   const totalProfit = sales.reduce((sum, s) => sum + (s.profit || 0), 0);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">Cargando ventas...</span>
-        </div>
-      </div>
-    );
-  }
+  if (loading) { return <PageSkeleton kpiCount={4} rowCount={8} showCharts showSearch={false} />; }
 
   return (
     <div className="space-y-6 animate-fade-up">
-      <PageHeader
-        badge="VENTAS"
-        title="Ventas"
-        subtitle="Historial de ventas de tus productos"
-      >
-        <FilterPanel
-          filters={FILTER_CONFIG}
-          values={filterValues}
-          onChange={handleFilterChange}
-          onClear={clearFilters}
-          sortOptions={SORT_OPTIONS}
-          sortValue={sortValue}
-          onSortChange={setSortValue}
-        />
+      <PageHeader badge="VENTAS" title="Ventas" subtitle="Historial de ventas de tus productos">
+        <FilterPanel filters={FILTER_CONFIG} values={filterValues} onChange={handleFilterChange} onClear={clearFilters} sortOptions={SORT_OPTIONS} sortValue={sortValue} onSortChange={setSortValue} />
       </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          label="Revenue Total"
-          value={fmt(totalRevenue)}
-          icon={DollarSign}
-          accentColor="cyan"
-          animationDelay={0}
-        />
-        <KpiCard
-          label="Profit Total"
-          value={fmt(totalProfit)}
-          icon={TrendingUp}
-          accentColor="green"
-          animationDelay={75}
-          trend={totalProfit >= 0 ? "up" : "down"}
-          trendValue={totalProfit >= 0 ? "Positivo" : "Negativo"}
-        />
-        <KpiCard
-          label="Unidades"
-          value={String(totalUnits)}
-          icon={ShoppingCart}
-          accentColor="amber"
-          animationDelay={150}
-        />
-        <KpiCard
-          label="Fees Amazon"
-          value={fmt(totalFees)}
-          icon={BarChart3}
-          accentColor="red"
-          animationDelay={225}
-        />
+        <KpiCard label="Revenue Total" value={fmt(totalRevenue)} icon={DollarSign} accentColor="cyan" animationDelay={0} />
+        <KpiCard label="Profit Total" value={fmt(totalProfit)} icon={TrendingUp} accentColor="green" animationDelay={75} trend={totalProfit >= 0 ? "up" : "down"} trendValue={totalProfit >= 0 ? "Positivo" : "Negativo"} />
+        <KpiCard label="Unidades" value={String(totalUnits)} icon={ShoppingCart} accentColor="amber" animationDelay={150} />
+        <KpiCard label="Fees Amazon" value={fmt(totalFees)} icon={BarChart3} accentColor="red" animationDelay={225} />
       </div>
+
+      {sales.length > 0 && (
+        <DataTableWrapper title="Tendencia de Revenue y Profit" icon={Activity}>
+          <div className="p-4"><RevenueTrendChart data={chartData} /></div>
+        </DataTableWrapper>
+      )}
 
       {sales.length === 0 && (
         <div className="rounded-2xl border border-border bg-card p-12 text-center">
@@ -201,10 +124,7 @@ export default function SalesPage() {
       )}
 
       {filtered.length > 0 && (
-        <DataTableWrapper
-          title={`${filtered.length} venta${filtered.length !== 1 ? "s" : ""}`}
-        >
-          {/* Desktop */}
+        <DataTableWrapper title={`${filtered.length} venta${filtered.length !== 1 ? "s" : ""}`}>
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -220,53 +140,26 @@ export default function SalesPage() {
               <tbody>
                 {filtered.map((s) => (
                   <tr key={s.id} className={tableRowClass}>
-                    <td className={`${tableCellClass} text-muted-foreground`}>
-                      {new Date(s.sale_date).toLocaleDateString("es-ES")}
-                    </td>
-                    <td className={`${tableCellClass} font-medium text-foreground/80`}>
-                      {s.products?.name || "N/A"}
-                    </td>
-                    <td className={`${tableCellClass} text-center text-foreground/60 tabular-nums`}>
-                      {s.units_sold}
-                    </td>
-                    <td className={`${tableCellClass} text-right text-foreground/70 tabular-nums`}>
-                      {fmt((s.sale_price || 0) * (s.units_sold || 0))}
-                    </td>
-                    <td className={`${tableCellClass} text-right text-destructive tabular-nums`}>
-                      {fmt(s.amazon_fees)}
-                    </td>
-                    <td className={`${tableCellClass} text-right font-semibold tabular-nums ${
-                      (s.profit || 0) >= 0 ? "text-emerald-500" : "text-red-500"
-                    }`}>
-                      {fmt(s.profit)}
-                    </td>
+                    <td className={`${tableCellClass} text-muted-foreground`}>{new Date(s.sale_date).toLocaleDateString("es-ES")}</td>
+                    <td className={`${tableCellClass} font-medium text-foreground/80`}>{s.products?.name || "N/A"}</td>
+                    <td className={`${tableCellClass} text-center text-foreground/60 tabular-nums`}>{s.units_sold}</td>
+                    <td className={`${tableCellClass} text-right text-foreground/70 tabular-nums`}>{fmt((s.sale_price || 0) * (s.units_sold || 0))}</td>
+                    <td className={`${tableCellClass} text-right text-destructive tabular-nums`}>{fmt(s.amazon_fees)}</td>
+                    <td className={`${tableCellClass} text-right font-semibold tabular-nums ${(s.profit || 0) >= 0 ? "text-emerald-500" : "text-red-500"}`}>{fmt(s.profit)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
-          {/* Mobile */}
           <div className="md:hidden space-y-3 p-4">
             {filtered.map((s) => (
-              <div
-                key={s.id}
-                className="rounded-xl border border-border bg-card p-4"
-              >
+              <div key={s.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <p className="font-medium text-sm text-foreground/80">
-                      {s.products?.name || "N/A"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(s.sale_date).toLocaleDateString("es-ES")}
-                    </p>
+                    <p className="font-medium text-sm text-foreground/80">{s.products?.name || "N/A"}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(s.sale_date).toLocaleDateString("es-ES")}</p>
                   </div>
-                  <p className={`font-bold text-sm tabular-nums ${
-                    (s.profit || 0) >= 0 ? "text-emerald-500" : "text-red-500"
-                  }`}>
-                    {fmt(s.profit)}
-                  </p>
+                  <p className={`font-bold text-sm tabular-nums ${(s.profit || 0) >= 0 ? "text-emerald-500" : "text-red-500"}`}>{fmt(s.profit)}</p>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center mt-3">
                   <div>
@@ -275,9 +168,7 @@ export default function SalesPage() {
                   </div>
                   <div>
                     <p className="text-[10px] text-muted-foreground">Revenue</p>
-                    <p className="font-bold text-sm text-foreground/70 tabular-nums">
-                      {fmt((s.sale_price || 0) * (s.units_sold || 0))}
-                    </p>
+                    <p className="font-bold text-sm text-foreground/70 tabular-nums">{fmt((s.sale_price || 0) * (s.units_sold || 0))}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-muted-foreground">Fees</p>
