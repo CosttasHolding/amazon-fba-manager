@@ -75,7 +75,7 @@ export function KpiCard({
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-2xl p-6 relative overflow-hidden",
+        "bg-card border border-border rounded-2xl p-4 sm:p-6 relative overflow-hidden",
         "transition-all duration-300 ease-out",
         "hover:scale-[1.01]",
         accent.glow,
@@ -86,35 +86,35 @@ export function KpiCard({
       {Icon && (
         <div
           className={cn(
-            "absolute top-4 right-4 rounded-xl p-2.5",
+            "absolute top-3 right-3 sm:top-4 sm:right-4 rounded-lg sm:rounded-xl p-1.5 sm:p-2.5",
             accent.iconBg
           )}
         >
-          <Icon className={cn("w-5 h-5", accent.iconText)} />
+          <Icon className={cn("w-3.5 h-3.5 sm:w-5 sm:h-5", accent.iconText)} />
         </div>
       )}
 
-      <p className="font-display uppercase text-[11px] tracking-[0.15em] text-muted-foreground mb-3">
+      <p className="font-display uppercase text-[10px] sm:text-[11px] tracking-[0.15em] text-muted-foreground mb-2 sm:mb-3 pr-8 sm:pr-0">
         {label}
       </p>
 
-      <p className="font-display text-3xl font-bold tabular-nums text-foreground">
+      <p className="font-display text-xl sm:text-3xl font-bold tabular-nums text-foreground">
         {value}
       </p>
 
       {trend && trendValue && (
-        <div className={cn("flex items-center gap-1.5 mt-2", trendColor)}>
-          <TrendIcon className="w-3.5 h-3.5" />
-          <span className="text-xs font-medium font-display">{trendValue}</span>
+        <div className={cn("flex items-center gap-1 sm:gap-1.5 mt-1.5 sm:mt-2", trendColor)}>
+          <TrendIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          <span className="text-[10px] sm:text-xs font-medium font-display">{trendValue}</span>
         </div>
       )}
 
       {subtitle && (
-        <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{subtitle}</p>
       )}
 
       {typeof progressBar === "number" && (
-        <div className="mt-4 h-1 rounded-full bg-white/[0.06] overflow-hidden">
+        <div className="mt-3 sm:mt-4 h-1 rounded-full bg-white/[0.06] overflow-hidden">
           <div
             className={cn(
               "h-full rounded-full transition-all duration-1000 ease-out",

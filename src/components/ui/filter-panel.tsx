@@ -3,8 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Filter, X, ChevronDown } from "lucide-react";
 
-// --- Types ---
-
 interface SelectFilter {
   type: "select";
   key: string;
@@ -47,7 +45,6 @@ interface FilterPanelProps {
   onSortChange?: (value: string) => void;
 }
 
-// --- Helper: count active filters ---
 function countActive(filters: FilterConfig[], values: Record<string, any>): number {
   let count = 0;
   for (const f of filters) {
@@ -64,7 +61,6 @@ function countActive(filters: FilterConfig[], values: Record<string, any>): numb
   return count;
 }
 
-// --- Component ---
 export function FilterPanel({
   filters,
   values,
@@ -91,7 +87,6 @@ export function FilterPanel({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  // Build active chips
   const chips: { key: string; label: string; color: string; onRemove: () => void }[] = [];
   for (const f of filters) {
     if (f.type === "select" && values[f.key]) {
@@ -161,7 +156,6 @@ export function FilterPanel({
 
   return (
     <div className="relative" ref={ref}>
-      {/* Toggle button */}
       <button
         onClick={() => setOpen(!open)}
         className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all duration-200 ${
@@ -179,10 +173,8 @@ export function FilterPanel({
         )}
       </button>
 
-      {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-full mt-2 z-50 w-[460px] max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-card shadow-2xl shadow-black/20 p-5 space-y-4 animate-in fade-in-0 zoom-in-95 duration-150">
-          {/* Header */}
+        <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 z-50 w-[calc(100vw-2rem)] sm:w-[460px] rounded-2xl border border-border bg-card shadow-2xl shadow-black/20 p-4 sm:p-5 space-y-4 animate-in fade-in-0 zoom-in-95 duration-150">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-primary" />
@@ -209,7 +201,6 @@ export function FilterPanel({
             </div>
           </div>
 
-          {/* Sort */}
           {sortOptions && onSortChange && (
             <div>
               <label className="text-xs text-muted-foreground mb-1.5 block">Ordenar por</label>
@@ -230,7 +221,6 @@ export function FilterPanel({
             </div>
           )}
 
-          {/* Filter fields */}
           <div className="space-y-3">
             {filters.map((f) => {
               if (f.type === "select") {
@@ -263,7 +253,7 @@ export function FilterPanel({
                     <div className="grid grid-cols-2 gap-2">
                       <input
                         type="number"
-                        placeholder={`Min${f.prefix ? ` (${f.prefix})` : ""}`}
+                        placeholder={`Min ${f.prefix ? `(${f.prefix})` : ""}`}
                         value={values[`${f.key}Min`] ?? ""}
                         onChange={(e) => onChange(`${f.key}Min`, e.target.value)}
                         step={f.step || 1}
@@ -271,7 +261,7 @@ export function FilterPanel({
                       />
                       <input
                         type="number"
-                        placeholder={`Max${f.prefix ? ` (${f.prefix})` : ""}`}
+                        placeholder={`Max ${f.prefix ? `(${f.prefix})` : ""}`}
                         value={values[`${f.key}Max`] ?? ""}
                         onChange={(e) => onChange(`${f.key}Max`, e.target.value)}
                         step={f.step || 1}
@@ -310,7 +300,6 @@ export function FilterPanel({
             })}
           </div>
 
-          {/* Active chips */}
           {chips.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
               <span className="text-xs text-muted-foreground/60">Activos:</span>

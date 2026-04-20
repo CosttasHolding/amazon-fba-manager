@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { Package, LogOut, Settings } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
@@ -37,9 +38,13 @@ export default async function DashboardLayout({
 
       <header className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-card/90 backdrop-blur-xl border-b border-border">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
-            <Package className="w-4 h-4 text-primary-foreground" />
-          </div>
+          <Image
+            src="/logo_solo.png"
+            alt="CosttasHolding"
+            width={32}
+            height={26}
+            className="rounded-lg object-contain"
+          />
           <div>
             <h1 className="text-sm font-bold text-foreground font-display leading-none">
               CosttasHolding
