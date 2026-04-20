@@ -117,20 +117,22 @@ export default function EditProductPage() {
     resolver: zodResolver(productSchema),
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (params.id) {
       fetchProduct();
       fetchSuppliers();
       fetchLinkedSuppliers();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const fetchProduct = async () => {
     try {
       const res = await fetch(`/api/products/${params.id}`);
       if (!res.ok) throw new Error("Error");
-      const d = await res.json();
+      const raw = await res.json();
+      // Handle both { data: {...} } and flat response
+      const d = raw.data ? raw.data : raw;
       setProductName(d.name || "Producto");
       reset({
         name: d.name || "",
@@ -138,17 +140,17 @@ export default function EditProductPage() {
         sku: d.sku || "",
         category: d.category || "Other",
         status: d.status || "active",
-        unitCost: d.unitCost ?? d.unit_cost ?? d.buy_cost ?? 0,
-        salePrice: d.salePrice ?? d.sale_price ?? d.sell_price ?? 0,
-        fbaFee: d.fbaFee ?? d.fba_fee ?? 0,
-        referralFee: d.referralFee ?? d.referral_fee ?? 0,
-        shippingCost: d.shippingCost ?? d.shipping_cost ?? 0,
-        storageCost: d.storageCost ?? d.storage_cost ?? 0,
-        weight: d.weight ?? 0,
+        unitCost: d.unit_cost ?? d.unitCost ?? d.buy_cost ?? 0,
+        salePrice: d.sale_price ?? d.salePrice ?? d.sell_price ?? 0,
+        fbaFee: d.fba_fee ?? d.fbaFee ?? 0,
+        referralFee: d.referral_fee ?? d.referralFee ?? 0,
+        shippingCost: d.shipping_cost ?? d.shippingCost ?? 0,
+        storageCost: d.storage_fee_monthly ?? d.storageCost ?? d.storage_cost ?? 0,
+        weight: d.weight_kg ?? d.weight ?? 0,
         dimensions: d.dimensions || "",
         notes: d.notes || "",
-        imageUrl: d.imageUrl ?? d.image_url ?? "",
-        minStock: d.minStock ?? d.min_stock ?? 10,
+        imageUrl: d.image_url ?? d.imageUrl ?? "",
+        minStock: d.min_stock ?? d.minStock ?? 10,
       });
     } catch {
       toast.error("Error al cargar el producto");
@@ -162,8 +164,8 @@ export default function EditProductPage() {
     try {
       const res = await fetch("/api/suppliers");
       if (res.ok) {
-        const data = await res.json();
-        setSuppliers(data.data || data || []);
+        const raw = await res.json();
+        setSuppliers(raw.data || raw || []);
       }
     } catch (error) {
       console.error("Error loading suppliers:", error);
@@ -174,7 +176,8 @@ export default function EditProductPage() {
     try {
       const res = await fetch(`/api/products/${params.id}/suppliers`);
       if (res.ok) {
-        const data: LinkedSupplier[] = await res.json();
+        const raw = await res.json();
+        const data: LinkedSupplier[] = Array.isArray(raw) ? raw : raw.data || [];
         const primary = data.find((s) => s.is_primary) || data[0];
         if (primary) {
           setSelectedSupplier(primary.suppliers.id);

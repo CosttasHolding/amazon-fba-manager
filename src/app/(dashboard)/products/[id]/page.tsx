@@ -53,11 +53,15 @@ interface Product {
   status: string;
   buy_cost: number;
   sell_price: number;
+  unit_cost: number;
+  sale_price: number;
   fba_fee: number;
   referral_fee: number;
   shipping_cost: number;
   storage_cost: number;
+  storage_fee_monthly: number;
   weight: number;
+  weight_kg: number;
   dimensions: string;
   notes: string;
   image_url: string;
@@ -129,12 +133,12 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (params.id) {
       fetchProduct();
       fetchSuppliers();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const fetchProduct = async () => {
@@ -142,7 +146,9 @@ export default function ProductDetailPage() {
       const res = await fetch(`/api/products/${params.id}`);
       if (!res.ok) throw new Error("Error al cargar producto");
       const data = await res.json();
-      setProduct(data);
+      // API now returns flat object (not wrapped in { data })
+      const p = data.data ? data.data : data;
+      setProduct(p);
     } catch {
       toast.error("Error al cargar el producto");
       router.push("/products");
@@ -156,7 +162,7 @@ export default function ProductDetailPage() {
       const res = await fetch(`/api/products/${params.id}/suppliers`);
       if (res.ok) {
         const data = await res.json();
-        setSuppliers(data);
+        setSuppliers(Array.isArray(data) ? data : data.data || []);
       }
     } catch (error) {
       console.error("Error loading suppliers:", error);
@@ -197,44 +203,50 @@ export default function ProductDetailPage() {
     );
   }
 
-  const totalCost =
-    (product.buy_cost || 0) +
-    (product.fba_fee || 0) +
-    (product.referral_fee || 0) +
-    (product.shipping_cost || 0) +
-    (product.storage_cost || 0);
+  const sellPrice = product.sell_price || product.sale_price || 0;
+  const buyCost = product.buy_cost || product.unit_cost || 0;
+  const fbaFee = product.fba_fee || 0;
+  const referralFee = product.referral_fee || 0;
+  const shippingCost = product.shipping_cost || 0;
+  const storageCost = product.storage_cost || product.storage_fee_monthly || 0;
+  const productWeight = product.weight || product.weight_kg || 0;
+
+  const totalCost = buyCost + fbaFee + referralFee + shippingCost + storageCost;
+  const profitValue = product.profit ?? (sellPrice - totalCost);
+  const roiValue = product.roi ?? (buyCost > 0 ? (profitValue / buyCost) * 100 : 0);
+  const marginValue = product.margin ?? (sellPrice > 0 ? (profitValue / sellPrice) * 100 : 0);
 
   const stockStatus =
-    product.current_stock <= 0
+    (product.current_stock || 0) <= 0
       ? "Sin stock"
-      : product.current_stock <= product.min_stock
+      : (product.current_stock || 0) <= (product.min_stock || 0)
         ? "Stock bajo"
         : "En stock";
 
   const stockVariant: "success" | "warning" | "danger" =
-    product.current_stock <= 0
+    (product.current_stock || 0) <= 0
       ? "danger"
-      : product.current_stock <= product.min_stock
+      : (product.current_stock || 0) <= (product.min_stock || 0)
         ? "warning"
         : "success";
 
   const costBreakdown = [
-    { label: "Costo de compra", value: product.buy_cost },
-    { label: "Tarifa FBA", value: product.fba_fee },
-    { label: "Tarifa referral", value: product.referral_fee },
-    { label: "Costo de envío", value: product.shipping_cost },
-    { label: "Costo almacenamiento", value: product.storage_cost },
+    { label: "Costo de compra", value: buyCost },
+    { label: "Tarifa FBA", value: fbaFee },
+    { label: "Tarifa referral", value: referralFee },
+    { label: "Costo de envío", value: shippingCost },
+    { label: "Costo almacenamiento", value: storageCost },
   ];
 
   return (
     <div className="space-y-6 animate-fade-up">
       <PageHeader
         badge="PRODUCTO"
-        title={product.name}
+        title={product.name || "Sin nombre"}
         subtitle={`ASIN: ${product.asin || "N/A"} — SKU: ${product.sku || "N/A"}${product.category ? ` — ${product.category}` : ""}`}
         breadcrumbs={[
           { label: "Productos", href: "/products" },
-          { label: product.name },
+          { label: product.name || "Producto" },
         ]}
       >
         <div className="flex items-center gap-2 flex-wrap">
@@ -263,7 +275,7 @@ export default function ProductDetailPage() {
             <AlertDialogContent className="bg-popover border-border">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-foreground">
-                  ¿Eliminar producto?
+                  ¿ Eliminar producto?
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-muted-foreground">
                   Esta acción no se puede deshacer. Se eliminará permanentemente
@@ -286,37 +298,34 @@ export default function ProductDetailPage() {
         </div>
       </PageHeader>
 
+      {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label="Precio Venta"
-          value={fmt(product.sell_price)}
+          value={fmt(sellPrice)}
           icon={DollarSign}
           accentColor="green"
           animationDelay={0}
         />
         <KpiCard
           label="Costo Compra"
-          value={fmt(product.buy_cost)}
+          value={fmt(buyCost)}
           icon={ShoppingCart}
           accentColor="cyan"
           animationDelay={75}
         />
         <KpiCard
           label="ROI"
-          value={`${(product.roi || 0).toFixed(1)}%`}
+          value={`${roiValue.toFixed(1)}%`}
           icon={TrendingUp}
           accentColor={
-            (product.roi || 0) >= 20
-              ? "green"
-              : (product.roi || 0) >= 0
-                ? "amber"
-                : "red"
+            roiValue >= 20 ? "green" : roiValue >= 0 ? "amber" : "red"
           }
-          trend={(product.roi || 0) >= 0 ? "up" : "down"}
+          trend={roiValue >= 0 ? "up" : "down"}
           trendValue={
-            (product.roi || 0) >= 20
+            roiValue >= 20
               ? "Excelente"
-              : (product.roi || 0) >= 0
+              : roiValue >= 0
                 ? "Aceptable"
                 : "Negativo"
           }
@@ -324,29 +333,32 @@ export default function ProductDetailPage() {
         />
         <KpiCard
           label="Margen"
-          value={`${(product.margin || 0).toFixed(1)}%`}
+          value={`${marginValue.toFixed(1)}%`}
           icon={Percent}
-          accentColor={(product.margin || 0) >= 0 ? "green" : "red"}
+          accentColor={marginValue >= 0 ? "green" : "red"}
           animationDelay={225}
         />
       </div>
 
       {/* Banner de ganancia */}
       <div
-        className={`relative overflow-hidden rounded-2xl border p-5 ${(product.profit || 0) >= 0
+        className={`relative overflow-hidden rounded-2xl border p-5 ${
+          profitValue >= 0
             ? "border-emerald-500/20 bg-emerald-500/5"
             : "border-red-500/20 bg-red-500/5"
-          }`}
+        }`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center ${(product.profit || 0) >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"
-                }`}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                profitValue >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"
+              }`}
             >
               <DollarSign
-                className={`h-5 w-5 ${(product.profit || 0) >= 0 ? "text-emerald-400" : "text-red-400"
-                  }`}
+                className={`h-5 w-5 ${
+                  profitValue >= 0 ? "text-emerald-400" : "text-red-400"
+                }`}
               />
             </div>
             <span className="text-sm font-medium text-muted-foreground">
@@ -354,10 +366,11 @@ export default function ProductDetailPage() {
             </span>
           </div>
           <span
-            className={`text-2xl font-bold tabular-nums ${(product.profit || 0) >= 0 ? "text-emerald-400" : "text-red-400"
-              }`}
+            className={`text-2xl font-bold tabular-nums ${
+              profitValue >= 0 ? "text-emerald-400" : "text-red-400"
+            }`}
           >
-            {fmt(product.profit)}
+            {fmt(profitValue)}
           </span>
         </div>
       </div>
@@ -403,12 +416,13 @@ export default function ProductDetailPage() {
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Stock actual</span>
               <span
-                className={`text-sm font-bold tabular-nums ${stockVariant === "danger"
+                className={`text-sm font-bold tabular-nums ${
+                  stockVariant === "danger"
                     ? "text-red-400"
                     : stockVariant === "warning"
                       ? "text-yellow-400"
                       : "text-emerald-400"
-                  }`}
+                }`}
               >
                 {product.current_stock || 0} uds
               </span>
@@ -423,13 +437,13 @@ export default function ProductDetailPage() {
               <span className="text-sm text-muted-foreground">Estado</span>
               <StatusBadge status={stockStatus} variant={stockVariant} />
             </div>
-            {product.weight > 0 && (
+            {productWeight > 0 && (
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground flex items-center gap-1">
                   <Weight className="h-3 w-3" /> Peso
                 </span>
                 <span className="text-sm font-medium text-foreground">
-                  {product.weight} kg
+                  {productWeight} kg
                 </span>
               </div>
             )}
@@ -518,7 +532,7 @@ export default function ProductDetailPage() {
                       </td>
                       <td className={tableCellClass}>
                         <StatusBadge
-                          status={platformLabels[ps.suppliers.platform] || ps.suppliers.platform}
+                          status={platformLabels[ps.suppliers.platform] || ps.suppliers.platform || "N/A"}
                           variant={platformVariants[ps.suppliers.platform] || "neutral"}
                         />
                       </td>
@@ -564,7 +578,7 @@ export default function ProductDetailPage() {
                         <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                       )}
                       <StatusBadge
-                        status={platformLabels[ps.suppliers.platform] || ps.suppliers.platform}
+                        status={platformLabels[ps.suppliers.platform] || ps.suppliers.platform || "N/A"}
                         variant={platformVariants[ps.suppliers.platform] || "neutral"}
                       />
                     </div>
@@ -594,12 +608,13 @@ export default function ProductDetailPage() {
         )}
       </DataTableWrapper>
 
+      {/* Fechas */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-muted-foreground/60 px-1">
         <span>
-          Creado: {new Date(product.created_at).toLocaleDateString("es-ES")}
+          Creado: {product.created_at ? new Date(product.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }) : "N/A"}
         </span>
         <span>
-          Actualizado: {new Date(product.updated_at).toLocaleDateString("es-ES")}
+          Actualizado: {product.updated_at ? new Date(product.updated_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }) : "N/A"}
         </span>
       </div>
     </div>
