@@ -22,17 +22,10 @@ import { Supplier } from "@/types";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const COUNTRIES = [
-  "China",
-  "India",
-  "Vietnam",
-  "Taiwan",
-  "Corea del Sur",
-  "Tailandia",
-  "Turquía",
-  "Bangladesh",
-  "Indonesia",
-  "Otro",
+const COUNTRY_SUGGESTIONS = [
+  "China", "India", "Vietnam", "Taiwan", "Corea del Sur",
+  "Tailandia", "Bangladesh", "Indonesia", "Estados Unidos",
+  "México", "Colombia", "Argentina", "Brasil", "Otro",
 ];
 
 const sectionClass = "rounded-2xl border border-border bg-card p-6 space-y-4";
@@ -77,16 +70,17 @@ export default function EditSupplierPage() {
     resolver: zodResolver(supplierSchema),
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (params.id) fetchSupplier();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const fetchSupplier = async () => {
     try {
       const res = await fetch(`/api/suppliers/${params.id}`);
       if (res.ok) {
-        const data: Supplier = await res.json();
+        const raw = await res.json();
+        const data: Supplier = raw.data ? raw.data : raw;
         setSupplierName(data.name || "Proveedor");
         reset({
           name: data.name,
@@ -126,7 +120,7 @@ export default function EditSupplierPage() {
         throw new Error(err.error || "Error al actualizar");
       }
 
-      toast.success(`${data.name} se actualizó correctamente`);
+      toast.success("Proveedor actualizado correctamente");
       router.push(`/suppliers/${params.id}`);
     } catch (error: unknown) {
       const message =
@@ -179,21 +173,17 @@ export default function EditSupplierPage() {
             </div>
             <div>
               <Label className={labelClass}>País</Label>
-              <Select
-                value={watch("country") || ""}
-                onValueChange={(val) => setValue("country", val)}
-              >
-                <SelectTrigger className={inputClass}>
-                  <SelectValue placeholder="Seleccionar país" />
-                </SelectTrigger>
-                <SelectContent>
-                  {COUNTRIES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                {...register("country")}
+                placeholder="Ej: China, México..."
+                list="country-suggestions-edit"
+                className={inputClass}
+              />
+              <datalist id="country-suggestions-edit">
+                {COUNTRY_SUGGESTIONS.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
             </div>
             <div>
               <Label className={labelClass}>Estado</Label>
@@ -224,11 +214,11 @@ export default function EditSupplierPage() {
                   <SelectValue placeholder="Sin rating" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1</SelectItem>
-                  <SelectItem value="2">2</SelectItem>
-                  <SelectItem value="3">3</SelectItem>
-                  <SelectItem value="4">4</SelectItem>
-                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="1">1 ⭐</SelectItem>
+                  <SelectItem value="2">2 ⭐</SelectItem>
+                  <SelectItem value="3">3 ⭐</SelectItem>
+                  <SelectItem value="4">4 ⭐</SelectItem>
+                  <SelectItem value="5">5 ⭐</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -246,7 +236,7 @@ export default function EditSupplierPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label className={labelClass}>Nombre de Contacto</Label>
+              <Label className={labelClass}>Persona de Contacto</Label>
               <Input {...register("contact_name")} className={inputClass} />
             </div>
             <div>

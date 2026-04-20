@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,9 +19,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2, Factory, Mail, Package, FileText } from "lucide-react";
 
-const COUNTRIES = [
+const COUNTRY_SUGGESTIONS = [
   "China", "India", "Vietnam", "Taiwan", "Corea del Sur",
-  "Tailandia", "Turquía", "Bangladesh", "Indonesia", "Otro",
+  "Tailandia", "Bangladesh", "Indonesia", "Estados Unidos",
+  "México", "Colombia", "Argentina", "Brasil", "Otro",
 ];
 
 const STAR_OPTIONS = [
@@ -108,25 +109,25 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="sm:col-span-2">
-                <Label className={labelClass}>Nombre *</Label>
-                <Input {...form.register("name")} placeholder="Nombre del proveedor" className={inputClass} />
+                <Label className={labelClass}>Nombre del proveedor *</Label>
+                <Input {...form.register("name")} placeholder="Nombre de la empresa" className={inputClass} />
                 {form.formState.errors.name && (
                   <p className="text-xs text-destructive mt-0.5">{form.formState.errors.name.message}</p>
                 )}
               </div>
               <div>
                 <Label className={labelClass}>País</Label>
-                <Select
-                  value={form.watch("country") || ""}
-                  onValueChange={(v) => form.setValue("country", v)}
-                >
-                  <SelectTrigger className={inputClass}><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  {...form.register("country")}
+                  placeholder="Ej: China, México..."
+                  list="country-suggestions"
+                  className={inputClass}
+                />
+                <datalist id="country-suggestions">
+                  {COUNTRY_SUGGESTIONS.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
               </div>
               <div>
                 <Label className={labelClass}>Estado</Label>
@@ -173,8 +174,8 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <Label className={labelClass}>Nombre contacto</Label>
-                <Input {...form.register("contact_name")} placeholder="John Doe" className={inputClass} />
+                <Label className={labelClass}>Persona de contacto</Label>
+                <Input {...form.register("contact_name")} placeholder="Nombre y apellido" className={inputClass} />
               </div>
               <div>
                 <Label className={labelClass}>Email</Label>
