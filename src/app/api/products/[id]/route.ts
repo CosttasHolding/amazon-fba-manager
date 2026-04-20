@@ -22,19 +22,22 @@ export async function GET(
 
     if (error) throw error;
 
-    const uc = data.unit_cost ?? data.buy_cost ?? 0;
-    const sp = data.sale_price ?? data.sell_price ?? 0;
-    const ff = data.fba_fee ?? 0;
-    const rf = data.referral_fee ?? 0;
-    const sc = data.shipping_cost ?? 0;
-    const sf = data.storage_fee_monthly ?? data.storage_cost ?? 0;
-    const totalCost = uc + ff + rf + sc + sf;
-    const profitVal = sp - totalCost;
-    const roiVal = uc > 0 ? (profitVal / uc) * 100 : 0;
-    const marginVal = sp > 0 ? (profitVal / sp) * 100 : 0;
+    var uc = data.unit_cost ?? 0;
+    var sp = data.sale_price ?? 0;
+    var ff = data.fba_fee ?? 0;
+    var rf = data.referral_fee ?? 0;
+    var sc = data.shipping_cost ?? 0;
+    var sf = data.storage_fee_monthly ?? 0;
+    var pc = data.prep_cost ?? 0;
+    var tx = data.taxes ?? 0;
+    var of2 = data.other_fees ?? 0;
+    var totalCost = uc + sc + pc + tx;
+    var totalFees = ff + rf + sf + of2;
+    var profitVal = sp - totalCost - totalFees;
+    var roiVal = totalCost > 0 ? (profitVal / totalCost) * 100 : 0;
+    var marginVal = sp > 0 ? (profitVal / sp) * 100 : 0;
 
-    const enriched = {
-      ...data,
+    var enriched = Object.assign({}, data, {
       buy_cost: uc,
       sell_price: sp,
       unit_cost: uc,
@@ -44,14 +47,18 @@ export async function GET(
       fba_fee: ff,
       referral_fee: rf,
       shipping_cost: sc,
-      weight: data.weight_kg ?? data.weight ?? 0,
-      weight_kg: data.weight_kg ?? data.weight ?? 0,
-      current_stock: data.current_stock ?? 0,
-      min_stock: data.min_stock ?? 10,
-      profit: data.profit ?? profitVal,
-      roi: data.roi ?? roiVal,
-      margin: data.margin ?? marginVal,
-    };
+      prep_cost: pc,
+      taxes: tx,
+      other_fees: of2,
+      weight: data.weight_kg ?? 0,
+      weight_kg: data.weight_kg ?? 0,
+      units_purchased: data.units_purchased ?? 0,
+      current_stock: data.stock_available ?? 0,
+      reorder_point: data.reorder_point ?? 10,
+      profit: profitVal,
+      roi: roiVal,
+      margin: marginVal,
+    });
 
     return NextResponse.json(enriched);
   } catch (err: any) {
@@ -73,26 +80,24 @@ export async function PUT(
 
     const body = await req.json();
 
-    const dbData: Record<string, any> = {
+    var dbData: Record<string, any> = {
       name: body.name,
       sku: body.sku,
       asin: body.asin || null,
       category: body.category || null,
       status: body.status || "active",
       marketplace: body.marketplace || "US",
-      unit_cost: body.unitCost ?? body.unit_cost ?? body.buy_cost ?? 0,
-      sale_price: body.salePrice ?? body.sale_price ?? body.sell_price ?? 0,
+      unit_cost: body.unitCost ?? body.unit_cost ?? 0,
+      sale_price: body.salePrice ?? body.sale_price ?? 0,
       fba_fee: body.fbaFee ?? body.fba_fee ?? 0,
       referral_fee: body.referralFee ?? body.referral_fee ?? 0,
       shipping_cost: body.shippingCost ?? body.shipping_cost ?? 0,
-      storage_fee_monthly: body.storageFeeMonthly ?? body.storageCost ?? body.storage_fee_monthly ?? body.storage_cost ?? 0,
+      storage_fee_monthly: body.storageCost ?? body.storage_fee_monthly ?? 0,
       prep_cost: body.prepCost ?? body.prep_cost ?? 0,
       taxes: body.taxes ?? 0,
       other_fees: body.otherFees ?? body.other_fees ?? 0,
-      weight_kg: body.weight ?? body.weightKg ?? body.weight_kg ?? null,
-      dimensions: body.dimensions || null,
-      image_url: body.imageUrl ?? body.image_url ?? null,
-      min_stock: body.minStock ?? body.min_stock ?? 10,
+      weight_kg: body.weight ?? body.weight_kg ?? null,
+      units_purchased: body.unitsPurchased ?? body.units_purchased ?? 0,
       notes: body.notes || null,
     };
 

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
 import { Save, Loader2, Factory, Mail, Package, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,71 +15,58 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supplierSchema, SupplierFormData } from "@/validations/supplier";
 import { Supplier } from "@/types";
-import { PageHeader } from "@/components/ui/page-header";
-import { Skeleton } from "@/components/ui/skeleton";
 
-const COUNTRY_SUGGESTIONS = [
+var COUNTRY_SUGGESTIONS = [
   "China", "India", "Vietnam", "Taiwan", "Corea del Sur",
   "Tailandia", "Bangladesh", "Indonesia", "Estados Unidos",
-  "México", "Colombia", "Argentina", "Brasil", "Otro",
+  "Mexico", "Colombia", "Argentina", "Brasil", "Otro",
 ];
 
-const sectionClass = "rounded-2xl border border-border bg-card p-6 space-y-4";
-const sectionTitleClass =
-  "flex items-center gap-2 text-sm font-semibold text-foreground uppercase tracking-wider mb-4";
-const labelClass = "text-sm text-muted-foreground";
-const errorClass = "text-xs text-destructive mt-1";
-const inputClass = "bg-muted/50 border-border";
+var STAR_OPTIONS = [
+  { value: "1", label: "\u2B50" },
+  { value: "2", label: "\u2B50\u2B50" },
+  { value: "3", label: "\u2B50\u2B50\u2B50" },
+  { value: "4", label: "\u2B50\u2B50\u2B50\u2B50" },
+  { value: "5", label: "\u2B50\u2B50\u2B50\u2B50\u2B50" },
+];
 
-function EditSkeleton() {
-  return (
-    <div className="space-y-6 animate-fade-up">
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-48 rounded" />
-        <Skeleton className="h-5 w-28 rounded-full" />
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-4 w-44" />
-      </div>
-      <Skeleton className="h-72 w-full rounded-2xl" />
-      <Skeleton className="h-40 w-full rounded-2xl" />
-      <Skeleton className="h-40 w-full rounded-2xl" />
-      <Skeleton className="h-32 w-full rounded-2xl" />
-    </div>
-  );
-}
+var inputClass = "h-9 bg-muted/50 border-border text-sm";
+var labelClass = "text-xs text-muted-foreground";
+var sectionLabel = "flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wider mb-3 mt-1";
 
 export default function EditSupplierPage() {
-  const params = useParams();
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [supplierName, setSupplierName] = useState("");
+  var params = useParams();
+  var router = useRouter();
+  var [loading, setLoading] = useState(true);
+  var [saving, setSaving] = useState(false);
+  var [supplierName, setSupplierName] = useState("");
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    reset,
-    formState: { errors },
-  } = useForm<SupplierFormData>({
+  var form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
   });
 
-  useEffect(() => {
+  var { register, handleSubmit, setValue, watch, reset, formState: { errors } } = form;
+
+  useEffect(function() {
     if (params.id) fetchSupplier();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
-  const fetchSupplier = async () => {
+  var fetchSupplier = async function() {
     try {
-      const res = await fetch(`/api/suppliers/${params.id}`);
+      var res = await fetch("/api/suppliers/" + params.id);
       if (res.ok) {
-        const raw = await res.json();
-        const data: Supplier = raw.data ? raw.data : raw;
+        var raw = await res.json();
+        var data: Supplier = raw.data ? raw.data : raw;
         setSupplierName(data.name || "Proveedor");
         reset({
           name: data.name,
@@ -106,27 +92,22 @@ export default function EditSupplierPage() {
     }
   };
 
-  const onSubmit = async (data: SupplierFormData) => {
+  var onSubmit = async function(data: SupplierFormData) {
     setSaving(true);
     try {
-      const res = await fetch(`/api/suppliers/${params.id}`, {
+      var res = await fetch("/api/suppliers/" + params.id, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-
       if (!res.ok) {
-        const err = await res.json();
+        var err = await res.json();
         throw new Error(err.error || "Error al actualizar");
       }
-
       toast.success("Proveedor actualizado correctamente");
-      router.push(`/suppliers/${params.id}`);
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Error al actualizar proveedor";
+      router.push("/suppliers/" + params.id);
+    } catch (error) {
+      var message = error instanceof Error ? error.message : "Error al actualizar proveedor";
       toast.error(message);
     } finally {
       setSaving(false);
@@ -134,186 +115,150 @@ export default function EditSupplierPage() {
   };
 
   if (loading) {
-    return <EditSkeleton />;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6 animate-fade-up">
-      <PageHeader
-        badge="EDITAR PROVEEDOR"
-        title={supplierName}
-        subtitle="Modifica los datos del proveedor"
-        breadcrumbs={[
-          { label: "Proveedores", href: "/suppliers" },
-          { label: supplierName, href: `/suppliers/${params.id}` },
-          { label: "Editar" },
-        ]}
-      />
+    <Dialog open={true} onOpenChange={function() { router.push("/suppliers/" + params.id); }}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border p-0">
+        <DialogHeader className="sticky top-0 z-10 bg-card border-b border-border px-6 py-4">
+          <DialogTitle className="text-foreground flex items-center gap-2">
+            <Factory className="h-5 w-5 text-primary" />
+            {"Editar: " + supplierName}
+          </DialogTitle>
+        </DialogHeader>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className={sectionClass}>
-          <div className={sectionTitleClass}>
-            <Factory className="h-4 w-4 text-primary" />
-            Información del Proveedor
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <Label className={labelClass}>Nombre del Proveedor *</Label>
-              <Input {...register("name")} className={inputClass} />
-              {errors.name && (
-                <p className={errorClass}>{errors.name.message}</p>
-              )}
-            </div>
-            <div className="md:col-span-2">
-              <Label className={labelClass}>URL Alibaba / 1688</Label>
-              <Input {...register("alibaba_url")} className={inputClass} />
-              {errors.alibaba_url && (
-                <p className={errorClass}>{errors.alibaba_url.message}</p>
-              )}
-            </div>
-            <div>
-              <Label className={labelClass}>País</Label>
-              <Input
-                {...register("country")}
-                placeholder="Ej: China, México..."
-                list="country-suggestions-edit"
-                className={inputClass}
-              />
-              <datalist id="country-suggestions-edit">
-                {COUNTRY_SUGGESTIONS.map((c) => (
-                  <option key={c} value={c} />
-                ))}
-              </datalist>
-            </div>
-            <div>
-              <Label className={labelClass}>Estado</Label>
-              <Select
-                value={watch("status")}
-                onValueChange={(val) =>
-                  setValue("status", val as "active" | "inactive")
-                }
-              >
-                <SelectTrigger className={inputClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Activo</SelectItem>
-                  <SelectItem value="inactive">Inactivo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className={labelClass}>Rating (1-5)</Label>
-              <Select
-                value={watch("rating")?.toString() || ""}
-                onValueChange={(val) =>
-                  setValue("rating", val ? parseInt(val) : null)
-                }
-              >
-                <SelectTrigger className={inputClass}>
-                  <SelectValue placeholder="Sin rating" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 ⭐</SelectItem>
-                  <SelectItem value="2">2 ⭐</SelectItem>
-                  <SelectItem value="3">3 ⭐</SelectItem>
-                  <SelectItem value="4">4 ⭐</SelectItem>
-                  <SelectItem value="5">5 ⭐</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className={labelClass}>Términos de Pago</Label>
-              <Input {...register("payment_terms")} className={inputClass} />
-            </div>
-          </div>
-        </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="px-6 pb-6 space-y-5">
 
-        <div className={sectionClass}>
-          <div className={sectionTitleClass}>
-            <Mail className="h-4 w-4 text-primary" />
-            Información de Contacto
+          <div>
+            <div className={sectionLabel}>
+              <Factory className="h-3 w-3" />
+              Informacion del proveedor
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="sm:col-span-2">
+                <Label className={labelClass}>Nombre *</Label>
+                <Input {...register("name")} className={inputClass} />
+                {errors.name && <p className="text-xs text-destructive mt-0.5">{errors.name.message}</p>}
+              </div>
+              <div>
+                <Label className={labelClass}>Pais</Label>
+                <Input
+                  {...register("country")}
+                  placeholder="Ej: China, Mexico..."
+                  list="country-suggestions-edit"
+                  className={inputClass}
+                />
+                <datalist id="country-suggestions-edit">
+                  {COUNTRY_SUGGESTIONS.map(function(c) { return <option key={c} value={c} />; })}
+                </datalist>
+              </div>
+              <div>
+                <Label className={labelClass}>Estado</Label>
+                <Select
+                  value={watch("status")}
+                  onValueChange={function(v) { setValue("status", v as "active" | "inactive"); }}
+                >
+                  <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Activo</SelectItem>
+                    <SelectItem value="inactive">Inactivo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="sm:col-span-2">
+                <Label className={labelClass}>URL Alibaba / 1688</Label>
+                <Input {...register("alibaba_url")} placeholder="https://www.alibaba.com/..." className={inputClass} />
+                {errors.alibaba_url && <p className="text-xs text-destructive mt-0.5">{errors.alibaba_url.message}</p>}
+              </div>
+              <div>
+                <Label className={labelClass}>Rating</Label>
+                <Select
+                  value={watch("rating")?.toString() || ""}
+                  onValueChange={function(v) { setValue("rating", v ? parseInt(v) : null); }}
+                >
+                  <SelectTrigger className={inputClass}><SelectValue placeholder={"--"} /></SelectTrigger>
+                  <SelectContent>
+                    {STAR_OPTIONS.map(function(opt) {
+                      return <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>;
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className={labelClass}>Persona de Contacto</Label>
-              <Input {...register("contact_name")} className={inputClass} />
-            </div>
-            <div>
-              <Label className={labelClass}>Email</Label>
-              <Input
-                type="email"
-                {...register("contact_email")}
-                className={inputClass}
-              />
-              {errors.contact_email && (
-                <p className={errorClass}>{errors.contact_email.message}</p>
-              )}
-            </div>
-            <div>
-              <Label className={labelClass}>WhatsApp</Label>
-              <Input {...register("contact_whatsapp")} className={inputClass} />
-            </div>
-          </div>
-        </div>
 
-        <div className={sectionClass}>
-          <div className={sectionTitleClass}>
-            <Package className="h-4 w-4 text-primary" />
-            Producción y Logística
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className={labelClass}>MOQ (Mínimo de Orden)</Label>
-              <Input
-                type="number"
-                {...register("min_order_qty")}
-                className={inputClass}
-              />
-              {errors.min_order_qty && (
-                <p className={errorClass}>{errors.min_order_qty.message}</p>
-              )}
+          <div>
+            <div className={sectionLabel}>
+              <Mail className="h-3 w-3" />
+              Contacto
             </div>
-            <div>
-              <Label className={labelClass}>Lead Time (días)</Label>
-              <Input
-                type="number"
-                {...register("lead_time_days")}
-                className={inputClass}
-              />
-              {errors.lead_time_days && (
-                <p className={errorClass}>{errors.lead_time_days.message}</p>
-              )}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <Label className={labelClass}>Persona de contacto</Label>
+                <Input {...register("contact_name")} placeholder="Nombre" className={inputClass} />
+              </div>
+              <div>
+                <Label className={labelClass}>Email</Label>
+                <Input {...register("contact_email")} placeholder="email@example.com" className={inputClass} />
+                {errors.contact_email && <p className="text-xs text-destructive mt-0.5">{errors.contact_email.message}</p>}
+              </div>
+              <div>
+                <Label className={labelClass}>WhatsApp</Label>
+                <Input {...register("contact_whatsapp")} placeholder="+86..." className={inputClass} />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className={sectionClass}>
-          <div className={sectionTitleClass}>
-            <FileText className="h-4 w-4 text-primary" />
-            Notas
+          <div>
+            <div className={sectionLabel}>
+              <Package className="h-3 w-3" />
+              Condiciones comerciales
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <Label className={labelClass}>Terminos de pago</Label>
+                <Input {...register("payment_terms")} placeholder="30/70, T/T..." className={inputClass} />
+              </div>
+              <div>
+                <Label className={labelClass}>MOQ</Label>
+                <Input type="number" {...register("min_order_qty", { valueAsNumber: true })} placeholder="100" className={inputClass} />
+                {errors.min_order_qty && <p className="text-xs text-destructive mt-0.5">{errors.min_order_qty.message}</p>}
+              </div>
+              <div>
+                <Label className={labelClass}>Lead time (dias)</Label>
+                <Input type="number" {...register("lead_time_days", { valueAsNumber: true })} placeholder="30" className={inputClass} />
+                {errors.lead_time_days && <p className="text-xs text-destructive mt-0.5">{errors.lead_time_days.message}</p>}
+              </div>
+            </div>
           </div>
-          <Textarea {...register("notes")} rows={4} className={inputClass} />
-        </div>
 
-        <div className="flex items-center gap-3 justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push(`/suppliers/${params.id}`)}
-          >
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={saving}>
-            {saving ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            {saving ? "Guardando..." : "Guardar Cambios"}
-          </Button>
-        </div>
-      </form>
-    </div>
+          <div>
+            <div className={sectionLabel}>
+              <FileText className="h-3 w-3" />
+              Notas
+            </div>
+            <Textarea {...register("notes")} placeholder="Notas adicionales..." rows={2} className="bg-muted/50 border-border text-sm" />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-border sticky bottom-0 bg-card">
+            <button type="button"
+              onClick={function() { router.push("/suppliers/" + params.id); }}
+              className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              Cancelar
+            </button>
+            <button type="submit" disabled={saving}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {saving ? "Guardando..." : "Guardar cambios"}
+            </button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
