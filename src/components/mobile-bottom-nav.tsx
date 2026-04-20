@@ -10,30 +10,28 @@ import {
   Warehouse,
   TrendingUp,
   Calculator,
-  Settings,
   Bell,
 } from "lucide-react";
 
-const navItems = [
+var navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
   { href: "/products", icon: Package, label: "Productos" },
   { href: "/suppliers", icon: Factory, label: "Proveed." },
   { href: "/inventory", icon: Warehouse, label: "Inventario" },
   { href: "/sales", icon: TrendingUp, label: "Ventas" },
   { href: "/calculator", icon: Calculator, label: "Calc." },
-  { href: "/settings", icon: Settings, label: "Config." },
 ];
 
 export function MobileBottomNav() {
-  const pathname = usePathname();
-  const [notifCount, setNotifCount] = useState(0);
+  var pathname = usePathname();
+  var [notifCount, setNotifCount] = useState(0);
 
-  const fetchNotifications = useCallback(async () => {
+  var fetchNotifications = useCallback(async function() {
     try {
-      const res = await fetch("/api/notifications");
+      var res = await fetch("/api/notifications");
       if (res.ok) {
-        const data = await res.json();
-        const total =
+        var data = await res.json();
+        var total =
           (data.notifications?.critical?.length || 0) +
           (data.notifications?.warning?.length || 0) +
           (data.notifications?.info?.length || 0);
@@ -44,13 +42,13 @@ export function MobileBottomNav() {
     }
   }, []);
 
-  useEffect(() => {
+  useEffect(function() {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000);
-    return () => clearInterval(interval);
+    var interval = setInterval(fetchNotifications, 60000);
+    return function() { clearInterval(interval); };
   }, [fetchNotifications]);
 
-  const isActive = (href: string) => {
+  var isActive = function(href: string) {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   };
@@ -58,31 +56,30 @@ export function MobileBottomNav() {
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border px-1 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
       <div className="flex justify-around">
-        {navItems.map((item) => {
-          const active = isActive(item.href);
-          const showBadge = item.href === "/inventory" && notifCount > 0;
+        {navItems.map(function(item) {
+          var active = isActive(item.href);
+          var showBadge = item.href === "/inventory" && notifCount > 0;
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`
-                relative flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-xl
-                transition-all duration-200 min-w-0 flex-1
-                ${active
+              className={
+                "relative flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-xl transition-all duration-200 min-w-0 flex-1 " +
+                (active
                   ? "text-primary bg-primary/8"
-                  : "text-muted-foreground hover:text-foreground"
-                }
-              `}
+                  : "text-muted-foreground hover:text-foreground")
+              }
             >
               {active && (
                 <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-6 h-[2.5px] rounded-full bg-primary animate-scale-in" />
               )}
               <div className="relative">
                 <item.icon
-                  className={`w-4 h-4 transition-all duration-200 ${
-                    active ? "text-primary scale-110" : ""
-                  }`}
+                  className={
+                    "w-4 h-4 transition-all duration-200 " +
+                    (active ? "text-primary scale-110" : "")
+                  }
                 />
                 {showBadge && (
                   <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-red-500 text-white text-[8px] font-bold leading-none px-0.5 animate-scale-in">
@@ -91,9 +88,10 @@ export function MobileBottomNav() {
                 )}
               </div>
               <span
-                className={`text-[9px] font-medium truncate transition-all duration-200 ${
-                  active ? "text-primary font-semibold" : ""
-                }`}
+                className={
+                  "text-[9px] font-medium truncate transition-all duration-200 " +
+                  (active ? "text-primary font-semibold" : "")
+                }
               >
                 {item.label}
               </span>

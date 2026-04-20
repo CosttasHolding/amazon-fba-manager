@@ -10,13 +10,12 @@ import {
   Warehouse,
   TrendingUp,
   Calculator,
-  Settings,
   LogOut,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
 
-const navItems = [
+var navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/products", icon: Package, label: "Productos" },
   { href: "/suppliers", icon: Factory, label: "Proveedores" },
@@ -25,40 +24,36 @@ const navItems = [
   { href: "/calculator", icon: Calculator, label: "Calculadora" },
 ];
 
-const bottomNavItems = [
-  { href: "/settings", icon: Settings, label: "Configuración" },
-];
-
 interface SidebarProps {
   userEmail?: string;
   userName?: string;
 }
 
 export function Sidebar({ userEmail, userName }: SidebarProps) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [loggingOut, setLoggingOut] = useState(false);
+  var pathname = usePathname();
+  var router = useRouter();
+  var [loggingOut, setLoggingOut] = useState(false);
 
-  const isActive = (href: string) => {
+  var isActive = function(href: string) {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   };
 
-  const getInitial = () => {
+  var getInitial = function() {
     if (userName) return userName.charAt(0).toUpperCase();
     if (userEmail) return userEmail.charAt(0).toUpperCase();
     return "U";
   };
 
-  const handleLogout = async () => {
+  var handleLogout = async function() {
     setLoggingOut(true);
     try {
-      const supabase = createClient();
+      var supabase = createClient();
       await supabase.auth.signOut();
       router.push("/login");
       router.refresh();
     } catch (error) {
-      console.error("Error al cerrar sesión:", error);
+      console.error("Error al cerrar sesion:", error);
     } finally {
       setLoggingOut(false);
     }
@@ -66,7 +61,6 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
 
   return (
     <aside className="hidden lg:flex w-64 flex-col fixed h-screen bg-card border-r border-border z-40">
-      {/* Logo */}
       <div className="px-5 pt-6 pb-5">
         <div className="flex items-center gap-3">
           <Image
@@ -87,83 +81,39 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
         </div>
       </div>
 
-      {/* Nav Items */}
       <nav className="flex-1 px-3 mt-2 space-y-0.5 overflow-y-auto">
-        {navItems.map((item) => {
-          const active = isActive(item.href);
+        {navItems.map(function(item) {
+          var active = isActive(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`
-                relative flex items-center gap-3 px-3 py-2.5 rounded-xl
-                transition-all duration-200 group
-                ${active
+              className={
+                "relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group " +
+                (active
                   ? "text-primary bg-primary/[0.08]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }
-              `}
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50")
+              }
             >
               {active && (
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary" />
               )}
               <item.icon
-                className={`w-[18px] h-[18px] transition-colors duration-200 ${active
-                    ? "text-primary"
-                    : "text-muted-foreground group-hover:text-foreground"
-                  }`}
-              />
-              <span className="text-sm font-medium font-body">
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
-
-        <div className="my-3 mx-3 border-t border-border" />
-
-        {bottomNavItems.map((item) => {
-          const active = isActive(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`
-                relative flex items-center gap-3 px-3 py-2.5 rounded-xl
-                transition-all duration-200 group
-                ${active
-                  ? "text-primary bg-primary/[0.08]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                className={
+                  "w-[18px] h-[18px] transition-colors duration-200 " +
+                  (active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")
                 }
-              `}
-            >
-              {active && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary" />
-              )}
-              <item.icon
-                className={`w-[18px] h-[18px] transition-colors duration-200 ${active
-                    ? "text-primary"
-                    : "text-muted-foreground group-hover:text-foreground"
-                  }`}
               />
-              <span className="text-sm font-medium font-body">
-                {item.label}
-              </span>
+              <span className="text-sm font-medium font-body">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* User Section + Logout */}
       <div className="px-3 pb-4 pt-2 border-t border-border space-y-1">
-        <Link
-          href="/settings"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/50 transition-colors"
-        >
+        <div className="flex items-center gap-3 px-3 py-2.5">
           <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <span className="text-xs font-bold text-primary font-display">
-              {getInitial()}
-            </span>
+            <span className="text-xs font-bold text-primary font-display">{getInitial()}</span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate font-body">
@@ -173,8 +123,7 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
               {userEmail || ""}
             </p>
           </div>
-        </Link>
-
+        </div>
         <button
           onClick={handleLogout}
           disabled={loggingOut}
@@ -182,7 +131,7 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
         >
           <LogOut className="w-[18px] h-[18px]" />
           <span className="text-sm font-medium font-body">
-            {loggingOut ? "Cerrando..." : "Cerrar sesión"}
+            {loggingOut ? "Cerrando..." : "Cerrar sesion"}
           </span>
         </button>
       </div>
