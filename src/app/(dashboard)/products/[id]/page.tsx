@@ -85,26 +85,30 @@ interface ProductSupplier {
     id: string;
     name: string;
     contact_name: string;
-    email: string;
-    phone: string;
+    contact_email: string;
+    contact_whatsapp: string;
     country: string;
-    platform: string;
+    alibaba_url: string;
+    rating: number;
+    status: string;
   };
 }
 
-const fmt = (v: number) => `$${(v || 0).toFixed(2)}`;
+const fmt = (v: number) => "$" + (v || 0).toFixed(2);
 
-const platformLabels: Record<string, string> = {
-  alibaba: "Alibaba",
-  "1688": "1688",
-  global_sources: "Global Sources",
-};
-
-const platformVariants: Record<string, "warning" | "danger" | "info" | "neutral"> = {
-  alibaba: "warning",
-  "1688": "danger",
-  global_sources: "info",
-};
+function RatingStars({ rating }: { rating: number }) {
+  if (!rating) return <span className="text-xs text-muted-foreground">N/A</span>;
+  return (
+    <div className="flex items-center gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={"h-3 w-3 " + (i < rating ? "text-amber-400 fill-amber-400" : "text-muted-foreground/30")}
+        />
+      ))}
+    </div>
+  );
+}
 
 function DetailSkeleton() {
   return (
@@ -143,10 +147,9 @@ export default function ProductDetailPage() {
 
   const fetchProduct = async () => {
     try {
-      const res = await fetch(`/api/products/${params.id}`);
+      const res = await fetch("/api/products/" + params.id);
       if (!res.ok) throw new Error("Error al cargar producto");
       const data = await res.json();
-      // API now returns flat object (not wrapped in { data })
       const p = data.data ? data.data : data;
       setProduct(p);
     } catch {
@@ -159,7 +162,7 @@ export default function ProductDetailPage() {
 
   const fetchSuppliers = async () => {
     try {
-      const res = await fetch(`/api/products/${params.id}/suppliers`);
+      const res = await fetch("/api/products/" + params.id + "/suppliers");
       if (res.ok) {
         const data = await res.json();
         setSuppliers(Array.isArray(data) ? data : data.data || []);
@@ -172,7 +175,7 @@ export default function ProductDetailPage() {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      const res = await fetch(`/api/products/${params.id}`, {
+      const res = await fetch("/api/products/" + params.id, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Error al eliminar");
@@ -230,6 +233,8 @@ export default function ProductDetailPage() {
         ? "warning"
         : "success";
 
+  const subtitleText = "ASIN: " + (product.asin || "N/A") + " — SKU: " + (product.sku || "N/A") + (product.category ? " — " + product.category : "");
+
   const costBreakdown = [
     { label: "Costo de compra", value: buyCost },
     { label: "Tarifa FBA", value: fbaFee },
@@ -243,7 +248,7 @@ export default function ProductDetailPage() {
       <PageHeader
         badge="PRODUCTO"
         title={product.name || "Sin nombre"}
-        subtitle={`ASIN: ${product.asin || "N/A"} — SKU: ${product.sku || "N/A"}${product.category ? ` — ${product.category}` : ""}`}
+        subtitle={subtitleText}
         breadcrumbs={[
           { label: "Productos", href: "/products" },
           { label: product.name || "Producto" },
@@ -252,7 +257,7 @@ export default function ProductDetailPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <StatusBadge status={product.status} />
           <Link
-            href={`/products/${params.id}/edit`}
+            href={"/products/" + params.id + "/edit"}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
           >
             <Edit className="h-4 w-4" />
@@ -298,7 +303,6 @@ export default function ProductDetailPage() {
         </div>
       </PageHeader>
 
-      {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label="Precio Venta"
@@ -316,7 +320,7 @@ export default function ProductDetailPage() {
         />
         <KpiCard
           label="ROI"
-          value={`${roiValue.toFixed(1)}%`}
+          value={roiValue.toFixed(1) + "%"}
           icon={TrendingUp}
           accentColor={
             roiValue >= 20 ? "green" : roiValue >= 0 ? "amber" : "red"
@@ -333,32 +337,31 @@ export default function ProductDetailPage() {
         />
         <KpiCard
           label="Margen"
-          value={`${marginValue.toFixed(1)}%`}
+          value={marginValue.toFixed(1) + "%"}
           icon={Percent}
           accentColor={marginValue >= 0 ? "green" : "red"}
           animationDelay={225}
         />
       </div>
 
-      {/* Banner de ganancia */}
       <div
-        className={`relative overflow-hidden rounded-2xl border p-5 ${
+        className={"relative overflow-hidden rounded-2xl border p-5 " + (
           profitValue >= 0
             ? "border-emerald-500/20 bg-emerald-500/5"
             : "border-red-500/20 bg-red-500/5"
-        }`}
+        )}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+              className={"w-10 h-10 rounded-xl flex items-center justify-center " + (
                 profitValue >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"
-              }`}
+              )}
             >
               <DollarSign
-                className={`h-5 w-5 ${
+                className={"h-5 w-5 " + (
                   profitValue >= 0 ? "text-emerald-400" : "text-red-400"
-                }`}
+                )}
               />
             </div>
             <span className="text-sm font-medium text-muted-foreground">
@@ -366,9 +369,9 @@ export default function ProductDetailPage() {
             </span>
           </div>
           <span
-            className={`text-2xl font-bold tabular-nums ${
+            className={"text-2xl font-bold tabular-nums " + (
               profitValue >= 0 ? "text-emerald-400" : "text-red-400"
-            }`}
+            )}
           >
             {fmt(profitValue)}
           </span>
@@ -376,7 +379,6 @@ export default function ProductDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Desglose de costos */}
         <div className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center gap-2 mb-5">
             <DollarSign className="h-4 w-4 text-primary" />
@@ -394,17 +396,12 @@ export default function ProductDetailPage() {
               </div>
             ))}
             <div className="border-t border-border pt-3 flex justify-between items-center">
-              <span className="text-sm font-semibold text-foreground">
-                Costo total
-              </span>
-              <span className="text-sm font-bold text-primary tabular-nums">
-                {fmt(totalCost)}
-              </span>
+              <span className="text-sm font-semibold text-foreground">Costo total</span>
+              <span className="text-sm font-bold text-primary tabular-nums">{fmt(totalCost)}</span>
             </div>
           </div>
         </div>
 
-        {/* Inventario */}
         <div className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center gap-2 mb-5">
             <Box className="h-4 w-4 text-primary" />
@@ -416,13 +413,13 @@ export default function ProductDetailPage() {
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Stock actual</span>
               <span
-                className={`text-sm font-bold tabular-nums ${
+                className={"text-sm font-bold tabular-nums " + (
                   stockVariant === "danger"
                     ? "text-red-400"
                     : stockVariant === "warning"
                       ? "text-yellow-400"
                       : "text-emerald-400"
-                }`}
+                )}
               >
                 {product.current_stock || 0} uds
               </span>
@@ -461,7 +458,6 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {/* Notas */}
       {product.notes && (
         <div className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center gap-2 mb-3">
@@ -475,7 +471,6 @@ export default function ProductDetailPage() {
         </div>
       )}
 
-      {/* Proveedores vinculados */}
       <DataTableWrapper
         title="Proveedores Vinculados"
         actions={
@@ -500,18 +495,17 @@ export default function ProductDetailPage() {
           </div>
         ) : (
           <div>
-            {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
                     <th className={tableHeaderClass}>Proveedor</th>
-                    <th className={tableHeaderClass}>Plataforma</th>
                     <th className={tableHeaderClass}>País</th>
-                    <th className={`${tableHeaderClass} text-right`}>Costo unit.</th>
-                    <th className={`${tableHeaderClass} text-right`}>MOQ</th>
-                    <th className={`${tableHeaderClass} text-right`}>Lead time</th>
-                    <th className={`${tableHeaderClass} text-center`}>Principal</th>
+                    <th className={tableHeaderClass}>Rating</th>
+                    <th className={tableHeaderClass + " text-right"}>Costo unit.</th>
+                    <th className={tableHeaderClass + " text-right"}>MOQ</th>
+                    <th className={tableHeaderClass + " text-right"}>Lead time</th>
+                    <th className={tableHeaderClass + " text-center"}>Principal</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -519,7 +513,7 @@ export default function ProductDetailPage() {
                     <tr key={ps.id} className={tableRowClass}>
                       <td className={tableCellClass}>
                         <Link
-                          href={`/suppliers/${ps.suppliers.id}`}
+                          href={"/suppliers/" + ps.suppliers.id}
                           className="text-sm font-medium text-foreground hover:text-primary transition-colors"
                         >
                           {ps.suppliers.name}
@@ -530,25 +524,22 @@ export default function ProductDetailPage() {
                           </p>
                         )}
                       </td>
-                      <td className={tableCellClass}>
-                        <StatusBadge
-                          status={platformLabels[ps.suppliers.platform] || ps.suppliers.platform || "N/A"}
-                          variant={platformVariants[ps.suppliers.platform] || "neutral"}
-                        />
-                      </td>
-                      <td className={`${tableCellClass} text-muted-foreground`}>
+                      <td className={tableCellClass + " text-muted-foreground"}>
                         {ps.suppliers.country || "N/A"}
                       </td>
-                      <td className={`${tableCellClass} text-right font-medium text-foreground tabular-nums`}>
+                      <td className={tableCellClass}>
+                        <RatingStars rating={ps.suppliers.rating} />
+                      </td>
+                      <td className={tableCellClass + " text-right font-medium text-foreground tabular-nums"}>
                         {fmt(ps.unit_cost)}
                       </td>
-                      <td className={`${tableCellClass} text-right text-muted-foreground tabular-nums`}>
+                      <td className={tableCellClass + " text-right text-muted-foreground tabular-nums"}>
                         {ps.moq || "N/A"}
                       </td>
-                      <td className={`${tableCellClass} text-right text-muted-foreground tabular-nums`}>
-                        {ps.lead_time_days ? `${ps.lead_time_days}d` : "N/A"}
+                      <td className={tableCellClass + " text-right text-muted-foreground tabular-nums"}>
+                        {ps.lead_time_days ? ps.lead_time_days + "d" : "N/A"}
                       </td>
-                      <td className={`${tableCellClass} text-center`}>
+                      <td className={tableCellClass + " text-center"}>
                         {ps.is_primary && (
                           <Star className="h-4 w-4 text-yellow-500 mx-auto fill-yellow-500" />
                         )}
@@ -559,7 +550,6 @@ export default function ProductDetailPage() {
               </table>
             </div>
 
-            {/* Mobile cards */}
             <div className="md:hidden space-y-3 p-4">
               {suppliers.map((ps) => (
                 <div
@@ -568,7 +558,7 @@ export default function ProductDetailPage() {
                 >
                   <div className="flex items-center justify-between">
                     <Link
-                      href={`/suppliers/${ps.suppliers.id}`}
+                      href={"/suppliers/" + ps.suppliers.id}
                       className="text-sm font-medium text-foreground hover:text-primary transition-colors"
                     >
                       {ps.suppliers.name}
@@ -577,10 +567,7 @@ export default function ProductDetailPage() {
                       {ps.is_primary && (
                         <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                       )}
-                      <StatusBadge
-                        status={platformLabels[ps.suppliers.platform] || ps.suppliers.platform || "N/A"}
-                        variant={platformVariants[ps.suppliers.platform] || "neutral"}
-                      />
+                      <RatingStars rating={ps.suppliers.rating} />
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-xs">
@@ -597,10 +584,15 @@ export default function ProductDetailPage() {
                     <div>
                       <span className="text-muted-foreground">Lead time</span>
                       <p className="font-medium text-foreground">
-                        {ps.lead_time_days ? `${ps.lead_time_days} días` : "N/A"}
+                        {ps.lead_time_days ? ps.lead_time_days + " días" : "N/A"}
                       </p>
                     </div>
                   </div>
+                  {ps.suppliers.country && (
+                    <p className="text-xs text-muted-foreground">
+                      País: {ps.suppliers.country}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -608,7 +600,6 @@ export default function ProductDetailPage() {
         )}
       </DataTableWrapper>
 
-      {/* Fechas */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-muted-foreground/60 px-1">
         <span>
           Creado: {product.created_at ? new Date(product.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }) : "N/A"}

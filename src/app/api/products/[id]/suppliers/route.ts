@@ -1,4 +1,4 @@
-﻿import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -40,21 +40,28 @@ export async function GET(
           id,
           name,
           contact_name,
-          email,
-          phone,
+          contact_email,
+          contact_whatsapp,
           country,
-          platform
+          alibaba_url,
+          rating,
+          payment_terms,
+          min_order_qty,
+          lead_time_days,
+          status
         )
       `)
       .eq("product_id", params.id)
       .order("is_primary", { ascending: false });
 
     if (error) {
+      console.error("Error fetching product suppliers:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json(data || []);
   } catch (error) {
+    console.error("Product suppliers GET error:", error);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }
