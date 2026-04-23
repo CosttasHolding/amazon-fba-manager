@@ -11,6 +11,7 @@ interface KpiCardProps {
   icon?: LucideIcon;
   trend?: "up" | "down" | "neutral";
   trendValue?: string;
+  customTrend?: React.ReactNode;
   accentColor?: "cyan" | "green" | "amber" | "red" | "purple";
   animationDelay?: number;
   progressBar?: number;
@@ -18,32 +19,32 @@ interface KpiCardProps {
 
 const accentMap = {
   cyan: {
-    iconBg: "bg-gradient-to-br from-cyan-500/20 to-cyan-400/10",
-    iconText: "text-cyan-400",
-    progressBar: "bg-cyan-500",
-    glow: "hover:shadow-[0_0_20px_rgba(6,182,212,0.15)]",
+    iconBg: "bg-gradient-to-br from-blue-500/20 to-blue-400/10 dark:from-cyan-500/20 dark:to-cyan-400/10",
+    iconText: "text-blue-600 dark:text-cyan-400",
+    progressBar: "bg-blue-500 dark:bg-cyan-500",
+    glow: "hover:shadow-[0_0_20px_rgba(37,99,235,0.15)] dark:hover:shadow-[0_0_20px_rgba(6,182,212,0.15)]",
   },
   green: {
-    iconBg: "bg-gradient-to-br from-emerald-500/20 to-emerald-400/10",
-    iconText: "text-emerald-400",
-    progressBar: "bg-emerald-500",
-    glow: "hover:shadow-[0_0_20px_rgba(16,185,129,0.15)]",
+    iconBg: "bg-gradient-to-br from-green-500/20 to-green-400/10 dark:from-emerald-500/20 dark:to-emerald-400/10",
+    iconText: "text-green-600 dark:text-emerald-400",
+    progressBar: "bg-green-500 dark:bg-emerald-500",
+    glow: "hover:shadow-[0_0_20px_rgba(34,197,94,0.15)] dark:hover:shadow-[0_0_20px_rgba(16,185,129,0.15)]",
   },
   amber: {
     iconBg: "bg-gradient-to-br from-amber-500/20 to-amber-400/10",
-    iconText: "text-amber-400",
+    iconText: "text-amber-600 dark:text-amber-400",
     progressBar: "bg-amber-500",
     glow: "hover:shadow-[0_0_20px_rgba(245,158,11,0.15)]",
   },
   red: {
-    iconBg: "bg-gradient-to-br from-rose-500/20 to-rose-400/10",
-    iconText: "text-rose-400",
-    progressBar: "bg-rose-500",
-    glow: "hover:shadow-[0_0_20px_rgba(244,63,94,0.15)]",
+    iconBg: "bg-gradient-to-br from-red-500/20 to-red-400/10 dark:from-rose-500/20 dark:to-rose-400/10",
+    iconText: "text-red-600 dark:text-rose-400",
+    progressBar: "bg-red-500 dark:bg-rose-500",
+    glow: "hover:shadow-[0_0_20px_rgba(239,68,68,0.15)] dark:hover:shadow-[0_0_20px_rgba(244,63,94,0.15)]",
   },
   purple: {
     iconBg: "bg-gradient-to-br from-purple-500/20 to-purple-400/10",
-    iconText: "text-purple-400",
+    iconText: "text-purple-600 dark:text-purple-400",
     progressBar: "bg-purple-500",
     glow: "hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]",
   },
@@ -56,6 +57,7 @@ export function KpiCard({
   icon: Icon,
   trend,
   trendValue,
+  customTrend,
   accentColor = "cyan",
   animationDelay = 0,
   progressBar,
@@ -67,9 +69,9 @@ export function KpiCard({
 
   const trendColor =
     trend === "up"
-      ? "text-emerald-400"
+      ? "text-green-600 dark:text-emerald-400"
       : trend === "down"
-        ? "text-rose-400"
+        ? "text-red-600 dark:text-rose-400"
         : "text-muted-foreground";
 
   return (
@@ -102,7 +104,13 @@ export function KpiCard({
         {value}
       </p>
 
-      {trend && trendValue && (
+      {customTrend && (
+        <div className="mt-1.5 sm:mt-2">
+          {customTrend}
+        </div>
+      )}
+
+      {trend && trendValue && !customTrend && (
         <div className={cn("flex items-center gap-1 sm:gap-1.5 mt-1.5 sm:mt-2", trendColor)}>
           <TrendIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           <span className="text-[10px] sm:text-xs font-medium font-display">{trendValue}</span>
@@ -114,7 +122,7 @@ export function KpiCard({
       )}
 
       {typeof progressBar === "number" && (
-        <div className="mt-3 sm:mt-4 h-1 rounded-full bg-white/[0.06] overflow-hidden">
+        <div className="mt-3 sm:mt-4 h-1 rounded-full bg-black/[0.06] dark:bg-white/[0.06] overflow-hidden">
           <div
             className={cn(
               "h-full rounded-full transition-all duration-1000 ease-out",

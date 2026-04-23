@@ -14,8 +14,10 @@ import { ProductFormModal } from "@/components/product-form-modal";
 import { ExportButton } from "@/components/ui/export-button";
 import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { exportProductsExcel } from "@/lib/export";
 import { useProducts } from "@/hooks/use-data";
+import { ProductWithInventory } from "@/types";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -61,7 +63,7 @@ export default function ProductsPage() {
   const [showNewModal, setShowNewModal] = useState(false);
   const [sortValue, setSortValue] = useState("newest");
 
-  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({
     status: "",
     category: "",
     marketplace: "",
@@ -72,7 +74,7 @@ export default function ProductsPage() {
   });
 
   const categories = useMemo(() => {
-    const cats = [...new Set(products.map((p: any) => p.category).filter(Boolean))] as string[];
+    const cats = [...new Set(products.map((p: ProductWithInventory) => p.category).filter(Boolean))] as string[];
     return cats.sort();
   }, [products]);
 
@@ -117,7 +119,7 @@ export default function ProductsPage() {
     },
   ], [categories]);
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string) => {
     setFilterValues((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
@@ -273,6 +275,7 @@ export default function ProductsPage() {
       <div className="relative max-w-sm mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
+          aria-label="Buscar productos"
           placeholder="Buscar por nombre, SKU o ASIN..."
           value={search}
           onChange={(e) => {
@@ -286,9 +289,12 @@ export default function ProductsPage() {
       {/* Mobile cards */}
       <div className="lg:hidden space-y-3">
         {filtered.length === 0 ? (
-          <p className="text-center py-12 text-muted-foreground">
-            {search || Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay productos"}
-          </p>
+          <EmptyState
+            icon={Package}
+            title={search || Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay productos"}
+            subtitle={search || Object.values(filterValues).some(Boolean) ? "Intenta con otros filtros" : "Agrega tu primer producto para empezar"}
+            action={!search && !Object.values(filterValues).some(Boolean) ? { label: "Crear producto", onClick: () => setShowNewModal(true) } : undefined}
+          />
         ) : (
           paginated.map((product) => (
             <div
@@ -330,19 +336,12 @@ export default function ProductsPage() {
       <div className="hidden lg:block">
         <DataTableWrapper>
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-2">
-              <p className="text-muted-foreground">
-                {search || Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay productos aun"}
-              </p>
-              {!search && !Object.values(filterValues).some(Boolean) && (
-                <button
-                  onClick={() => setShowNewModal(true)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground transition-all"
-                >
-                  Crear primero
-                </button>
-              )}
-            </div>
+            <EmptyState
+              icon={Package}
+              title={search || Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay productos"}
+              subtitle={search || Object.values(filterValues).some(Boolean) ? "Intenta con otros filtros" : "Agrega tu primer producto para empezar"}
+              action={!search && !Object.values(filterValues).some(Boolean) ? { label: "Crear producto", onClick: () => setShowNewModal(true) } : undefined}
+            />
           ) : (
             <table className="w-full">
               <thead>

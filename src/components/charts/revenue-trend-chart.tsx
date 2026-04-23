@@ -21,13 +21,19 @@ interface RevenueTrendChartProps {
   data: RevenueTrendPoint[];
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+interface TooltipPayload {
+  name: string;
+  value: number;
+  color: string;
+}
+
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: TooltipPayload[]; label?: string }) {
   if (!active || !payload || !payload.length) return null;
 
   return (
     <div className="rounded-xl border border-border bg-card p-3 shadow-lg">
       <p className="text-xs font-medium text-muted-foreground mb-2">{label}</p>
-      {payload.map((entry: any, index: number) => (
+      {payload.map((entry, index) => (
         <div key={index} className="flex items-center gap-2 text-sm">
           <span
             className="w-2 h-2 rounded-full"

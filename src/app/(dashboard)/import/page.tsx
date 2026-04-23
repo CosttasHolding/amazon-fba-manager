@@ -24,7 +24,7 @@ interface PreviewRow {
   row: number;
   valid: boolean;
   errors: string[];
-  data: Record<string, any>;
+  data: Record<string, string | number | undefined>;
 }
 
 interface PreviewResult {
@@ -43,7 +43,7 @@ interface ImportResult {
   invalidCount: number;
   insertedCount: number;
   insertErrors: string[];
-  invalidRows: { row: number; errors: string[]; data: Record<string, any> }[];
+  invalidRows: { row: number; errors: string[]; data: Record<string, string | number | undefined> }[];
 }
 
 const FIELD_LABELS: Record<string, string> = {

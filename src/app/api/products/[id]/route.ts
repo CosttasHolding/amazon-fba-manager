@@ -22,22 +22,23 @@ export async function GET(
 
     if (error) throw error;
 
-    var uc = data.unit_cost ?? 0;
-    var sp = data.sale_price ?? 0;
-    var ff = data.fba_fee ?? 0;
-    var rf = data.referral_fee ?? 0;
-    var sc = data.shipping_cost ?? 0;
-    var sf = data.storage_fee_monthly ?? 0;
-    var pc = data.prep_cost ?? 0;
-    var tx = data.taxes ?? 0;
-    var of2 = data.other_fees ?? 0;
-    var totalCost = uc + sc + pc + tx;
-    var totalFees = ff + rf + sf + of2;
-    var profitVal = sp - totalCost - totalFees;
-    var roiVal = totalCost > 0 ? (profitVal / totalCost) * 100 : 0;
-    var marginVal = sp > 0 ? (profitVal / sp) * 100 : 0;
+    const uc = data.unit_cost ?? 0;
+    const sp = data.sale_price ?? 0;
+    const ff = data.fba_fee ?? 0;
+    const rf = data.referral_fee ?? 0;
+    const sc = data.shipping_cost ?? 0;
+    const sf = data.storage_fee_monthly ?? 0;
+    const pc = data.prep_cost ?? 0;
+    const tx = data.taxes ?? 0;
+    const of2 = data.other_fees ?? 0;
+    const totalCost = uc + sc + pc + tx;
+    const totalFees = ff + rf + sf + of2;
+    const profitVal = sp - totalCost - totalFees;
+    const roiVal = totalCost > 0 ? (profitVal / totalCost) * 100 : 0;
+    const marginVal = sp > 0 ? (profitVal / sp) * 100 : 0;
 
-    var enriched = Object.assign({}, data, {
+    const enriched = {
+      ...data,
       buy_cost: uc,
       sell_price: sp,
       unit_cost: uc,
@@ -58,11 +59,12 @@ export async function GET(
       profit: profitVal,
       roi: roiVal,
       margin: marginVal,
-    });
+    };
 
     return NextResponse.json(enriched);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 404 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error desconocido";
+    return NextResponse.json({ error: message }, { status: 404 });
   }
 }
 
@@ -80,24 +82,26 @@ export async function PUT(
 
     const body = await req.json();
 
-    var dbData: Record<string, any> = {
+    const dbData: Record<string, unknown> = {
       name: body.name,
       sku: body.sku,
       asin: body.asin || null,
       category: body.category || null,
       status: body.status || "active",
       marketplace: body.marketplace || "US",
-      unit_cost: body.unitCost ?? body.unit_cost ?? 0,
-      sale_price: body.salePrice ?? body.sale_price ?? 0,
-      fba_fee: body.fbaFee ?? body.fba_fee ?? 0,
-      referral_fee: body.referralFee ?? body.referral_fee ?? 0,
-      shipping_cost: body.shippingCost ?? body.shipping_cost ?? 0,
-      storage_fee_monthly: body.storageCost ?? body.storage_fee_monthly ?? 0,
-      prep_cost: body.prepCost ?? body.prep_cost ?? 0,
+      unit_cost: body.unitCost ?? 0,
+      sale_price: body.salePrice ?? 0,
+      fba_fee: body.fbaFee ?? 0,
+      referral_fee: body.referralFee ?? 0,
+      shipping_cost: body.shippingCost ?? 0,
+      storage_fee_monthly: body.storageFeeMonthly ?? 0,
+      prep_cost: body.prepCost ?? 0,
       taxes: body.taxes ?? 0,
-      other_fees: body.otherFees ?? body.other_fees ?? 0,
-      weight_kg: body.weight ?? body.weight_kg ?? null,
-      units_purchased: body.unitsPurchased ?? body.units_purchased ?? 0,
+      other_fees: body.otherFees ?? 0,
+      weight_kg: body.weightKg ?? null,
+      min_stock: body.minStock ?? 10,
+      dimensions: body.dimensions || null,
+      image_url: body.imageUrl || null,
       notes: body.notes || null,
     };
 
@@ -111,8 +115,9 @@ export async function PUT(
 
     if (error) throw error;
     return NextResponse.json(data);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 400 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error desconocido";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
 
@@ -136,7 +141,8 @@ export async function DELETE(
 
     if (error) throw error;
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error desconocido";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

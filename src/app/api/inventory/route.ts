@@ -1,1 +1,40 @@
-import{NextRequest,NextResponse}from'next/server';import{createClient}from'@/lib/supabase/server';export async function GET(req:NextRequest){try{const supabase=await createClient();const{data:{user}}=await supabase.auth.getUser();if(!user)return NextResponse.json({error:'Unauthorized'},{status:401});const{searchParams}=new URL(req.url);const search=searchParams.get('search')||'';const stockStatus=searchParams.get('stockStatus');const page=parseInt(searchParams.get('page')||'1');const perPage=parseInt(searchParams.get('perPage')||'20');let query=supabase.from('products_with_inventory').select('*',{count:'exact'}).eq('user_id',user.id);if(search)query=query.or(`sku.ilike.%${search}%,name.ilike.%${search}%`);if(stockStatus)query=query.eq('stock_status',stockStatus);const{data,count,error}=await query.range((page-1)*perPage,page*perPage-1);if(error)throw error;return NextResponse.json({data,pagination:{total:count||0,page,perPage,totalPages:Math.ceil((count||0)/perPage)}})}catch(err:any){return NextResponse.json({error:err.message},{status:500})}}
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+
+export async function GET(req: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search") || "";
+    const stockStatus = searchParams.get("stockStatus");
+    const page = parseInt(searchParams.get("page") || "1");
+    const perPage = parseInt(searchParams.get("perPage") || "20");
+
+    let query = supabase
+      .from("products_with_inventory")
+      .select("*", { count: "exact" })
+      .eq("user_id", user.id);
+
+    if (search) query = query.or(`sku.ilike.%${search}%,name.ilike.%${search}%`);
+    if (stockStatus) query = query.eq("stock_status", stockStatus);
+
+    const { data, count, error } = await query.range((page - 1) * perPage, page * perPage - 1);
+    if (error) throw error;
+
+    return NextResponse.json({
+      data,
+      pagination: {
+        total: count || 0,
+        page,
+        perPage,
+        totalPages: Math.ceil((count || 0) / perPage),
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error desconocido";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

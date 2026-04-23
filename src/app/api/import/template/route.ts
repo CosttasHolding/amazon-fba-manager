@@ -87,11 +87,9 @@ export async function GET() {
         'Content-Disposition': 'attachment; filename="template_productos_costtasholding.xlsx"',
       },
     });
-  } catch (err: any) {
-    console.error('Template error:', err);
-    return NextResponse.json(
-      { error: err.message || 'Error al generar template' },
-      { status: 500 }
-    );
+  } catch (err) {
+    console.error("Template error:", err);
+    const message = err instanceof Error ? err.message : "Error al generar template";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

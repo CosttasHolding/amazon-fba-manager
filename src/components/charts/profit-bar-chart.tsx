@@ -22,28 +22,28 @@ interface ProfitBarChartProps {
   data: ProfitDataPoint[];
 }
 
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payload: Record<string, unknown> }[] }) {
   if (!active || !payload || !payload.length) return null;
 
-  const data = payload[0].payload;
+  const d = payload[0].payload as unknown as ProfitDataPoint;
 
   return (
     <div className="rounded-xl border border-border bg-card p-3 shadow-lg max-w-[220px]">
       <p className="text-sm font-medium text-foreground mb-1 truncate">
-        {data.name}
+        {d.name}
       </p>
       <p className="text-xs text-muted-foreground font-mono mb-2">
-        {data.sku}
+        {d.sku}
       </p>
       <div className="space-y-1">
         <div className="flex items-center justify-between gap-3 text-sm">
           <span className="text-muted-foreground">Beneficio:</span>
           <span
             className={`font-display font-semibold ${
-              data.profit >= 0 ? "text-emerald-500" : "text-red-500"
+              d.profit >= 0 ? "text-emerald-500" : "text-red-500"
             }`}
           >
-            ${Number(data.profit).toLocaleString("en-US", {
+            ${Number(d.profit).toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -53,14 +53,14 @@ function CustomTooltip({ active, payload }: any) {
           <span className="text-muted-foreground">ROI:</span>
           <span
             className={`font-display font-semibold ${
-              data.roi >= 20
+              d.roi >= 20
                 ? "text-emerald-500"
-                : data.roi > 0
+                : d.roi > 0
                   ? "text-amber-500"
                   : "text-red-500"
             }`}
           >
-            {Number(data.roi).toFixed(1)}%
+            {Number(d.roi).toFixed(1)}%
           </span>
         </div>
       </div>

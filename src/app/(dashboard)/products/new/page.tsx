@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { productSchema } from "@/validations/product";
+import type { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,9 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Save, Loader2, Package, DollarSign, Info, Users } from "lucide-react";
+import { Save, Loader2, Package, DollarSign, Info, Users, Globe, Weight } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
+import { FeeCalculatorInline } from "@/components/fee-calculator-inline";
+import { calcFBAFee, calcRefFee } from "@/lib/calculations";
 
 const CATEGORIES = [
   "Electronics", "Toys", "Home", "Kitchen", "Health", "Beauty", "Sports", "Books", "Other",
@@ -29,24 +32,16 @@ const STATUSES = [
   { value: "discontinued", label: "Descontinuado" },
 ] as const;
 
-const productSchema = z.object({
-  name: z.string().min(1, "El nombre es requerido"),
-  asin: z.string().optional(),
-  sku: z.string().min(1, "El SKU es requerido"),
-  category: z.enum(["Electronics","Toys","Home","Kitchen","Health","Beauty","Sports","Books","Other"]),
-  status: z.enum(["active", "paused", "discontinued"]).default("active"),
-  unitCost: z.coerce.number().min(0).default(0),
-  salePrice: z.coerce.number().min(0).default(0),
-  fbaFee: z.coerce.number().min(0).default(0),
-  referralFee: z.coerce.number().min(0).default(0),
-  shippingCost: z.coerce.number().min(0).default(0),
-  storageCost: z.coerce.number().min(0).default(0),
-  weight: z.coerce.number().min(0).default(0),
-  dimensions: z.string().optional(),
-  notes: z.string().optional(),
-  imageUrl: z.string().optional(),
-  minStock: z.coerce.number().min(0).default(10),
-});
+const MARKETPLACES = [
+  { value: "US", label: "US" },
+  { value: "MX", label: "MX" },
+  { value: "CA", label: "CA" },
+  { value: "UK", label: "UK" },
+  { value: "DE", label: "DE" },
+  { value: "FR", label: "FR" },
+  { value: "IT", label: "IT" },
+  { value: "ES", label: "ES" },
+] as const;
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -57,10 +52,11 @@ interface Supplier {
   country: string;
 }
 
-const sectionClass = "rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-4";
-const sectionTitleClass = "flex items-center gap-2 text-sm font-semibold text-white/80 uppercase tracking-wider mb-4";
-const labelClass = "text-sm text-white/50";
-const errorClass = "text-xs text-red-400 mt-1";
+const sectionClass = "rounded-2xl border border-border bg-card p-6 space-y-4";
+const sectionTitleClass = "flex items-center gap-2 text-sm font-semibold text-foreground/80 uppercase tracking-wider mb-4";
+const labelClass = "text-sm text-muted-foreground";
+const errorClass = "text-xs text-destructive mt-1";
+const inputClass = "bg-background border-border";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -85,51 +81,74 @@ export default function NewProductPage() {
     defaultValues: {
       status: "active",
       category: "Other",
+      marketplace: "US",
       unitCost: 0,
       salePrice: 0,
       fbaFee: 0,
       referralFee: 0,
       shippingCost: 0,
-      storageCost: 0,
-      weight: 0,
+      storageFeeMonthly: 0,
+      prepCost: 0,
+      taxes: 0,
+      otherFees: 0,
+      weightKg: null,
       minStock: 10,
     },
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const watched = watch();
+
+  // Auto-calculate FBA fee when weight changes
   useEffect(() => {
+    const w = watched.weightKg;
+    if (w && w > 0) {
+      const fee = calcFBAFee(w);
+      setValue("fbaFee", Number(fee.toFixed(2)));
+    }
+  }, [watched.weightKg, setValue]);
+
+  // Auto-calculate referral fee when salePrice changes
+  useEffect(() => {
+    const sp = watched.salePrice;
+    if (sp && sp > 0) {
+      const fee = calcRefFee(sp);
+      setValue("referralFee", Number(fee.toFixed(2)));
+    }
+  }, [watched.salePrice, setValue]);
+
+  useEffect(() => {
+    const fetchDefaults = async () => {
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.default_fba_fee) setValue("fbaFee", Number(data.default_fba_fee));
+          if (data.default_referral_fee) setValue("referralFee", Number(data.default_referral_fee));
+          if (data.default_shipping_cost) setValue("shippingCost", Number(data.default_shipping_cost));
+          if (data.default_storage_cost) setValue("storageFeeMonthly", Number(data.default_storage_cost));
+        }
+      } catch (error) {
+        console.error("Error loading defaults:", error);
+      } finally {
+        setLoadingDefaults(false);
+      }
+    };
+
+    const fetchSuppliers = async () => {
+      try {
+        const res = await fetch("/api/suppliers");
+        if (res.ok) {
+          const data = await res.json();
+          setSuppliers(data.data || data || []);
+        }
+      } catch (error) {
+        console.error("Error loading suppliers:", error);
+      }
+    };
+
     fetchSuppliers();
     fetchDefaults();
-  }, []);
-
-  const fetchDefaults = async () => {
-    try {
-      const res = await fetch("/api/settings");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.default_fba_fee) setValue("fbaFee", Number(data.default_fba_fee));
-        if (data.default_referral_fee) setValue("referralFee", Number(data.default_referral_fee));
-        if (data.default_shipping_cost) setValue("shippingCost", Number(data.default_shipping_cost));
-        if (data.default_storage_cost) setValue("storageCost", Number(data.default_storage_cost));
-      }
-    } catch (error) {
-      console.error("Error loading defaults:", error);
-    } finally {
-      setLoadingDefaults(false);
-    }
-  };
-
-  const fetchSuppliers = async () => {
-    try {
-      const res = await fetch("/api/suppliers");
-      if (res.ok) {
-        const data = await res.json();
-        setSuppliers(data.data || data || []);
-      }
-    } catch (error) {
-      console.error("Error loading suppliers:", error);
-    }
-  };
+  }, [setValue]);
 
   const onSubmit = async (data: ProductFormData) => {
     setSaving(true);
@@ -178,6 +197,7 @@ export default function NewProductPage() {
 
   const status = watch("status");
   const category = watch("category");
+  const marketplace = watch("marketplace");
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -195,28 +215,28 @@ export default function NewProductPage() {
         {/* Info basica */}
         <div className={sectionClass}>
           <div className={sectionTitleClass}>
-            <Package className="h-4 w-4 text-cyan-400" />
+            <Package className="h-4 w-4 text-primary" />
             Informacion basica
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <Label className={labelClass}>Nombre del producto *</Label>
-              <Input {...register("name")} placeholder="Ej: Silicone Kitchen Utensil Set" className="bg-white/[0.04] border-white/[0.08]" />
+              <Input {...register("name")} placeholder="Ej: Silicone Kitchen Utensil Set" className={inputClass} />
               {errors.name && <p className={errorClass}>{errors.name.message}</p>}
             </div>
             <div>
               <Label className={labelClass}>ASIN</Label>
-              <Input {...register("asin")} placeholder="B08XXXXXX" className="bg-white/[0.04] border-white/[0.08]" />
+              <Input {...register("asin")} placeholder="B08XXXXXX" className={inputClass} />
             </div>
             <div>
               <Label className={labelClass}>SKU *</Label>
-              <Input {...register("sku")} placeholder="SKU-001" className="bg-white/[0.04] border-white/[0.08]" />
+              <Input {...register("sku")} placeholder="SKU-001" className={inputClass} />
               {errors.sku && <p className={errorClass}>{errors.sku.message}</p>}
             </div>
             <div>
               <Label className={labelClass}>Categoria *</Label>
-              <Select value={category} onValueChange={(v) => setValue("category", v as ProductFormData["category"])}>
-                <SelectTrigger className="bg-white/[0.04] border-white/[0.08]"><SelectValue /></SelectTrigger>
+              <Select value={category || "Other"} onValueChange={(v) => setValue("category", v as ProductFormData["category"])}>
+                <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {CATEGORIES.map((cat) => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
@@ -225,9 +245,20 @@ export default function NewProductPage() {
               </Select>
             </div>
             <div>
+              <Label className={labelClass}>Marketplace *</Label>
+              <Select value={marketplace || "US"} onValueChange={(v) => setValue("marketplace", v as ProductFormData["marketplace"])}>
+                <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {MARKETPLACES.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label className={labelClass}>Estado</Label>
               <Select value={status} onValueChange={(v) => setValue("status", v as ProductFormData["status"])}>
-                <SelectTrigger className="bg-white/[0.04] border-white/[0.08]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {STATUSES.map((s) => (
                     <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
@@ -235,59 +266,86 @@ export default function NewProductPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label className={labelClass}>
+                <span className="flex items-center gap-1"><Weight className="h-3 w-3" /> Peso (kg)</span>
+              </Label>
+              <Input type="number" step="0.01" {...register("weightKg", { valueAsNumber: true })} placeholder="0.00" className={inputClass} />
+              <p className="text-[10px] text-muted-foreground mt-1">El FBA fee se calcula automaticamente segun el peso</p>
+            </div>
           </div>
         </div>
 
         {/* Costos */}
         <div className={sectionClass}>
           <div className={sectionTitleClass}>
-            <DollarSign className="h-4 w-4 text-cyan-400" />
+            <DollarSign className="h-4 w-4 text-primary" />
             Costos y precios
-            {loadingDefaults && <Loader2 className="h-3 w-3 animate-spin text-white/30" />}
+            {loadingDefaults && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <Label className={labelClass}>Costo compra ($) *</Label>
-              <Input type="number" step="0.01" {...register("unitCost")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input type="number" step="0.01" {...register("unitCost", { valueAsNumber: true })} className={inputClass} />
             </div>
             <div>
               <Label className={labelClass}>Precio venta ($) *</Label>
-              <Input type="number" step="0.01" {...register("salePrice")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input type="number" step="0.01" {...register("salePrice", { valueAsNumber: true })} className={inputClass} />
+              <p className="text-[10px] text-muted-foreground mt-1">El referral fee (15%) se calcula automaticamente</p>
             </div>
             <div>
               <Label className={labelClass}>Tarifa FBA ($)</Label>
-              <Input type="number" step="0.01" {...register("fbaFee")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input type="number" step="0.01" {...register("fbaFee", { valueAsNumber: true })} className={inputClass} />
             </div>
             <div>
               <Label className={labelClass}>Tarifa referral ($)</Label>
-              <Input type="number" step="0.01" {...register("referralFee")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input type="number" step="0.01" {...register("referralFee", { valueAsNumber: true })} className={inputClass} />
             </div>
             <div>
               <Label className={labelClass}>Costo envio ($)</Label>
-              <Input type="number" step="0.01" {...register("shippingCost")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input type="number" step="0.01" {...register("shippingCost", { valueAsNumber: true })} className={inputClass} />
             </div>
             <div>
-              <Label className={labelClass}>Almacenamiento ($)</Label>
-              <Input type="number" step="0.01" {...register("storageCost")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Label className={labelClass}>Almacenamiento/mes ($)</Label>
+              <Input type="number" step="0.01" {...register("storageFeeMonthly", { valueAsNumber: true })} className={inputClass} />
+            </div>
+            <div>
+              <Label className={labelClass}>Prep ($)</Label>
+              <Input type="number" step="0.01" {...register("prepCost", { valueAsNumber: true })} className={inputClass} />
+            </div>
+            <div>
+              <Label className={labelClass}>Impuestos ($)</Label>
+              <Input type="number" step="0.01" {...register("taxes", { valueAsNumber: true })} className={inputClass} />
+            </div>
+            <div>
+              <Label className={labelClass}>Otros fees ($)</Label>
+              <Input type="number" step="0.01" {...register("otherFees", { valueAsNumber: true })} className={inputClass} />
             </div>
           </div>
-          {!loadingDefaults && (
-            <p className="text-xs text-white/25">
-              Los valores de tarifas se precargaron desde tu configuracion FBA
-            </p>
-          )}
+
+          {/* Calculadora inline */}
+          <FeeCalculatorInline
+            unitCost={watched.unitCost || 0}
+            shippingCost={watched.shippingCost || 0}
+            prepCost={watched.prepCost || 0}
+            taxes={watched.taxes || 0}
+            salePrice={watched.salePrice || 0}
+            weightKg={watched.weightKg || 0}
+            storageFeeMonthly={watched.storageFeeMonthly || 0}
+            otherFees={watched.otherFees || 0}
+          />
         </div>
 
         {/* Proveedor */}
         <div className={sectionClass}>
           <div className={sectionTitleClass}>
-            <Users className="h-4 w-4 text-cyan-400" />
+            <Users className="h-4 w-4 text-primary" />
             Proveedor (opcional)
           </div>
           <div>
             <Label className={labelClass}>Seleccionar proveedor</Label>
             <Select value={selectedSupplier || "none"} onValueChange={setSelectedSupplier}>
-              <SelectTrigger className="bg-white/[0.04] border-white/[0.08]">
+              <SelectTrigger className={inputClass}>
                 <SelectValue placeholder="Sin proveedor" />
               </SelectTrigger>
               <SelectContent>
@@ -301,24 +359,24 @@ export default function NewProductPage() {
             </Select>
           </div>
           {selectedSupplier && selectedSupplier !== "none" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-white/[0.06]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border">
               <div>
                 <Label className={labelClass}>Costo unitario ($)</Label>
                 <Input type="number" step="0.01" value={supplierData.unit_cost}
                   onChange={(e) => setSupplierData((p) => ({ ...p, unit_cost: e.target.value }))}
-                  placeholder="0.00" className="bg-white/[0.04] border-white/[0.08]" />
+                  placeholder="0.00" className={inputClass} />
               </div>
               <div>
                 <Label className={labelClass}>MOQ</Label>
                 <Input type="number" value={supplierData.moq}
                   onChange={(e) => setSupplierData((p) => ({ ...p, moq: e.target.value }))}
-                  placeholder="100" className="bg-white/[0.04] border-white/[0.08]" />
+                  placeholder="100" className={inputClass} />
               </div>
               <div>
                 <Label className={labelClass}>Lead time (dias)</Label>
                 <Input type="number" value={supplierData.lead_time_days}
                   onChange={(e) => setSupplierData((p) => ({ ...p, lead_time_days: e.target.value }))}
-                  placeholder="30" className="bg-white/[0.04] border-white/[0.08]" />
+                  placeholder="30" className={inputClass} />
               </div>
             </div>
           )}
@@ -327,30 +385,26 @@ export default function NewProductPage() {
         {/* Detalles */}
         <div className={sectionClass}>
           <div className={sectionTitleClass}>
-            <Info className="h-4 w-4 text-cyan-400" />
+            <Info className="h-4 w-4 text-primary" />
             Detalles adicionales
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label className={labelClass}>Peso (kg)</Label>
-              <Input type="number" step="0.01" {...register("weight")} className="bg-white/[0.04] border-white/[0.08]" />
-            </div>
-            <div>
               <Label className={labelClass}>Dimensiones</Label>
-              <Input {...register("dimensions")} placeholder="30x20x10 cm" className="bg-white/[0.04] border-white/[0.08]" />
+              <Input {...register("dimensions")} placeholder="30x20x10 cm" className={inputClass} />
             </div>
             <div>
               <Label className={labelClass}>Stock minimo</Label>
-              <Input type="number" {...register("minStock")} className="bg-white/[0.04] border-white/[0.08]" />
+              <Input type="number" {...register("minStock", { valueAsNumber: true })} className={inputClass} />
+            </div>
+            <div>
+              <Label className={labelClass}>URL de imagen</Label>
+              <Input {...register("imageUrl")} placeholder="https://..." className={inputClass} />
             </div>
           </div>
           <div>
-            <Label className={labelClass}>URL de imagen</Label>
-            <Input {...register("imageUrl")} placeholder="https://..." className="bg-white/[0.04] border-white/[0.08]" />
-          </div>
-          <div>
             <Label className={labelClass}>Notas</Label>
-            <Textarea {...register("notes")} placeholder="Notas adicionales..." rows={3} className="bg-white/[0.04] border-white/[0.08]" />
+            <Textarea {...register("notes")} placeholder="Notas adicionales..." rows={3} className={inputClass} />
           </div>
         </div>
 
@@ -359,14 +413,14 @@ export default function NewProductPage() {
           <button
             type="button"
             onClick={() => router.push("/products")}
-            className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white/50 hover:text-white/70 hover:bg-white/10 transition-colors"
+            className="px-5 py-2.5 rounded-xl bg-muted border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Crear producto

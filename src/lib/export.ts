@@ -142,14 +142,14 @@ export function exportToExcelPro(
   URL.revokeObjectURL(url);
 }
 
-export function exportInventoryExcel(data: ExcelRow[]): void {
-  exportToExcelPro(data, "inventario");
+export function exportInventoryExcel(data: unknown[]): void {
+  exportToExcelPro(data as ExcelRow[], "inventario");
 }
 
-export function exportProductsExcel(data: ExcelRow[]): void {
-  exportToExcelPro(data, "productos");
+export function exportProductsExcel(data: unknown[]): void {
+  exportToExcelPro(data as ExcelRow[], "productos");
 }
 
-export function exportSalesExcel(data: ExcelRow[]): void {
-  exportToExcelPro(data, "ventas");
+export function exportSalesExcel(data: unknown[]): void {
+  exportToExcelPro(data as ExcelRow[], "ventas");
 }

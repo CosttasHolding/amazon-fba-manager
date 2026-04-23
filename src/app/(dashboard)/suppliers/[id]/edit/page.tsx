@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,13 +25,13 @@ import { toast } from "sonner";
 import { supplierSchema, SupplierFormData } from "@/validations/supplier";
 import { Supplier } from "@/types";
 
-var COUNTRY_SUGGESTIONS = [
+const COUNTRY_SUGGESTIONS = [
   "China", "India", "Vietnam", "Taiwan", "Corea del Sur",
   "Tailandia", "Bangladesh", "Indonesia", "Estados Unidos",
-  "Mexico", "Colombia", "Argentina", "Brasil", "Otro",
+  "M\u00E9xico", "Colombia", "Argentina", "Brasil", "Otro",
 ];
 
-var STAR_OPTIONS = [
+const STAR_OPTIONS = [
   { value: "1", label: "\u2B50" },
   { value: "2", label: "\u2B50\u2B50" },
   { value: "3", label: "\u2B50\u2B50\u2B50" },
@@ -39,34 +39,29 @@ var STAR_OPTIONS = [
   { value: "5", label: "\u2B50\u2B50\u2B50\u2B50\u2B50" },
 ];
 
-var inputClass = "h-9 bg-muted/50 border-border text-sm";
-var labelClass = "text-xs text-muted-foreground";
-var sectionLabel = "flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wider mb-3 mt-1";
+const inputClass = "h-9 bg-muted/50 border-border text-sm";
+const labelClass = "text-xs text-muted-foreground";
+const sectionLabel = "flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wider mb-3 mt-1";
 
 export default function EditSupplierPage() {
-  var params = useParams();
-  var router = useRouter();
-  var [loading, setLoading] = useState(true);
-  var [saving, setSaving] = useState(false);
-  var [supplierName, setSupplierName] = useState("");
+  const params = useParams();
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [supplierName, setSupplierName] = useState("");
 
-  var form = useForm<SupplierFormData>({
+  const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
   });
 
-  var { register, handleSubmit, setValue, watch, reset, formState: { errors } } = form;
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = form;
 
-  useEffect(function() {
-    if (params.id) fetchSupplier();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
-
-  var fetchSupplier = async function() {
+  const fetchSupplier = useCallback(async () => {
     try {
-      var res = await fetch("/api/suppliers/" + params.id);
+      const res = await fetch("/api/suppliers/" + params.id);
       if (res.ok) {
-        var raw = await res.json();
-        var data: Supplier = raw.data ? raw.data : raw;
+        const raw = await res.json();
+        const data: Supplier = raw.data ? raw.data : raw;
         setSupplierName(data.name || "Proveedor");
         reset({
           name: data.name,
@@ -90,24 +85,28 @@ export default function EditSupplierPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id, reset, router]);
 
-  var onSubmit = async function(data: SupplierFormData) {
+  useEffect(() => {
+    if (params.id) fetchSupplier();
+  }, [params.id, fetchSupplier]);
+
+  const onSubmit = async (data: SupplierFormData) => {
     setSaving(true);
     try {
-      var res = await fetch("/api/suppliers/" + params.id, {
+      const res = await fetch("/api/suppliers/" + params.id, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!res.ok) {
-        var err = await res.json();
+        const err = await res.json();
         throw new Error(err.error || "Error al actualizar");
       }
       toast.success("Proveedor actualizado correctamente");
       router.push("/suppliers/" + params.id);
     } catch (error) {
-      var message = error instanceof Error ? error.message : "Error al actualizar proveedor";
+      const message = error instanceof Error ? error.message : "Error al actualizar proveedor";
       toast.error(message);
     } finally {
       setSaving(false);
@@ -123,7 +122,7 @@ export default function EditSupplierPage() {
   }
 
   return (
-    <Dialog open={true} onOpenChange={function() { router.push("/suppliers/" + params.id); }}>
+    <Dialog open={true} onOpenChange={() => router.push("/suppliers/" + params.id)}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border p-0">
         <DialogHeader className="sticky top-0 z-10 bg-card border-b border-border px-6 py-4">
           <DialogTitle className="text-foreground flex items-center gap-2">
@@ -137,7 +136,7 @@ export default function EditSupplierPage() {
           <div>
             <div className={sectionLabel}>
               <Factory className="h-3 w-3" />
-              Informacion del proveedor
+              Informaci\u00F3n del proveedor
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
@@ -146,22 +145,22 @@ export default function EditSupplierPage() {
                 {errors.name && <p className="text-xs text-destructive mt-0.5">{errors.name.message}</p>}
               </div>
               <div>
-                <Label className={labelClass}>Pais</Label>
+                <Label className={labelClass}>Pa\u00EDs</Label>
                 <Input
                   {...register("country")}
-                  placeholder="Ej: China, Mexico..."
+                  placeholder="Ej: China, M\u00E9xico..."
                   list="country-suggestions-edit"
                   className={inputClass}
                 />
                 <datalist id="country-suggestions-edit">
-                  {COUNTRY_SUGGESTIONS.map(function(c) { return <option key={c} value={c} />; })}
+                  {COUNTRY_SUGGESTIONS.map((c) => <option key={c} value={c} />)}
                 </datalist>
               </div>
               <div>
                 <Label className={labelClass}>Estado</Label>
                 <Select
                   value={watch("status")}
-                  onValueChange={function(v) { setValue("status", v as "active" | "inactive"); }}
+                  onValueChange={(v) => setValue("status", v as "active" | "inactive")}
                 >
                   <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -179,13 +178,11 @@ export default function EditSupplierPage() {
                 <Label className={labelClass}>Rating</Label>
                 <Select
                   value={watch("rating")?.toString() || ""}
-                  onValueChange={function(v) { setValue("rating", v ? parseInt(v) : null); }}
+                  onValueChange={(v) => setValue("rating", v ? parseInt(v) : null)}
                 >
-                  <SelectTrigger className={inputClass}><SelectValue placeholder={"--"} /></SelectTrigger>
+                  <SelectTrigger className={inputClass}><SelectValue placeholder="--" /></SelectTrigger>
                   <SelectContent>
-                    {STAR_OPTIONS.map(function(opt) {
-                      return <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>;
-                    })}
+                    {STAR_OPTIONS.map((opt) => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -221,7 +218,7 @@ export default function EditSupplierPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <Label className={labelClass}>Terminos de pago</Label>
+                <Label className={labelClass}>T\u00E9rminos de pago</Label>
                 <Input {...register("payment_terms")} placeholder="30/70, T/T..." className={inputClass} />
               </div>
               <div>
@@ -230,7 +227,7 @@ export default function EditSupplierPage() {
                 {errors.min_order_qty && <p className="text-xs text-destructive mt-0.5">{errors.min_order_qty.message}</p>}
               </div>
               <div>
-                <Label className={labelClass}>Lead time (dias)</Label>
+                <Label className={labelClass}>Lead time (d\u00EDas)</Label>
                 <Input type="number" {...register("lead_time_days", { valueAsNumber: true })} placeholder="30" className={inputClass} />
                 {errors.lead_time_days && <p className="text-xs text-destructive mt-0.5">{errors.lead_time_days.message}</p>}
               </div>
@@ -247,7 +244,7 @@ export default function EditSupplierPage() {
 
           <div className="flex justify-end gap-2 pt-3 border-t border-border sticky bottom-0 bg-card">
             <button type="button"
-              onClick={function() { router.push("/suppliers/" + params.id); }}
+              onClick={() => router.push("/suppliers/" + params.id)}
               className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               Cancelar
             </button>

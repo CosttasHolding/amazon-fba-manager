@@ -3,6 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
   Package,
@@ -10,17 +12,25 @@ import {
   Warehouse,
   TrendingUp,
   Calculator,
+  FlaskConical,
+  ClipboardList,
   LogOut,
+  Wallet,
+  Ship,
+  RotateCcw,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { useState } from "react";
 
-var navItems = [
+const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/products", icon: Package, label: "Productos" },
+  { href: "/research", icon: FlaskConical, label: "Research" },
   { href: "/suppliers", icon: Factory, label: "Proveedores" },
+  { href: "/orders", icon: ClipboardList, label: "Pedidos" },
+  { href: "/shipments", icon: Ship, label: "Shipments" },
   { href: "/inventory", icon: Warehouse, label: "Inventario" },
   { href: "/sales", icon: TrendingUp, label: "Ventas" },
+  { href: "/returns", icon: RotateCcw, label: "Returns" },
+  { href: "/finances", icon: Wallet, label: "Finanzas" },
   { href: "/calculator", icon: Calculator, label: "Calculadora" },
 ];
 
@@ -30,25 +40,25 @@ interface SidebarProps {
 }
 
 export function Sidebar({ userEmail, userName }: SidebarProps) {
-  var pathname = usePathname();
-  var router = useRouter();
-  var [loggingOut, setLoggingOut] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
 
-  var isActive = function(href: string) {
+  const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   };
 
-  var getInitial = function() {
+  const getInitial = () => {
     if (userName) return userName.charAt(0).toUpperCase();
     if (userEmail) return userEmail.charAt(0).toUpperCase();
     return "U";
   };
 
-  var handleLogout = async function() {
+  const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      var supabase = createClient();
+      const supabase = createClient();
       await supabase.auth.signOut();
       router.push("/login");
       router.refresh();
@@ -82,12 +92,13 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
       </div>
 
       <nav className="flex-1 px-3 mt-2 space-y-0.5 overflow-y-auto">
-        {navItems.map(function(item) {
-          var active = isActive(item.href);
+        {navItems.map((item) => {
+          const active = isActive(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? "page" : undefined}
               className={
                 "relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group " +
                 (active
@@ -127,6 +138,7 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
         <button
           onClick={handleLogout}
           disabled={loggingOut}
+          aria-label="Cerrar sesión"
           className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
         >
           <LogOut className="w-[18px] h-[18px]" />

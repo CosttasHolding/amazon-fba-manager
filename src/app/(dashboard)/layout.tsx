@@ -33,6 +33,12 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-xl focus:font-medium"
+      >
+        Saltar al contenido principal
+      </a>
       <Sidebar userEmail={user.email} userName={userName} />
       <MobileBottomNav />
 
@@ -59,6 +65,7 @@ export default async function DashboardLayout({
             href="/settings"
             className="w-9 h-9 rounded-xl flex items-center justify-center bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
             title="Configuración"
+            aria-label="Configuración"
           >
             <Settings className="w-4 h-4" />
           </Link>
@@ -68,6 +75,7 @@ export default async function DashboardLayout({
               type="submit"
               className="w-9 h-9 rounded-xl flex items-center justify-center bg-muted/50 border border-border text-muted-foreground hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 transition-all duration-200"
               title="Cerrar sesión"
+              aria-label="Cerrar sesión"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -75,7 +83,7 @@ export default async function DashboardLayout({
         </div>
       </header>
 
-      <main className="lg:ml-64 min-h-screen pb-24 lg:pb-0">
+      <main id="main-content" className="lg:ml-64 min-h-screen pb-24 lg:pb-0">
         <TopHeader userEmail={user.email} userName={userName} />
         <div className="p-4 sm:p-6 lg:p-8">
           <ErrorBoundaryWrapper>{children}</ErrorBoundaryWrapper>

@@ -93,6 +93,15 @@ export interface DashboardMetrics {
     out_of_stock_count: number;
     revenue_last_30d: number;
     units_sold_last_30d: number;
+    // Nuevos KPIs profesionales
+    revenue_current_month: number;
+    revenue_last_month: number;
+    revenue_delta_pct: number;
+    units_current_month: number;
+    units_last_month: number;
+    units_delta_pct: number;
+    weighted_avg_roi: number;
+    margin_net_avg: number;
 }
 
 // ============================================
@@ -168,4 +177,77 @@ export interface NotificationsResponse {
   notifications: Notification[];
   unread_count: number;
   total_count: number;
+}
+
+// ============================================
+// Product Research (SPRINT 4)
+// ============================================
+
+export type ResearchStatus = 'idea' | 'validating' | 'approved' | 'rejected' | 'in_progress' | 'launched';
+export type CompetitionLevel = 'low' | 'medium' | 'high';
+
+export interface ProductResearch {
+  id: string;
+  user_id: string;
+  name: string;
+  niche: string | null;
+  asin_reference: string | null;
+  amazon_category: string | null;
+  estimated_monthly_sales: number | null;
+  average_price: number | null;
+  review_count_competitor: number | null;
+  average_rating: number | null;
+  bsr: number | null;
+  competition_level: CompetitionLevel | null;
+  estimated_cogs: number | null;
+  estimated_selling_price: number | null;
+  estimated_roi: number | null;
+  differentiation_notes: string | null;
+  keywords: string[] | null;
+  status: ResearchStatus;
+  priority: number;
+  source: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ============================================
+// Purchase Orders (SPRINT 5)
+// ============================================
+
+export type PoStatus = 'draft' | 'sent' | 'confirmed' | 'in_production' | 'shipped' | 'in_transit' | 'customs' | 'delivered' | 'cancelled';
+export type ShippingMethod = 'air' | 'sea' | 'express';
+
+export interface PurchaseOrder {
+  id: string;
+  user_id: string;
+  supplier_id: string | null;
+  po_number: string | null;
+  product_id: string | null;
+  quantity: number;
+  unit_cost: number;
+  total_cost: number;
+  currency: string;
+  exchange_rate: number;
+  shipping_method: ShippingMethod | null;
+  shipping_cost: number | null;
+  status: PoStatus;
+  order_date: string | null;
+  production_deadline: string | null;
+  ship_date: string | null;
+  estimated_arrival: string | null;
+  actual_arrival: string | null;
+  tracking_number: string | null;
+  forwarder_name: string | null;
+  customs_cost: number | null;
+  prep_center_cost: number | null;
+  amazon_shipment_id: string | null;
+  payment_deposit: number | null;
+  payment_balance: number | null;
+  payment_deposit_date: string | null;
+  payment_balance_date: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 }

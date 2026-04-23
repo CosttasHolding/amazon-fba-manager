@@ -1,1 +1,16 @@
-import{NextRequest,NextResponse}from'next/server';import{calcRefFee,calcFBAFee,calcMetrics}from'@/lib/calculations';export async function POST(req:NextRequest){try{const body=await req.json();const{unitCost,salePrice,weightKg}=body;const referralFee=calcRefFee(salePrice);const fbaFee=calcFBAFee(weightKg||1);const result=calcMetrics(unitCost,0,0,0,salePrice,referralFee,fbaFee,0,0);return NextResponse.json({...result,referralFee,fbaFee})}catch(err:any){return NextResponse.json({error:err.message},{status:400})}}
+import { NextRequest, NextResponse } from "next/server";
+import { calcRefFee, calcFBAFee, calcMetrics } from "@/lib/calculations";
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { unitCost, salePrice, weightKg } = body;
+    const referralFee = calcRefFee(salePrice);
+    const fbaFee = calcFBAFee(weightKg || 1);
+    const result = calcMetrics(unitCost, 0, 0, 0, salePrice, referralFee, fbaFee, 0, 0);
+    return NextResponse.json({ ...result, referralFee, fbaFee });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error desconocido";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}

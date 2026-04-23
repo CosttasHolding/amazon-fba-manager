@@ -19,22 +19,26 @@ export async function GET(req: NextRequest) {
 
     if (error) throw error;
 
-    var enriched = (data || []).map(function(s) {
-      var unitCost = 0;
-      if (s.products) {
-        unitCost = s.products.total_cost || s.products.unit_cost || 0;
-      }
-      var cost = (s.units_sold || 0) * unitCost;
-      var profit = (s.revenue || 0) - (s.amazon_fees || 0) - cost;
-      return Object.assign({}, s, {
+    const enriched = (data || []).map((s) => {
+      const row = s as Record<string, unknown>;
+      const prod = row.products as { total_cost?: number; unit_cost?: number } | null;
+      const unitCost = prod ? (prod.total_cost || prod.unit_cost || 0) : 0;
+      const unitsSold = (row.units_sold as number) || 0;
+      const revenue = (row.revenue as number) || 0;
+      const amazonFees = (row.amazon_fees as number) || 0;
+      const cost = unitsSold * unitCost;
+      const profit = revenue - amazonFees - cost;
+      return {
+        ...row,
         cost: Math.round(cost * 100) / 100,
         profit: Math.round(profit * 100) / 100,
-      });
+      };
     });
 
     return NextResponse.json({ data: enriched });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error desconocido";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -99,7 +103,8 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
 
     return NextResponse.json({ data }, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 400 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error desconocido";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

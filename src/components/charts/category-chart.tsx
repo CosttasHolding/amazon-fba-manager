@@ -29,16 +29,16 @@ const COLORS = [
   "hsl(38, 92%, 50%)",
 ];
 
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payload: Record<string, unknown> }[] }) {
   if (!active || !payload || !payload.length) return null;
-  const data = payload[0].payload;
+  const d = payload[0].payload as unknown as { name: string; value: number; count: number };
 
   return (
     <div className="rounded-xl border border-border bg-card p-3 shadow-lg">
-      <p className="text-xs font-medium text-foreground mb-1">{data.name}</p>
+      <p className="text-xs font-medium text-foreground mb-1">{d.name}</p>
       <p className="text-sm text-muted-foreground">
-        ${Number(data.value).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-        <span className="text-xs ml-1">({data.count} productos)</span>
+        ${Number(d.value).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+        <span className="text-xs ml-1">({d.count} productos)</span>
       </p>
     </div>
   );

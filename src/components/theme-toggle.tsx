@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -20,6 +20,8 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
                 onClick={() => setTheme(isDark ? "light" : "dark")}
                 className="w-9 h-9 rounded-xl flex items-center justify-center bg-card border border-border hover:bg-accent transition-all duration-200"
                 title={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                aria-pressed={isDark}
             >
                 {isDark ? (
                     <Moon className="w-4 h-4 text-indigo-400" />

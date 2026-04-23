@@ -24,17 +24,17 @@ export default function DashboardError({
         </div>
 
         {/* Text */}
-        <h2 className="text-xl font-bold text-white mb-2">
-          Algo salió mal
+        <h2 className="text-xl font-bold text-foreground mb-2">
+          Algo sali\u00F3 mal
         </h2>
-        <p className="text-sm text-white/40 mb-2">
-          Ocurrió un error inesperado al cargar esta página.
+        <p className="text-sm text-muted-foreground mb-2">
+          Ocurri\u00F3 un error inesperado al cargar esta p\u00E1gina.
         </p>
 
         {/* Error detail */}
         {error.message && (
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 mb-6">
-            <p className="text-xs text-white/30 font-mono break-all">
+          <div className="rounded-xl border border-border bg-muted p-3 mb-6">
+            <p className="text-xs text-muted-foreground/60 font-mono break-all">
               {error.message}
             </p>
           </div>
@@ -44,7 +44,7 @@ export default function DashboardError({
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={reset}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-all duration-200"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all duration-200"
           >
             <RefreshCw className="h-4 w-4" />
             Reintentar
@@ -52,7 +52,7 @@ export default function DashboardError({
 
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-white/50 hover:text-white/80 hover:bg-white/10 transition-all duration-200"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-muted border border-border text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-200"
           >
             <Home className="h-4 w-4" />
             Ir al inicio
@@ -61,7 +61,7 @@ export default function DashboardError({
 
         {/* Digest */}
         {error.digest && (
-          <p className="text-[10px] text-white/20 mt-6 font-mono">
+          <p className="text-[10px] text-muted-foreground/40 mt-6 font-mono">
             Error ID: {error.digest}
           </p>
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,45 +31,39 @@ interface SaleFormModalProps {
   onSuccess?: () => void;
 }
 
-var inputClass = "h-9 bg-muted/50 border-border text-sm";
-var labelClass = "text-xs text-muted-foreground";
+const inputClass = "h-9 bg-muted/50 border-border text-sm";
+const labelClass = "text-xs text-muted-foreground";
 
 function getTodayStr() {
-  var d = new Date();
-  var mm = String(d.getMonth() + 1).padStart(2, "0");
-  var dd = String(d.getDate()).padStart(2, "0");
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
   return d.getFullYear() + "-" + mm + "-" + dd;
 }
 
-var fmtMoney = function(v: number) {
+const fmtMoney = (v: number) => {
   return "$" + (v || 0).toFixed(2);
 };
 
 export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalProps) {
-  var [products, setProducts] = useState<ProductOption[]>([]);
-  var [loadingProducts, setLoadingProducts] = useState(false);
-  var [saving, setSaving] = useState(false);
+  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  var [selectedProduct, setSelectedProduct] = useState("");
-  var [saleDate, setSaleDate] = useState(getTodayStr());
-  var [unitsSold, setUnitsSold] = useState("");
-  var [revenue, setRevenue] = useState("");
-  var [amazonFees, setAmazonFees] = useState("");
-  var [orderId, setOrderId] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState("");
+  const [saleDate, setSaleDate] = useState(getTodayStr());
+  const [unitsSold, setUnitsSold] = useState("");
+  const [revenue, setRevenue] = useState("");
+  const [amazonFees, setAmazonFees] = useState("");
+  const [orderId, setOrderId] = useState("");
 
-  useEffect(function() {
-    if (open) {
-      fetchProducts();
-    }
-  }, [open]);
-
-  var fetchProducts = async function() {
+  const fetchProducts = useCallback(async () => {
     setLoadingProducts(true);
     try {
-      var res = await fetch("/api/products");
+      const res = await fetch("/api/products");
       if (res.ok) {
-        var raw = await res.json();
-        var list = raw.data || raw || [];
+        const raw = await res.json();
+        const list = raw.data || raw || [];
         setProducts(list);
       }
     } catch (error) {
@@ -77,41 +71,47 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
     } finally {
       setLoadingProducts(false);
     }
-  };
+  }, []);
 
-  var selectedProductData = products.find(function(p) { return p.id === selectedProduct; });
+  useEffect(() => {
+    if (open) {
+      fetchProducts();
+    }
+  }, [open, fetchProducts]);
 
-  var handleProductChange = function(productId: string) {
+  const selectedProductData = products.find((p) => p.id === selectedProduct);
+
+  const handleProductChange = (productId: string) => {
     setSelectedProduct(productId);
-    var prod = products.find(function(p) { return p.id === productId; });
+    const prod = products.find((p) => p.id === productId);
     if (prod && unitsSold) {
-      var units = parseInt(unitsSold) || 0;
+      const units = parseInt(unitsSold) || 0;
       if (units > 0) {
         setRevenue(String(Math.round(prod.sale_price * units * 100) / 100));
-        var feesPerUnit = (prod.fba_fee || 0) + (prod.referral_fee || 0);
+        const feesPerUnit = (prod.fba_fee || 0) + (prod.referral_fee || 0);
         setAmazonFees(String(Math.round(feesPerUnit * units * 100) / 100));
       }
     }
   };
 
-  var handleUnitsChange = function(value: string) {
+  const handleUnitsChange = (value: string) => {
     setUnitsSold(value);
-    var units = parseInt(value) || 0;
+    const units = parseInt(value) || 0;
     if (selectedProductData && units > 0) {
       setRevenue(String(Math.round(selectedProductData.sale_price * units * 100) / 100));
-      var feesPerUnit = (selectedProductData.fba_fee || 0) + (selectedProductData.referral_fee || 0);
+      const feesPerUnit = (selectedProductData.fba_fee || 0) + (selectedProductData.referral_fee || 0);
       setAmazonFees(String(Math.round(feesPerUnit * units * 100) / 100));
     }
   };
 
-  var revenueNum = parseFloat(revenue) || 0;
-  var feesNum = parseFloat(amazonFees) || 0;
-  var unitsNum = parseInt(unitsSold) || 0;
-  var costPerUnit = selectedProductData ? (selectedProductData.total_cost || selectedProductData.unit_cost || 0) : 0;
-  var totalCost = unitsNum * costPerUnit;
-  var estimatedProfit = revenueNum - feesNum - totalCost;
+  const revenueNum = parseFloat(revenue) || 0;
+  const feesNum = parseFloat(amazonFees) || 0;
+  const unitsNum = parseInt(unitsSold) || 0;
+  const costPerUnit = selectedProductData ? (selectedProductData.total_cost || selectedProductData.unit_cost || 0) : 0;
+  const totalCost = unitsNum * costPerUnit;
+  const estimatedProfit = revenueNum - feesNum - totalCost;
 
-  var resetForm = function() {
+  const resetForm = () => {
     setSelectedProduct("");
     setSaleDate(getTodayStr());
     setUnitsSold("");
@@ -120,7 +120,7 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
     setOrderId("");
   };
 
-  var handleSubmit = async function(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProduct) {
       toast.error("Selecciona un producto");
@@ -137,7 +137,7 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
 
     setSaving(true);
     try {
-      var res = await fetch("/api/sales", {
+      const res = await fetch("/api/sales", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -150,7 +150,7 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
         }),
       });
       if (!res.ok) {
-        var err = await res.json();
+        const err = await res.json();
         throw new Error(err.error || "Error al registrar venta");
       }
       toast.success("Venta registrada correctamente");
@@ -158,7 +158,7 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
       onOpenChange(false);
       if (onSuccess) onSuccess();
     } catch (error) {
-      var message = error instanceof Error ? error.message : "Error al guardar";
+      const message = error instanceof Error ? error.message : "Error al guardar";
       toast.error(message);
     } finally {
       setSaving(false);
@@ -183,13 +183,11 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
                 <SelectValue placeholder={loadingProducts ? "Cargando..." : "Seleccionar producto"} />
               </SelectTrigger>
               <SelectContent>
-                {products.map(function(p) {
-                  return (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name + " (" + p.sku + ")"}
-                    </SelectItem>
-                  );
-                })}
+                {products.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name + " (" + p.sku + ")"}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -198,13 +196,13 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
             <div>
               <Label className={labelClass}>Fecha de venta *</Label>
               <Input type="date" value={saleDate}
-                onChange={function(e) { setSaleDate(e.target.value); }}
+                onChange={(e) => setSaleDate(e.target.value)}
                 className={inputClass} />
             </div>
             <div>
               <Label className={labelClass}>Unidades vendidas *</Label>
               <Input type="number" min="1" value={unitsSold}
-                onChange={function(e) { handleUnitsChange(e.target.value); }}
+                onChange={(e) => handleUnitsChange(e.target.value)}
                 placeholder="0" className={inputClass} />
             </div>
           </div>
@@ -213,7 +211,7 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
             <div>
               <Label className={labelClass}>Revenue total ($)</Label>
               <Input type="number" step="0.01" value={revenue}
-                onChange={function(e) { setRevenue(e.target.value); }}
+                onChange={(e) => setRevenue(e.target.value)}
                 placeholder="0.00" className={inputClass} />
               {selectedProductData && unitsNum > 0 && (
                 <p className="text-[10px] text-muted-foreground/60 mt-0.5">
@@ -224,7 +222,7 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
             <div>
               <Label className={labelClass}>Amazon Fees ($)</Label>
               <Input type="number" step="0.01" value={amazonFees}
-                onChange={function(e) { setAmazonFees(e.target.value); }}
+                onChange={(e) => setAmazonFees(e.target.value)}
                 placeholder="0.00" className={inputClass} />
             </div>
           </div>
@@ -232,7 +230,7 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
           <div>
             <Label className={labelClass}>Order ID (opcional)</Label>
             <Input value={orderId}
-              onChange={function(e) { setOrderId(e.target.value); }}
+              onChange={(e) => setOrderId(e.target.value)}
               placeholder="XXX-XXXXXXX-XXXXXXX" className={inputClass} />
           </div>
 
@@ -240,7 +238,7 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
             <div className={"rounded-xl border p-4 " + (estimatedProfit >= 0 ? "border-emerald-500/20 bg-emerald-500/5" : "border-red-500/20 bg-red-500/5")}>
               <div className="flex items-center gap-2 mb-2">
                 <Calculator className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground uppercase">Estimacion</span>
+                <span className="text-xs font-medium text-muted-foreground uppercase">Estimaci\u00F3n</span>
               </div>
               <div className="grid grid-cols-3 gap-2 text-xs">
                 <div>
@@ -262,7 +260,7 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
           )}
 
           <div className="flex justify-end gap-2 pt-2 border-t border-border">
-            <button type="button" onClick={function() { onOpenChange(false); }}
+            <button type="button" onClick={() => onOpenChange(false)}
               className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               Cancelar
             </button>

@@ -28,6 +28,7 @@ import { SupplierFormModal } from "@/components/supplier-form-modal";
 import { ExportButton } from "@/components/ui/export-button";
 import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -73,7 +74,7 @@ export default function SuppliersPage() {
   const [showNewModal, setShowNewModal] = useState(false);
   const [sortValue, setSortValue] = useState("newest");
 
-  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({
     status: "",
     country: "",
     ratingMin: "",
@@ -151,7 +152,7 @@ export default function SuppliersPage() {
     },
   ], [countries]);
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string) => {
     setFilterValues((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
@@ -303,7 +304,8 @@ export default function SuppliersPage() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar proveedor, contacto, país..."
+          aria-label="Buscar proveedores"
+          placeholder="Buscar proveedor, contacto, pa\u00EDs..."
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -314,26 +316,12 @@ export default function SuppliersPage() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="rounded-2xl border border-border bg-card p-12 text-center">
-          <Factory className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground/70 mb-1">
-            {suppliers.length === 0 ? "No hay proveedores" : "Sin resultados"}
-          </h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            {suppliers.length === 0
-              ? "Agrega tu primer proveedor de Alibaba"
-              : "Intenta cambiar los filtros de búsqueda"}
-          </p>
-          {suppliers.length === 0 && (
-            <button
-              onClick={() => setShowNewModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              Agregar Proveedor
-            </button>
-          )}
-        </div>
+        <EmptyState
+          icon={Factory}
+          title={suppliers.length === 0 ? "No hay proveedores" : "Sin resultados"}
+          subtitle={suppliers.length === 0 ? "Agrega tu primer proveedor de Alibaba" : "Intenta cambiar los filtros de b\u00FAsqueda"}
+          action={suppliers.length === 0 ? { label: "Agregar Proveedor", onClick: () => setShowNewModal(true) } : undefined}
+        />
       )}
 
       {filtered.length > 0 && (

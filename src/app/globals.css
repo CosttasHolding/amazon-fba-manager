@@ -4,40 +4,40 @@
 
 @layer base {
   :root {
-    /* ===== LIGHT THEME ===== */
-    --background: 36 33% 89%;
-    --foreground: 25 15% 12%;
-    --card: 38 28% 96%;
-    --card-foreground: 25 15% 12%;
-    --popover: 38 28% 96%;
-    --popover-foreground: 25 15% 12%;
-    --primary: 192 82% 41%;
+    /* ===== LIGHT THEME — Azul y Blanco ===== */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 217 91% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 35 25% 84%;
-    --secondary-foreground: 25 12% 18%;
-    --muted: 35 25% 84%;
-    --muted-foreground: 25 10% 44%;
-    --accent: 35 25% 84%;
-    --accent-foreground: 25 12% 18%;
-    --destructive: 343 81% 59%;
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 214 32% 91%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 214 32% 91%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 35 20% 79%;
-    --input: 35 20% 79%;
-    --ring: 192 82% 41%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 50%;
     --radius: 0.75rem;
-    --chart-1: 192 82% 41%;
+    --chart-1: 217 91% 50%;
     --chart-2: 160 84% 39%;
     --chart-3: 38 92% 50%;
     --chart-4: 270 50% 60%;
-    --chart-5: 343 81% 59%;
-    --sidebar: 36 30% 91%;
-    --sidebar-foreground: 25 15% 12%;
-    --sidebar-primary: 192 82% 41%;
+    --chart-5: 0 84% 55%;
+    --sidebar: 210 40% 98%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 217 91% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 35 25% 84%;
-    --sidebar-accent-foreground: 25 12% 18%;
-    --sidebar-border: 35 20% 79%;
-    --sidebar-ring: 192 82% 41%;
+    --sidebar-accent: 214 32% 91%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 217 91% 50%;
   }
 
   .dark {

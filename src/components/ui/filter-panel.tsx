@@ -37,15 +37,15 @@ interface SortOption {
 
 interface FilterPanelProps {
   filters: FilterConfig[];
-  values: Record<string, any>;
-  onChange: (key: string, value: any) => void;
+  values: Record<string, string>;
+  onChange: (key: string, value: string) => void;
   onClear: () => void;
   sortOptions?: SortOption[];
   sortValue?: string;
   onSortChange?: (value: string) => void;
 }
 
-function countActive(filters: FilterConfig[], values: Record<string, any>): number {
+function countActive(filters: FilterConfig[], values: Record<string, string>): number {
   let count = 0;
   for (const f of filters) {
     if (f.type === "select" && values[f.key]) count++;

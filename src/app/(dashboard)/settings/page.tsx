@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -346,7 +346,7 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     setProfile((p) => ({ ...p, country: e.target.value }))
                   }
-                  placeholder="Tu País_LC"
+                  placeholder="Tu país"
                 />
               </Field>
             </div>
@@ -553,7 +553,7 @@ export default function SettingsPage() {
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}
-              Guardar Cálculos_LC
+              Guardar cálculos
             </Button>
           </div>
         </div>

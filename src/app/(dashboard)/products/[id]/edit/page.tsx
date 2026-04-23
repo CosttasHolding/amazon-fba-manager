@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { productSchema } from "@/validations/product";
+import type { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,39 +22,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Save, Loader2, Package, DollarSign, Users, ShoppingCart, Info, X } from "lucide-react";
+import { Save, Loader2, Package, DollarSign, Users, Info, Weight } from "lucide-react";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FeeCalculatorInline } from "@/components/fee-calculator-inline";
+import { calcFBAFee, calcRefFee } from "@/lib/calculations";
 
-var CATEGORIES = [
+const CATEGORIES = [
   "Electronics", "Toys", "Home", "Kitchen", "Health", "Beauty", "Sports", "Books", "Other",
 ];
 
-var STATUSES = [
+const STATUSES = [
   { value: "active", label: "Activo" },
   { value: "paused", label: "Pausado" },
   { value: "discontinued", label: "Descontinuado" },
 ];
 
-var productSchema = z.object({
-  name: z.string().min(1, "El nombre es requerido"),
-  asin: z.string().optional(),
-  sku: z.string().min(1, "El SKU es requerido"),
-  category: z.string().default("Other"),
-  status: z.string().default("active"),
-  unitCost: z.coerce.number().min(0).default(0),
-  salePrice: z.coerce.number().min(0).default(0),
-  fbaFee: z.coerce.number().min(0).default(0),
-  referralFee: z.coerce.number().min(0).default(0),
-  shippingCost: z.coerce.number().min(0).default(0),
-  storageCost: z.coerce.number().min(0).default(0),
-  prepCost: z.coerce.number().min(0).default(0),
-  taxes: z.coerce.number().min(0).default(0),
-  otherFees: z.coerce.number().min(0).default(0),
-  weight: z.coerce.number().min(0).default(0),
-  notes: z.string().optional(),
-  unitsPurchased: z.coerce.number().min(0).default(0),
-});
+const MARKETPLACES = [
+  { value: "US", label: "US" },
+  { value: "MX", label: "MX" },
+  { value: "CA", label: "CA" },
+  { value: "UK", label: "UK" },
+  { value: "DE", label: "DE" },
+  { value: "FR", label: "FR" },
+  { value: "IT", label: "IT" },
+  { value: "ES", label: "ES" },
+];
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -74,46 +67,56 @@ interface LinkedSupplier {
   suppliers: { id: string; name: string };
 }
 
-var inputClass = "h-9 bg-muted/50 border-border text-sm";
-var labelClass = "text-xs text-muted-foreground";
-var sectionLabel = "flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wider mb-3 mt-1";
+const inputClass = "h-9 bg-muted/50 border-border text-sm";
+const labelClass = "text-xs text-muted-foreground";
+const sectionLabel = "flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wider mb-3 mt-1";
 
 export default function EditProductPage() {
-  var router = useRouter();
-  var params = useParams();
-  var [loading, setLoading] = useState(true);
-  var [saving, setSaving] = useState(false);
-  var [productName, setProductName] = useState("");
-  var [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
-  var [selectedSupplier, setSelectedSupplier] = useState("");
-  var [originalSupplier, setOriginalSupplier] = useState("");
-  var [supplierData, setSupplierData] = useState({
+  const router = useRouter();
+  const params = useParams();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [productName, setProductName] = useState("");
+  const [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
+  const [selectedSupplier, setSelectedSupplier] = useState("");
+  const [originalSupplier, setOriginalSupplier] = useState("");
+  const [supplierData, setSupplierData] = useState({
     unit_cost: "",
     moq: "",
     lead_time_days: "",
   });
 
-  var form = useForm<ProductFormData>({
+  const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
   });
 
-  var { register, handleSubmit, setValue, watch, reset, formState: { errors } } = form;
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = form;
+  const watched = watch();
 
-  useEffect(function() {
-    if (params.id) {
-      fetchProduct();
-      fetchSuppliers();
-      fetchLinkedSuppliers();
+  // Auto-calculate FBA fee when weight changes
+  useEffect(() => {
+    const w = watched.weightKg;
+    if (w && w > 0) {
+      const fee = calcFBAFee(w);
+      setValue("fbaFee", Number(fee.toFixed(2)));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
+  }, [watched.weightKg, setValue]);
 
-  var fetchProduct = async function() {
+  // Auto-calculate referral fee when salePrice changes
+  useEffect(() => {
+    const sp = watched.salePrice;
+    if (sp && sp > 0) {
+      const fee = calcRefFee(sp);
+      setValue("referralFee", Number(fee.toFixed(2)));
+    }
+  }, [watched.salePrice, setValue]);
+
+  const fetchProduct = useCallback(async () => {
     try {
-      var res = await fetch("/api/products/" + params.id);
+      const res = await fetch("/api/products/" + params.id);
       if (!res.ok) throw new Error("Error");
-      var raw = await res.json();
-      var d = raw.data ? raw.data : raw;
+      const raw = await res.json();
+      const d = raw.data ? raw.data : raw;
       setProductName(d.name || "Producto");
       reset({
         name: d.name || "",
@@ -121,18 +124,21 @@ export default function EditProductPage() {
         sku: d.sku || "",
         category: d.category || "Other",
         status: d.status || "active",
+        marketplace: d.marketplace || "US",
         unitCost: d.unit_cost ?? 0,
         salePrice: d.sale_price ?? 0,
         fbaFee: d.fba_fee ?? 0,
         referralFee: d.referral_fee ?? 0,
         shippingCost: d.shipping_cost ?? 0,
-        storageCost: d.storage_fee_monthly ?? 0,
+        storageFeeMonthly: d.storage_fee_monthly ?? 0,
         prepCost: d.prep_cost ?? 0,
         taxes: d.taxes ?? 0,
         otherFees: d.other_fees ?? 0,
-        weight: d.weight_kg ?? 0,
+        weightKg: d.weight_kg ?? null,
+        dimensions: d.dimensions || "",
         notes: d.notes || "",
-        unitsPurchased: d.units_purchased ?? 0,
+        imageUrl: d.image_url || "",
+        minStock: d.min_stock ?? 10,
       });
     } catch {
       toast.error("Error al cargar el producto");
@@ -140,27 +146,27 @@ export default function EditProductPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id, reset, router]);
 
-  var fetchSuppliers = async function() {
+  const fetchSuppliers = useCallback(async () => {
     try {
-      var res = await fetch("/api/suppliers");
+      const res = await fetch("/api/suppliers");
       if (res.ok) {
-        var raw = await res.json();
+        const raw = await res.json();
         setSuppliers(raw.data || raw || []);
       }
     } catch (error) {
       console.error("Error loading suppliers:", error);
     }
-  };
+  }, []);
 
-  var fetchLinkedSuppliers = async function() {
+  const fetchLinkedSuppliers = useCallback(async () => {
     try {
-      var res = await fetch("/api/products/" + params.id + "/suppliers");
+      const res = await fetch("/api/products/" + params.id + "/suppliers");
       if (res.ok) {
-        var raw = await res.json();
-        var data: LinkedSupplier[] = Array.isArray(raw) ? raw : raw.data || [];
-        var primary = data.find(function(s) { return s.is_primary; }) || data[0];
+        const raw = await res.json();
+        const data: LinkedSupplier[] = Array.isArray(raw) ? raw : raw.data || [];
+        const primary = data.find((s) => s.is_primary) || data[0];
         if (primary) {
           setSelectedSupplier(primary.suppliers.id);
           setOriginalSupplier(primary.suppliers.id);
@@ -174,15 +180,23 @@ export default function EditProductPage() {
     } catch (error) {
       console.error("Error loading linked suppliers:", error);
     }
-  };
+  }, [params.id]);
 
-  var handleSupplierChange = function(supplierId: string) {
+  useEffect(() => {
+    if (params.id) {
+      fetchProduct();
+      fetchSuppliers();
+      fetchLinkedSuppliers();
+    }
+  }, [params.id, fetchProduct, fetchSuppliers, fetchLinkedSuppliers]);
+
+  const handleSupplierChange = (supplierId: string) => {
     setSelectedSupplier(supplierId);
     if (supplierId === "none" || !supplierId) {
       setSupplierData({ unit_cost: "", moq: "", lead_time_days: "" });
       return;
     }
-    var found = suppliers.find(function(s) { return s.id === supplierId; });
+    const found = suppliers.find((s) => s.id === supplierId);
     if (found && supplierId !== originalSupplier) {
       setSupplierData({
         unit_cost: "",
@@ -192,20 +206,20 @@ export default function EditProductPage() {
     }
   };
 
-  var onSubmit = async function(data: ProductFormData) {
+  const onSubmit = async (data: ProductFormData) => {
     setSaving(true);
     try {
-      var res = await fetch("/api/products/" + params.id, {
+      const res = await fetch("/api/products/" + params.id, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!res.ok) {
-        var err = await res.json();
+        const err = await res.json();
         throw new Error(err.error || "Error al actualizar");
       }
 
-      var eff = selectedSupplier === "none" ? "" : selectedSupplier;
+      const eff = selectedSupplier === "none" ? "" : selectedSupplier;
       if (originalSupplier && !eff) {
         await fetch("/api/products/" + params.id + "/suppliers?supplier_id=" + originalSupplier, { method: "DELETE" });
       }
@@ -229,15 +243,16 @@ export default function EditProductPage() {
       toast.success("Producto actualizado correctamente");
       router.push("/products/" + params.id);
     } catch (error) {
-      var message = error instanceof Error ? error.message : "Error al actualizar";
+      const message = error instanceof Error ? error.message : "Error al actualizar";
       toast.error(message);
     } finally {
       setSaving(false);
     }
   };
 
-  var statusVal = watch("status");
-  var categoryVal = watch("category");
+  const statusVal = watch("status");
+  const categoryVal = watch("category");
+  const marketplaceVal = watch("marketplace");
 
   if (loading) {
     return (
@@ -248,7 +263,7 @@ export default function EditProductPage() {
   }
 
   return (
-    <Dialog open={true} onOpenChange={function() { router.push("/products/" + params.id); }}>
+    <Dialog open={true} onOpenChange={() => router.push("/products/" + params.id)}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border p-0">
         <DialogHeader className="sticky top-0 z-10 bg-card border-b border-border px-6 py-4">
           <DialogTitle className="text-foreground flex items-center gap-2">
@@ -262,7 +277,7 @@ export default function EditProductPage() {
           <div>
             <div className={sectionLabel}>
               <Package className="h-3 w-3" />
-              Informacion basica
+              Informaci\u00F3n b\u00E1sica
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
@@ -280,22 +295,38 @@ export default function EditProductPage() {
                 {errors.sku && <p className="text-xs text-destructive mt-0.5">{errors.sku.message}</p>}
               </div>
               <div>
-                <Label className={labelClass}>Categoria</Label>
-                <Select value={categoryVal} onValueChange={function(v) { setValue("category", v); }}>
+                <Label className={labelClass}>Categor\u00EDa</Label>
+                <Select value={categoryVal || "Other"} onValueChange={(v) => setValue("category", v as ProductFormData["category"])}>
                   <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map(function(c) { return <SelectItem key={c} value={c}>{c}</SelectItem>; })}
+                    {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className={labelClass}>Marketplace</Label>
+                <Select value={marketplaceVal || "US"} onValueChange={(v) => setValue("marketplace", v as ProductFormData["marketplace"])}>
+                  <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MARKETPLACES.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label className={labelClass}>Estado</Label>
-                <Select value={statusVal} onValueChange={function(v) { setValue("status", v); }}>
+                <Select value={statusVal} onValueChange={(v) => setValue("status", v as ProductFormData["status"])}>
                   <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {STATUSES.map(function(s) { return <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>; })}
+                    {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label className={labelClass}>
+                  <span className="flex items-center gap-1"><Weight className="h-3 w-3" /> Peso (kg)</span>
+                </Label>
+                <Input type="number" step="0.01" {...register("weightKg", { valueAsNumber: true })} className={inputClass} />
+                <p className="text-[10px] text-muted-foreground mt-0.5">FBA fee se calcula automaticamente</p>
               </div>
             </div>
           </div>
@@ -308,41 +339,52 @@ export default function EditProductPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div>
                 <Label className={labelClass}>Costo unitario ($)</Label>
-                <Input type="number" step="0.01" {...register("unitCost")} className={inputClass} />
+                <Input type="number" step="0.01" {...register("unitCost", { valueAsNumber: true })} className={inputClass} />
               </div>
               <div>
                 <Label className={labelClass}>Precio venta ($)</Label>
-                <Input type="number" step="0.01" {...register("salePrice")} className={inputClass} />
+                <Input type="number" step="0.01" {...register("salePrice", { valueAsNumber: true })} className={inputClass} />
               </div>
               <div>
                 <Label className={labelClass}>Tarifa FBA ($)</Label>
-                <Input type="number" step="0.01" {...register("fbaFee")} className={inputClass} />
+                <Input type="number" step="0.01" {...register("fbaFee", { valueAsNumber: true })} className={inputClass} />
               </div>
               <div>
                 <Label className={labelClass}>Referral fee ($)</Label>
-                <Input type="number" step="0.01" {...register("referralFee")} className={inputClass} />
+                <Input type="number" step="0.01" {...register("referralFee", { valueAsNumber: true })} className={inputClass} />
               </div>
               <div>
-                <Label className={labelClass}>Envio ($)</Label>
-                <Input type="number" step="0.01" {...register("shippingCost")} className={inputClass} />
+                <Label className={labelClass}>Env\u00EDo ($)</Label>
+                <Input type="number" step="0.01" {...register("shippingCost", { valueAsNumber: true })} className={inputClass} />
               </div>
               <div>
-                <Label className={labelClass}>Almacenamiento ($)</Label>
-                <Input type="number" step="0.01" {...register("storageCost")} className={inputClass} />
+                <Label className={labelClass}>Almacenamiento/mes ($)</Label>
+                <Input type="number" step="0.01" {...register("storageFeeMonthly", { valueAsNumber: true })} className={inputClass} />
               </div>
               <div>
                 <Label className={labelClass}>Prep ($)</Label>
-                <Input type="number" step="0.01" {...register("prepCost")} className={inputClass} />
+                <Input type="number" step="0.01" {...register("prepCost", { valueAsNumber: true })} className={inputClass} />
               </div>
               <div>
                 <Label className={labelClass}>Impuestos ($)</Label>
-                <Input type="number" step="0.01" {...register("taxes")} className={inputClass} />
+                <Input type="number" step="0.01" {...register("taxes", { valueAsNumber: true })} className={inputClass} />
               </div>
               <div>
                 <Label className={labelClass}>Otros fees ($)</Label>
-                <Input type="number" step="0.01" {...register("otherFees")} className={inputClass} />
+                <Input type="number" step="0.01" {...register("otherFees", { valueAsNumber: true })} className={inputClass} />
               </div>
             </div>
+
+            <FeeCalculatorInline
+              unitCost={watched.unitCost || 0}
+              shippingCost={watched.shippingCost || 0}
+              prepCost={watched.prepCost || 0}
+              taxes={watched.taxes || 0}
+              salePrice={watched.salePrice || 0}
+              weightKg={watched.weightKg || 0}
+              storageFeeMonthly={watched.storageFeeMonthly || 0}
+              otherFees={watched.otherFees || 0}
+            />
           </div>
 
           <div>
@@ -356,9 +398,9 @@ export default function EditProductPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Sin proveedor</SelectItem>
-                {suppliers.map(function(s) {
-                  return <SelectItem key={s.id} value={s.id}>{s.name + (s.country ? " (" + s.country + ")" : "")}</SelectItem>;
-                })}
+                {suppliers.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name + (s.country ? " (" + s.country + ")" : "")}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             {selectedSupplier && selectedSupplier !== "none" && (
@@ -366,19 +408,19 @@ export default function EditProductPage() {
                 <div>
                   <Label className={labelClass}>Costo unit. ($)</Label>
                   <Input type="number" step="0.01" value={supplierData.unit_cost}
-                    onChange={function(e) { setSupplierData(function(p) { return Object.assign({}, p, { unit_cost: e.target.value }); }); }}
+                    onChange={(e) => setSupplierData((p) => ({ ...p, unit_cost: e.target.value }))}
                     placeholder="0.00" className={inputClass} />
                 </div>
                 <div>
                   <Label className={labelClass}>MOQ</Label>
                   <Input type="number" value={supplierData.moq}
-                    onChange={function(e) { setSupplierData(function(p) { return Object.assign({}, p, { moq: e.target.value }); }); }}
+                    onChange={(e) => setSupplierData((p) => ({ ...p, moq: e.target.value }))}
                     placeholder="100" className={inputClass} />
                 </div>
                 <div>
-                  <Label className={labelClass}>Lead time (dias)</Label>
+                  <Label className={labelClass}>Lead time (d\u00EDas)</Label>
                   <Input type="number" value={supplierData.lead_time_days}
-                    onChange={function(e) { setSupplierData(function(p) { return Object.assign({}, p, { lead_time_days: e.target.value }); }); }}
+                    onChange={(e) => setSupplierData((p) => ({ ...p, lead_time_days: e.target.value }))}
                     placeholder="30" className={inputClass} />
                 </div>
               </div>
@@ -392,23 +434,23 @@ export default function EditProductPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className={labelClass}>Peso (kg)</Label>
-                <Input type="number" step="0.01" {...register("weight")} className={inputClass} />
+                <Label className={labelClass}>Dimensiones</Label>
+                <Input {...register("dimensions")} className={inputClass} />
               </div>
               <div>
-                <Label className={labelClass}>Unidades compradas</Label>
-                <Input type="number" {...register("unitsPurchased")} className={inputClass} />
+                <Label className={labelClass}>Stock minimo</Label>
+                <Input type="number" {...register("minStock", { valueAsNumber: true })} className={inputClass} />
               </div>
             </div>
             <div className="mt-3">
               <Label className={labelClass}>Notas</Label>
-              <Textarea {...register("notes")} placeholder="Notas adicionales..." rows={2} className={"bg-muted/50 border-border text-sm"} />
+              <Textarea {...register("notes")} placeholder="Notas adicionales..." rows={2} className="bg-muted/50 border-border text-sm" />
             </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-border sticky bottom-0 bg-card">
             <button type="button"
-              onClick={function() { router.push("/products/" + params.id); }}
+              onClick={() => router.push("/products/" + params.id)}
               className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               Cancelar
             </button>

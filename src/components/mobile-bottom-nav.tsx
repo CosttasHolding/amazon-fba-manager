@@ -10,28 +10,37 @@ import {
   Warehouse,
   TrendingUp,
   Calculator,
-  Bell,
+  FlaskConical,
+  ClipboardList,
+  Wallet,
+  Ship,
+  RotateCcw,
 } from "lucide-react";
 
-var navItems = [
+const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
   { href: "/products", icon: Package, label: "Productos" },
+  { href: "/research", icon: FlaskConical, label: "Research" },
   { href: "/suppliers", icon: Factory, label: "Proveed." },
+  { href: "/orders", icon: ClipboardList, label: "Pedidos" },
+  { href: "/shipments", icon: Ship, label: "Shipments" },
   { href: "/inventory", icon: Warehouse, label: "Inventario" },
   { href: "/sales", icon: TrendingUp, label: "Ventas" },
+  { href: "/returns", icon: RotateCcw, label: "Returns" },
+  { href: "/finances", icon: Wallet, label: "Finanzas" },
   { href: "/calculator", icon: Calculator, label: "Calc." },
 ];
 
 export function MobileBottomNav() {
-  var pathname = usePathname();
-  var [notifCount, setNotifCount] = useState(0);
+  const pathname = usePathname();
+  const [notifCount, setNotifCount] = useState(0);
 
-  var fetchNotifications = useCallback(async function() {
+  const fetchNotifications = useCallback(async () => {
     try {
-      var res = await fetch("/api/notifications");
+      const res = await fetch("/api/notifications");
       if (res.ok) {
-        var data = await res.json();
-        var total =
+        const data = await res.json();
+        const total =
           (data.notifications?.critical?.length || 0) +
           (data.notifications?.warning?.length || 0) +
           (data.notifications?.info?.length || 0);
@@ -42,32 +51,33 @@ export function MobileBottomNav() {
     }
   }, []);
 
-  useEffect(function() {
+  useEffect(() => {
     fetchNotifications();
-    var interval = setInterval(fetchNotifications, 60000);
-    return function() { clearInterval(interval); };
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  var isActive = function(href: string) {
+  const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   };
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border px-1 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
-      <div className="flex justify-around">
-        {navItems.map(function(item) {
-          var active = isActive(item.href);
-          var showBadge = item.href === "/inventory" && notifCount > 0;
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 border-t border-border px-1 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
+      <div className="flex justify-around overflow-x-auto">
+        {navItems.map((item) => {
+          const active = isActive(item.href);
+          const showBadge = item.href === "/inventory" && notifCount > 0;
 
           return (
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? "page" : undefined}
               className={
-                "relative flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-xl transition-all duration-200 min-w-0 flex-1 " +
+                "relative flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-xl transition-all duration-200 min-w-0 flex-1 shrink-0 " +
                 (active
-                  ? "text-primary bg-primary/8"
+                  ? "text-primary bg-primary/[0.08]"
                   : "text-muted-foreground hover:text-foreground")
               }
             >
@@ -82,14 +92,14 @@ export function MobileBottomNav() {
                   }
                 />
                 {showBadge && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-red-500 text-white text-[8px] font-bold leading-none px-0.5 animate-scale-in">
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[8px] font-bold leading-none px-0.5 animate-scale-in">
                     {notifCount > 99 ? "99+" : notifCount}
                   </span>
                 )}
               </div>
               <span
                 className={
-                  "text-[9px] font-medium truncate transition-all duration-200 " +
+                  "text-[9px] font-medium truncate transition-all duration-200 max-w-[60px] " +
                   (active ? "text-primary font-semibold" : "")
                 }
               >

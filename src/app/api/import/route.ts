@@ -64,8 +64,8 @@ function normalizeHeader(header: string): string {
     .replace(/[()]/g, '');
 }
 
-function mapRowToProduct(row: Record<string, any>): Record<string, any> {
-  const mapped: Record<string, any> = {};
+function mapRowToProduct(row: Record<string, unknown>): Record<string, unknown> {
+  const mapped: Record<string, unknown> = {};
 
   for (const [rawKey, value] of Object.entries(row)) {
     const normalizedKey = normalizeHeader(rawKey);
@@ -73,9 +73,10 @@ function mapRowToProduct(row: Record<string, any>): Record<string, any> {
 
     if (schemaKey) {
       if (NUMERIC_FIELDS.includes(schemaKey)) {
-        const num = parseFloat(value);
+        const str = value === null || value === undefined ? "" : String(value);
+        const num = parseFloat(str);
         mapped[schemaKey] = isNaN(num) ? undefined : num;
-      } else if (value !== undefined && value !== null && value !== '') {
+      } else if (value !== undefined && value !== null && value !== "") {
         mapped[schemaKey] = String(value).trim();
       }
     }
@@ -131,7 +132,7 @@ export async function POST(req: NextRequest) {
     const workbook = XLSX.read(buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
-    const rawRows: Record<string, any>[] = XLSX.utils.sheet_to_json(sheet);
+    const rawRows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet);
 
     if (rawRows.length === 0) {
       return NextResponse.json(
@@ -157,7 +158,7 @@ export async function POST(req: NextRequest) {
     // Validar cada fila
     const results: {
       row: number;
-      data: Record<string, any>;
+      data: Record<string, unknown>;
       valid: boolean;
       errors: string[];
     }[] = [];
@@ -262,11 +263,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Modo no valido' }, { status: 400 });
-  } catch (err: any) {
-    console.error('Import error:', err);
-    return NextResponse.json(
-      { error: err.message || 'Error al procesar el archivo' },
-      { status: 500 }
+  } catch (err) {
+    console.error("Import error:", err);
+    const message = err instanceof Error ? err.message : "Error al procesar el archivo";
+    return NextResponse.json({ error: message }, { status: 500 }
     );
   }
 }

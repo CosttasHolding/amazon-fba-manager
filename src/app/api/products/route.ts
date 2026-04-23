@@ -44,8 +44,9 @@ export async function GET(req: NextRequest) {
                 totalPages: Math.ceil((count || 0) / perPage),
             },
         });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : "Error desconocido";
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }
 
@@ -93,7 +94,8 @@ export async function POST(req: NextRequest) {
         if (error) throw error;
 
         return NextResponse.json({ data }, { status: 201 });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 400 });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : "Error desconocido";
+        return NextResponse.json({ error: message }, { status: 400 });
     }
 }

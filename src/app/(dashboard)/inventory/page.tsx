@@ -22,9 +22,11 @@ import {
 import { ExportButton } from "@/components/ui/export-button";
 import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PaginationControl } from "@/components/ui/pagination-control";
 import { exportInventoryExcel } from "@/lib/export";
 import { useInventory } from "@/hooks/use-data";
-
+import { ProductWithInventory } from "@/types";
 const stockVariant = (status: string): "success" | "warning" | "danger" | "info" | "neutral" => {
   switch (status) {
     case "low_stock": return "warning";
@@ -51,6 +53,8 @@ const SORT_OPTIONS = [
   { value: "stock_desc", label: "Stock: mayor a menor" },
   { value: "available_asc", label: "Disponible: menor a mayor" },
   { value: "available_desc", label: "Disponible: mayor a menor" },
+  { value: "days_asc", label: "Dias stock: menor a mayor" },
+  { value: "days_desc", label: "Dias stock: mayor a menor" },
 ];
 
 const FILTER_CONFIG: FilterConfig[] = [
@@ -69,18 +73,38 @@ const FILTER_CONFIG: FilterConfig[] = [
   },
 ];
 
+function StockProjection({ p }: { p: ProductWithInventory }) {
+  const days = p.days_of_stock;
+  if (days === null || days === undefined) return <span className="text-xs text-muted-foreground">—</span>;
+  if (days <= 0) return <span className="text-xs text-red-600 dark:text-rose-400 font-semibold">Sin stock</span>;
+  if (days <= 14) return <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">{days}d (critico)</span>;
+  if (days <= 30) return <span className="text-xs text-amber-300">{days}d (bajo)</span>;
+  return <span className="text-xs text-green-600 dark:text-emerald-400">{days}d</span>;
+}
+
+function StockoutDate({ p }: { p: ProductWithInventory }) {
+  const days = p.days_of_stock;
+  if (!days || days <= 0) return <span className="text-xs text-muted-foreground">—</span>;
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return <span className="text-xs text-muted-foreground">{date.toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</span>;
+}
+
 export default function InventoryPage() {
   const { inventory, isLoading, mutate } = useInventory();
   const [search, setSearch] = useState("");
   const [sortValue, setSortValue] = useState("name_asc");
-  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({
     stockStatus: "",
     availableMin: "",
     availableMax: "",
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string) => {
     setFilterValues((prev) => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
   };
 
   const clearFilters = () => {
@@ -89,10 +113,11 @@ export default function InventoryPage() {
       availableMin: "",
       availableMax: "",
     });
+    setCurrentPage(1);
   };
 
   const filtered = useMemo(() => {
-    let result = inventory.filter((p: any) => {
+    let result = inventory.filter((p: ProductWithInventory) => {
       const matchSearch =
         !search ||
         p.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -111,7 +136,7 @@ export default function InventoryPage() {
       return matchSearch && matchStockStatus && matchAvailableMin && matchAvailableMax;
     });
 
-    result.sort((a: any, b: any) => {
+    result.sort((a: ProductWithInventory, b: ProductWithInventory) => {
       const totalA = (a.stock_available || 0) + (a.stock_inbound || 0) + (a.stock_warehouse || 0);
       const totalB = (b.stock_available || 0) + (b.stock_inbound || 0) + (b.stock_warehouse || 0);
       switch (sortValue) {
@@ -121,6 +146,8 @@ export default function InventoryPage() {
         case "stock_desc": return totalB - totalA;
         case "available_asc": return (a.stock_available || 0) - (b.stock_available || 0);
         case "available_desc": return (b.stock_available || 0) - (a.stock_available || 0);
+        case "days_asc": return (a.days_of_stock || 999) - (b.days_of_stock || 999);
+        case "days_desc": return (b.days_of_stock || 999) - (a.days_of_stock || 999);
         default: return 0;
       }
     });
@@ -128,13 +155,17 @@ export default function InventoryPage() {
     return result;
   }, [inventory, search, filterValues, sortValue]);
 
+  const paginated = useMemo(() => {
+    return filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  }, [filtered, currentPage]);
+
   const totalUnits = inventory.reduce(
-    (sum: number, p: any) => sum + (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0),
+    (sum: number, p: ProductWithInventory) => sum + (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0),
     0
   );
-  const lowStockCount = inventory.filter((p: any) => p.stock_status === "low_stock").length;
-  const outOfStockCount = inventory.filter((p: any) => p.stock_status === "out_of_stock").length;
-  const overstockCount = inventory.filter((p: any) => p.stock_status === "overstock").length;
+  const lowStockCount = inventory.filter((p: ProductWithInventory) => p.stock_status === "low_stock").length;
+  const outOfStockCount = inventory.filter((p: ProductWithInventory) => p.stock_status === "out_of_stock").length;
+  const overstockCount = inventory.filter((p: ProductWithInventory) => p.stock_status === "overstock").length;
 
   const handleExport = () => {
     exportInventoryExcel(filtered);
@@ -208,6 +239,7 @@ export default function InventoryPage() {
       <div className="relative max-w-sm mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
+          aria-label="Buscar inventario"
           placeholder="Buscar por SKU o nombre..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -216,15 +248,11 @@ export default function InventoryPage() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="rounded-2xl border border-border bg-card p-12 text-center">
-          <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground/70 mb-1">
-            {Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay datos de inventario"}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {Object.values(filterValues).some(Boolean) ? "Intenta con otros filtros" : "Agrega productos para ver su stock aqui"}
-          </p>
-        </div>
+        <EmptyState
+          icon={Package}
+          title={Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay datos de inventario"}
+          subtitle={Object.values(filterValues).some(Boolean) ? "Intenta con otros filtros" : "Agrega productos para ver su stock aqu\u00ED"}
+        />
       )}
 
       {filtered.length > 0 && (
@@ -242,11 +270,13 @@ export default function InventoryPage() {
                   <th className={`${tableHeaderClass} text-center`}>En Transito</th>
                   <th className={`${tableHeaderClass} text-center`}>Warehouse</th>
                   <th className={`${tableHeaderClass} text-center`}>Total</th>
+                  <th className={`${tableHeaderClass} text-center`}>Dias Stock</th>
+                  <th className={`${tableHeaderClass} text-center`}>Stockout</th>
                   <th className={`${tableHeaderClass} text-center`}>Estado</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((p: any) => {
+                {paginated.map((p: ProductWithInventory) => {
                   const total = (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0);
                   return (
                     <tr key={p.id} className={tableRowClass}>
@@ -269,6 +299,12 @@ export default function InventoryPage() {
                         {total}
                       </td>
                       <td className={`${tableCellClass} text-center`}>
+                        <StockProjection p={p} />
+                      </td>
+                      <td className={`${tableCellClass} text-center`}>
+                        <StockoutDate p={p} />
+                      </td>
+                      <td className={`${tableCellClass} text-center`}>
                         <StatusBadge
                           status={stockLabel(p.stock_status || "normal")}
                           variant={stockVariant(p.stock_status || "normal")}
@@ -283,7 +319,7 @@ export default function InventoryPage() {
 
           {/* Mobile */}
           <div className="md:hidden space-y-3 p-4">
-            {filtered.map((p: any) => {
+            {paginated.map((p: ProductWithInventory) => {
               const total = (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0);
               return (
                 <div
@@ -318,10 +354,25 @@ export default function InventoryPage() {
                       <p className="font-bold text-sm text-primary tabular-nums">{total}</p>
                     </div>
                   </div>
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
+                    <StockProjection p={p} />
+                    <StockoutDate p={p} />
+                  </div>
                 </div>
               );
             })}
           </div>
+          {filtered.length > ITEMS_PER_PAGE && (
+            <div className="p-4 border-t border-border">
+            <PaginationControl
+              currentPage={currentPage}
+              totalPages={Math.ceil(filtered.length / ITEMS_PER_PAGE)}
+              totalItems={filtered.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={setCurrentPage}
+            />
+            </div>
+          )}
         </DataTableWrapper>
       )}
     </div>

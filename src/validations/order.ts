@@ -1,0 +1,28 @@
+import { z } from "zod";
+
+export const orderSchema = z.object({
+  supplier_id: z.string().uuid().nullable().optional(),
+  product_id: z.string().uuid().nullable().optional(),
+  po_number: z.string().max(50).nullable().optional(),
+  quantity: z.coerce.number().int().positive("Cantidad requerida"),
+  unit_cost: z.coerce.number().positive("Costo requerido"),
+  currency: z.string().max(3).default("USD"),
+  exchange_rate: z.coerce.number().positive().default(1),
+  shipping_method: z.enum(["air", "sea", "express"]).nullable().optional(),
+  shipping_cost: z.coerce.number().min(0).nullable().optional(),
+  status: z.enum(["draft", "sent", "confirmed", "in_production", "shipped", "in_transit", "customs", "delivered", "cancelled"]).default("draft"),
+  order_date: z.string().nullable().optional(),
+  production_deadline: z.string().nullable().optional(),
+  ship_date: z.string().nullable().optional(),
+  estimated_arrival: z.string().nullable().optional(),
+  tracking_number: z.string().max(100).nullable().optional(),
+  forwarder_name: z.string().max(200).nullable().optional(),
+  customs_cost: z.coerce.number().min(0).nullable().optional(),
+  prep_center_cost: z.coerce.number().min(0).nullable().optional(),
+  amazon_shipment_id: z.string().max(100).nullable().optional(),
+  payment_deposit: z.coerce.number().min(0).nullable().optional(),
+  payment_balance: z.coerce.number().min(0).nullable().optional(),
+  payment_deposit_date: z.string().nullable().optional(),
+  payment_balance_date: z.string().nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+});
