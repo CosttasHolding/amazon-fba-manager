@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Save, Loader2, Package, DollarSign, Info, Users, Globe, Weight } from "lucide-react";
+import { Save, Loader2, Package, DollarSign, Info, Users, Weight } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { FeeCalculatorInline } from "@/components/fee-calculator-inline";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -135,6 +135,23 @@ export default function SupplierDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("info");
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const quoteModalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showQuoteModal) return;
+    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") setShowQuoteModal(false); };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [showQuoteModal]);
+
+  useEffect(() => {
+    if (!showQuoteModal) return;
+    const handleClick = (e: MouseEvent) => {
+      if (quoteModalRef.current && !quoteModalRef.current.contains(e.target as Node)) setShowQuoteModal(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showQuoteModal]);
   const [quoteForm, setQuoteForm] = useState({
     product_id: "",
     quantity: "",
@@ -586,8 +603,8 @@ export default function SupplierDetailPage() {
 
       {/* Quote Modal */}
       {showQuoteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-popover border border-border rounded-2xl p-6 w-full max-w-lg space-y-4 animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <div ref={quoteModalRef} className="bg-popover border border-border rounded-2xl p-6 w-full max-w-lg space-y-4 animate-scale-in">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-foreground">Nueva Cotización</h3>
               <button onClick={() => setShowQuoteModal(false)} className="p-1 rounded-lg hover:bg-muted transition-colors">

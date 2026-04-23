@@ -24,11 +24,11 @@ const COUNTRIES = [
   "Tailandia", "Turquia", "Bangladesh", "Indonesia", "Otro",
 ];
 
-const sectionClass = "rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-4";
-const sectionTitleClass = "flex items-center gap-2 text-sm font-semibold text-white/80 uppercase tracking-wider mb-4";
-const labelClass = "text-sm text-white/50";
-const errorClass = "text-xs text-red-400 mt-1";
-const inputClass = "bg-white/[0.04] border-white/[0.08]";
+const sectionClass = "rounded-2xl border border-border bg-background p-6 space-y-4";
+const sectionTitleClass = "flex items-center gap-2 text-sm font-semibold text-foreground uppercase tracking-wider mb-4";
+const labelClass = "text-sm text-muted-foreground";
+const errorClass = "text-xs text-destructive mt-1";
+const inputClass = "bg-muted border-border";
 
 export default function NewSupplierPage() {
   const router = useRouter();
@@ -98,7 +98,7 @@ export default function NewSupplierPage() {
         {/* Info basica */}
         <div className={sectionClass}>
           <div className={sectionTitleClass}>
-            <Factory className="h-4 w-4 text-cyan-400" />
+            <Factory className="h-4 w-4 text-primary" />
             Informacion del Proveedor
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -156,7 +156,7 @@ export default function NewSupplierPage() {
         {/* Contacto */}
         <div className={sectionClass}>
           <div className={sectionTitleClass}>
-            <Mail className="h-4 w-4 text-cyan-400" />
+            <Mail className="h-4 w-4 text-primary" />
             Informacion de Contacto
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -179,7 +179,7 @@ export default function NewSupplierPage() {
         {/* Produccion */}
         <div className={sectionClass}>
           <div className={sectionTitleClass}>
-            <Package className="h-4 w-4 text-cyan-400" />
+            <Package className="h-4 w-4 text-primary" />
             Produccion y Logistica
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -199,7 +199,7 @@ export default function NewSupplierPage() {
         {/* Notas */}
         <div className={sectionClass}>
           <div className={sectionTitleClass}>
-            <FileText className="h-4 w-4 text-cyan-400" />
+            <FileText className="h-4 w-4 text-primary" />
             Notas
           </div>
           <Textarea {...register("notes")} placeholder="Notas adicionales sobre el proveedor..." rows={4} className={inputClass} />
@@ -210,14 +210,14 @@ export default function NewSupplierPage() {
           <button
             type="button"
             onClick={() => router.push("/suppliers")}
-            className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white/50 hover:text-white/70 hover:bg-white/10 transition-colors"
+            className="px-5 py-2.5 rounded-xl bg-muted border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/20 transition-colors disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             {saving ? "Guardando..." : "Crear Proveedor"}

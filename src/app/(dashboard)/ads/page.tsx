@@ -78,7 +78,7 @@ export default function AdsPage() {
         </div>
         <div className="rounded-2xl border border-border bg-card p-5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Activas</p>
-          <p className="text-2xl font-display font-bold text-green-600 dark:text-emerald-400">{campaigns.filter((c) => c.status === "enabled").length}</p>
+          <p className="text-2xl font-display font-bold text-emerald-500">{campaigns.filter((c) => c.status === "enabled").length}</p>
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export default function AdsPage() {
                   <td className="px-4 py-3 font-medium text-foreground">{c.campaign_name}</td>
                   <td className="px-4 py-3 text-muted-foreground text-xs">{CAMPAIGN_TYPES[c.campaign_type] || c.campaign_type}</td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${c.status === "enabled" ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"}`}>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                       {c.status}
                     </span>
                   </td>

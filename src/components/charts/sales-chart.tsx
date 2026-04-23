@@ -85,7 +85,7 @@ export function SalesChart({ dataDaily, dataWeekly }: SalesChartProps) {
           className={cn(
             "px-3 py-1 rounded-lg text-xs font-medium transition-colors",
             view === "30d"
-              ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+              ? "bg-primary/10 text-primary border border-primary/20"
               : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
           )}
         >
@@ -96,7 +96,7 @@ export function SalesChart({ dataDaily, dataWeekly }: SalesChartProps) {
           className={cn(
             "px-3 py-1 rounded-lg text-xs font-medium transition-colors",
             view === "12w"
-              ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+              ? "bg-primary/10 text-primary border border-primary/20"
               : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
           )}
         >

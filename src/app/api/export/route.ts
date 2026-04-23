@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
     const { data, error } = await supabase
       .from(type === "inventory" ? "products_with_inventory" : "products")
       .select("*")
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .limit(10000);
 
     if (error) throw error;
 

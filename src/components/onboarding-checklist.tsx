@@ -15,8 +15,8 @@ export function OnboardingChecklist() {
   return (
     <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-          <Rocket className="h-5 w-5 text-cyan-400" />
+        <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+          <Rocket className="h-5 w-5 text-primary" />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-foreground">Bienvenido a FBA Manager</h3>
@@ -48,10 +48,10 @@ export function OnboardingChecklist() {
       <div className="pt-2">
         <div className="flex justify-between items-center mb-1">
           <span className="text-xs text-muted-foreground">Progreso</span>
-          <span className="text-xs font-medium text-cyan-400">0%</span>
+          <span className="text-xs font-medium text-primary">0%</span>
         </div>
         <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
-          <div className="h-full w-0 bg-cyan-500 rounded-full transition-all duration-500" />
+          <div className="h-full w-0 bg-primary rounded-full transition-all duration-500" />
         </div>
       </div>
     </div>
@@ -77,7 +77,7 @@ function StepCard({
       {done ? (
         <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
       ) : (
-        <Circle className="h-5 w-5 text-muted-foreground group-hover:text-cyan-400 shrink-0 transition-colors" />
+        <Circle className="h-5 w-5 text-muted-foreground group-hover:text-primary shrink-0 transition-colors" />
       )}
       <div className="flex items-center gap-2">
         <Icon className="h-4 w-4 text-muted-foreground" />

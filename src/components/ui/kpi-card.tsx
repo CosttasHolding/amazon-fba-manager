@@ -122,7 +122,7 @@ export function KpiCard({
       )}
 
       {typeof progressBar === "number" && (
-        <div className="mt-3 sm:mt-4 h-1 rounded-full bg-black/[0.06] dark:bg-white/[0.06] overflow-hidden">
+        <div className="mt-3 sm:mt-4 h-1 rounded-full bg-foreground/[0.06] overflow-hidden">
           <div
             className={cn(
               "h-full rounded-full transition-all duration-1000 ease-out",

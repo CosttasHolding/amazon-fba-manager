@@ -9,9 +9,6 @@ import {
   Factory,
   ClipboardList,
   FlaskConical,
-  TrendingUp,
-  Calculator,
-  Warehouse,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -111,7 +108,7 @@ export function GlobalSearch() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/40 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-background/80 backdrop-blur-sm p-4">
       <div className="w-full max-w-lg rounded-2xl border border-border bg-popover shadow-2xl overflow-hidden animate-scale-in">
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -122,7 +119,7 @@ export function GlobalSearch() {
             placeholder="Buscar productos, proveedores, pedidos..."
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
           />
-          {loading && <div className="w-4 h-4 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin" />}
+          {loading && <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />}
           <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-muted transition-colors">
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -139,7 +136,7 @@ export function GlobalSearch() {
                 onClick={() => handleSelect(item)}
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
-                  idx === selectedIndex ? "bg-cyan-500/10" : "hover:bg-muted/50"
+                  idx === selectedIndex ? "bg-primary/10" : "hover:bg-muted/50"
                 )}
               >
                 <Icon className="h-4 w-4 text-muted-foreground shrink-0" />

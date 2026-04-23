@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, ClipboardList, DollarSign, Truck } from "lucide-react";
+import { Loader2, ClipboardList, DollarSign } from "lucide-react";
 
 interface SupplierOption {
   id: string;

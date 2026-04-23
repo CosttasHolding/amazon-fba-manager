@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { calcFBAFee, calcRefFee, calcMetrics } from "@/lib/calculations";
 import { fmt, fmtPct, cn } from "@/lib/utils";
-import { Calculator, TrendingUp, DollarSign, Percent } from "lucide-react";
+import { Calculator, TrendingUp, DollarSign } from "lucide-react";
 
 interface FeeCalculatorInlineProps {
   unitCost: number;
@@ -84,13 +84,13 @@ export function FeeCalculatorInline({
       <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
         <div className="text-center p-2 rounded-lg bg-muted/30">
           <p className="text-[9px] text-muted-foreground uppercase">Ganancia</p>
-          <p className={cn("font-display text-sm font-bold", metrics.netProfit >= 0 ? "text-green-600 dark:text-emerald-400" : "text-red-600 dark:text-rose-400")}>
+          <p className={cn("font-display text-sm font-bold", metrics.netProfit >= 0 ? "text-emerald-500" : "text-rose-500")}>
             {fmt(metrics.netProfit)}
           </p>
         </div>
         <div className="text-center p-2 rounded-lg bg-muted/30">
           <p className="text-[9px] text-muted-foreground uppercase">ROI</p>
-          <p className={cn("font-display text-sm font-bold", metrics.roi >= 30 ? "text-green-600 dark:text-emerald-400" : metrics.roi >= 15 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-rose-400")}>
+          <p className={cn("font-display text-sm font-bold", metrics.roi >= 30 ? "text-emerald-500" : metrics.roi >= 15 ? "text-amber-500" : "text-rose-500")}>
             {fmtPct(metrics.roi)}
           </p>
         </div>

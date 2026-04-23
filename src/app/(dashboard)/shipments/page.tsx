@@ -66,8 +66,8 @@ const STATUS_COLORS: Record<string, string> = {
   delivered: "bg-green-500",
   checked_in: "bg-purple-500",
   receiving: "bg-emerald-500",
-  closed: "bg-gray-500",
-  cancelled: "bg-red-500",
+  closed: "bg-muted-foreground",
+  cancelled: "bg-destructive",
 };
 
 const SHIPPING_ICONS: Record<string, React.ElementType> = {
@@ -270,7 +270,7 @@ export default function ShipmentsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${STATUS_COLORS[s.status] || "bg-gray-400"}`} />
+                        <span className={`w-2 h-2 rounded-full ${STATUS_COLORS[s.status] || "bg-muted-foreground"}`} />
                         <span className="text-xs text-muted-foreground">{STATUS_LABELS[s.status] || s.status}</span>
                       </div>
                     </td>

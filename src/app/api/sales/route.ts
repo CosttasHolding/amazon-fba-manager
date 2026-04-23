@@ -20,12 +20,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data, error } = await supabase
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1") || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") || "50") || 50));
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { data, error, count } = await supabase
       .from("sales")
-      .select("*, products(name, sku, unit_cost, total_cost, sale_price, fba_fee, referral_fee)")
+      .select("*, products(name, sku, unit_cost, total_cost, sale_price, fba_fee, referral_fee)", { count: "exact" })
       .eq("user_id", user.id)
       .order("sale_date", { ascending: false })
-      .limit(500);
+      .range(from, to);
 
     if (error) throw error;
 
@@ -45,7 +51,7 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({ data: enriched });
+    return NextResponse.json({ data: enriched, count, page, limit });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error desconocido";
     return NextResponse.json({ error: message }, { status: 500 });

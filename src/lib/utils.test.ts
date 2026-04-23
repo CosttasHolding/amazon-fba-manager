@@ -74,8 +74,8 @@ describe("fmtPct()", () => {
 
 describe("roiColor()", () => {
   it("retorna verde para ROI >= 30", () => {
-    expect(roiColor(30)).toBe("text-green-500");
-    expect(roiColor(50)).toBe("text-green-500");
+    expect(roiColor(30)).toBe("text-emerald-500");
+    expect(roiColor(50)).toBe("text-emerald-500");
   });
 
   it("retorna amber para ROI 15-29", () => {
@@ -85,9 +85,9 @@ describe("roiColor()", () => {
   });
 
   it("retorna rojo para ROI < 15", () => {
-    expect(roiColor(14)).toBe("text-red-500");
-    expect(roiColor(0)).toBe("text-red-500");
-    expect(roiColor(-10)).toBe("text-red-500");
+    expect(roiColor(14)).toBe("text-rose-500");
+    expect(roiColor(0)).toBe("text-rose-500");
+    expect(roiColor(-10)).toBe("text-rose-500");
   });
 
   it("maneja null y undefined", () => {
@@ -98,8 +98,8 @@ describe("roiColor()", () => {
 
 describe("profitColor()", () => {
   it("retorna verde para profit > 0", () => {
-    expect(profitColor(0.01)).toBe("text-green-500");
-    expect(profitColor(100)).toBe("text-green-500");
+    expect(profitColor(0.01)).toBe("text-emerald-500");
+    expect(profitColor(100)).toBe("text-emerald-500");
   });
 
   it("retorna amber para profit === 0", () => {
@@ -107,8 +107,8 @@ describe("profitColor()", () => {
   });
 
   it("retorna rojo para profit < 0", () => {
-    expect(profitColor(-0.01)).toBe("text-red-500");
-    expect(profitColor(-100)).toBe("text-red-500");
+    expect(profitColor(-0.01)).toBe("text-rose-500");
+    expect(profitColor(-100)).toBe("text-rose-500");
   });
 
   it("maneja null y undefined", () => {

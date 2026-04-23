@@ -107,7 +107,7 @@ export function HelpButton() {
       {open && (
         <div className="fixed inset-0 z-[100] flex items-start justify-center pt-10 pb-10 px-4">
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           />
           <div className="relative w-full max-w-2xl max-h-[85vh] bg-card border border-border rounded-2xl shadow-2xl flex flex-col animate-in fade-in-0 zoom-in-95 duration-200">

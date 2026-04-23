@@ -20,9 +20,6 @@ import {
   Save,
   ChevronDown,
   ChevronUp,
-  ArrowDownRight,
-  ArrowUpRight,
-  Minus,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";

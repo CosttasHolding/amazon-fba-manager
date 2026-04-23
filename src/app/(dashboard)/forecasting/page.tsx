@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
-import { fmt } from "@/lib/utils";
 import { toast } from "sonner";
 import { TrendingUp, AlertTriangle, Package, Clock, Truck } from "lucide-react";
 

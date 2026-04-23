@@ -14,7 +14,7 @@ export const tableHeaderClass =
   "font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-6 py-4 text-left";
 
 export const tableRowClass =
-  "border-b border-border/50 hover:bg-white/[0.02] transition-colors";
+  "border-b border-border/50 hover:bg-foreground/[0.02] transition-colors";
 
 export const tableCellClass = "px-6 py-4 text-sm";
 

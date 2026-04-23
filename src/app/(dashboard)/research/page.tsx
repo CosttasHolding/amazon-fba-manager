@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   FlaskConical,
@@ -13,9 +13,6 @@ import {
   TrendingUp,
   Star,
   DollarSign,
-  Tag,
-  Calendar,
-  ArrowRight,
   Trash2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -60,6 +57,29 @@ export default function ResearchPage() {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ProductResearch | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Close modal on Escape key
+  useEffect(() => {
+    if (!showModal) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowModal(false);
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [showModal]);
+
+  // Close modal on click outside
+  useEffect(() => {
+    if (!showModal) return;
+    const handleClick = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        setShowModal(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showModal]);
 
   const [form, setForm] = useState({
     name: "", niche: "", asin_reference: "", amazon_category: "",
@@ -324,8 +344,8 @@ export default function ResearchPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-popover border border-border rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <div ref={modalRef} className="bg-popover border border-border rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 animate-scale-in">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-foreground">{editingItem ? "Editar Research" : "Nuevo Producto en Research"}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 rounded-lg hover:bg-muted transition-colors"><X className="h-4 w-4 text-muted-foreground" /></button>
