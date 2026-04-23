@@ -135,10 +135,7 @@ export default function EditProductPage() {
         taxes: d.taxes ?? 0,
         otherFees: d.other_fees ?? 0,
         weightKg: d.weight_kg ?? null,
-        dimensions: d.dimensions || "",
         notes: d.notes || "",
-        imageUrl: d.image_url || "",
-        minStock: d.min_stock ?? 10,
       });
     } catch {
       toast.error("Error al cargar el producto");
@@ -431,16 +428,6 @@ export default function EditProductPage() {
             <div className={sectionLabel}>
               <Info className="h-3 w-3" />
               Detalles
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className={labelClass}>Dimensiones</Label>
-                <Input {...register("dimensions")} className={inputClass} />
-              </div>
-              <div>
-                <Label className={labelClass}>Stock minimo</Label>
-                <Input type="number" {...register("minStock", { valueAsNumber: true })} className={inputClass} />
-              </div>
             </div>
             <div className="mt-3">
               <Label className={labelClass}>Notas</Label>

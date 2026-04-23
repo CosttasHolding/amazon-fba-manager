@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+
+const salePostSchema = z.object({
+  product_id: z.string().uuid(),
+  sale_date: z.string().min(1),
+  units_sold: z.coerce.number().int().min(1),
+  revenue: z.coerce.number().min(0),
+  amazon_fees: z.coerce.number().min(0).default(0),
+  order_id: z.string().max(255).nullable().optional(),
+});
 
 export async function GET(req: NextRequest) {
   try {
@@ -52,20 +62,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-
-    const productId = body.product_id || body.productId;
-    const saleDate = body.sale_date || body.saleDate;
-    const unitsSold = parseInt(body.units_sold || body.unitsSold || "0");
-    const revenue = parseFloat(body.revenue || "0");
-    const amazonFees = parseFloat(body.amazon_fees || body.amazonFees || "0");
-    const orderId = body.order_id || body.orderId || null;
-
-    if (!productId || !saleDate || !unitsSold || unitsSold <= 0) {
-      return NextResponse.json(
-        { error: "Producto, fecha y unidades son requeridos" },
-        { status: 400 }
-      );
+    const parse = salePostSchema.safeParse(body);
+    if (!parse.success) {
+      return NextResponse.json({ error: "Datos inv\u00E1lidos", details: parse.error.flatten().fieldErrors }, { status: 400 });
     }
+
+    const { product_id: productId, sale_date: saleDate, units_sold: unitsSold, revenue, amazon_fees: amazonFees, order_id: orderId } = parse.data;
 
     if (revenue <= 0) {
       return NextResponse.json(

@@ -16,16 +16,18 @@ export async function GET(req: NextRequest) {
         const search = searchParams.get('search') || '';
         const status = searchParams.get('status');
         const stockStatus = searchParams.get('stockStatus');
-        const page = parseInt(searchParams.get('page') || '1');
-        const perPage = parseInt(searchParams.get('perPage') || '20');
+        const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
+        const perPage = Math.min(200, Math.max(1, parseInt(searchParams.get('perPage') || '20') || 20));
 
         let query = supabase
             .from('products_with_inventory')
             .select('*', { count: 'exact' })
             .eq('user_id', user.id);
 
-        if (search)
-            query = query.or(`sku.ilike.%${search}%,name.ilike.%${search}%`);
+        if (search) {
+            const cleanSearch = search.replace(/[%_]/g, '\\$&');
+            query = query.or(`sku.ilike.%${cleanSearch}%,name.ilike.%${cleanSearch}%`);
+        }
         if (status) query = query.eq('status', status);
         if (stockStatus) query = query.eq('stock_status', stockStatus);
 

@@ -1,5 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const productSupplierSchema = z.object({
+  supplier_id: z.string().uuid(),
+  unit_cost: z.coerce.number().min(0).default(0),
+  moq: z.coerce.number().int().min(0).nullable().optional(),
+  lead_time_days: z.coerce.number().int().min(0).nullable().optional(),
+  is_primary: z.coerce.boolean().default(false),
+  notes: z.string().max(2000).nullable().optional(),
+});
 
 export async function GET(
   request: NextRequest,
@@ -92,11 +102,11 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { supplier_id, unit_cost, moq, lead_time_days, is_primary, notes } = body;
-
-    if (!supplier_id) {
-      return NextResponse.json({ error: "supplier_id es requerido" }, { status: 400 });
+    const parse = productSupplierSchema.safeParse(body);
+    if (!parse.success) {
+      return NextResponse.json({ error: "Datos inv\u00E1lidos", details: parse.error.flatten().fieldErrors }, { status: 400 });
     }
+    const { supplier_id, unit_cost, moq, lead_time_days, is_primary, notes } = parse.data;
 
     const { data: supplier } = await supabase
       .from("suppliers")
@@ -113,7 +123,8 @@ export async function POST(
       await supabase
         .from("product_suppliers")
         .update({ is_primary: false })
-        .eq("product_id", params.id);
+        .eq("product_id", params.id)
+        .eq("user_id", user.id);
     }
 
     const { data: existing } = await supabase

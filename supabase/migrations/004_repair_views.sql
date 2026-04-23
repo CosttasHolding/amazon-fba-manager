@@ -45,18 +45,6 @@ LEFT JOIN (
   GROUP BY product_id, user_id
 ) re ON re.product_id = p.id AND re.user_id = p.user_id;
 
--- Also fix monthly_financial_summary to filter by user_id in subqueries
-CREATE OR REPLACE VIEW monthly_financial_summary AS
-SELECT
-  p.user_id,
-  TO_CHAR(p.created_at, 'YYYY-MM') AS month,
-  COALESCE(SUM(p.total_cost * i.stock_available), 0) AS inventory_value,
-  COALESCE(SUM(p.net_profit * s.total_units), 0) AS estimated_profit
-FROM products p
-LEFT JOIN inventory i ON i.product_id = p.id
-LEFT JOIN (
-  SELECT product_id, user_id, SUM(units_sold) AS total_units
-  FROM sales
-  GROUP BY product_id, user_id
-) s ON s.product_id = p.id AND s.user_id = p.user_id
-GROUP BY p.user_id, TO_CHAR(p.created_at, 'YYYY-MM');
+-- NOTE: monthly_financial_summary in 003_finances.sql already filters by user_id
+-- and is used for expense categorization. Do NOT redefine it here to avoid
+-- breaking change. The original view is correct for its purpose.

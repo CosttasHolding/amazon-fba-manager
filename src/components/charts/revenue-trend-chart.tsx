@@ -72,7 +72,7 @@ export function RevenueTrendChart({ data }: RevenueTrendChartProps) {
 
   const formatYAxis = (v: number) => {
     if (v >= 1000) return `$${(v / 1000).toFixed(0)}k`;
-    return `$v`;
+    return `$${v}`;
   };
 
   return (

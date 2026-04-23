@@ -85,7 +85,10 @@ export async function GET(
     return NextResponse.json(enriched);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error desconocido";
-    return NextResponse.json({ error: message }, { status: 404 });
+    if (message.includes("PGRST116") || message.toLowerCase().includes("no rows") || message.toLowerCase().includes("not found")) {
+      return NextResponse.json({ error: message }, { status: 404 });
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

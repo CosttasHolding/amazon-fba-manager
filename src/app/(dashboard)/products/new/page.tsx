@@ -92,7 +92,6 @@ export default function NewProductPage() {
       taxes: 0,
       otherFees: 0,
       weightKg: null,
-      minStock: 10,
     },
   });
 
@@ -387,20 +386,6 @@ export default function NewProductPage() {
           <div className={sectionTitleClass}>
             <Info className="h-4 w-4 text-primary" />
             Detalles adicionales
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label className={labelClass}>Dimensiones</Label>
-              <Input {...register("dimensions")} placeholder="30x20x10 cm" className={inputClass} />
-            </div>
-            <div>
-              <Label className={labelClass}>Stock minimo</Label>
-              <Input type="number" {...register("minStock", { valueAsNumber: true })} className={inputClass} />
-            </div>
-            <div>
-              <Label className={labelClass}>URL de imagen</Label>
-              <Input {...register("imageUrl")} placeholder="https://..." className={inputClass} />
-            </div>
           </div>
           <div>
             <Label className={labelClass}>Notas</Label>

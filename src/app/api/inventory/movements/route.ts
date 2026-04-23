@@ -10,9 +10,17 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const validated = stockMovementSchema.parse(body);
+    const dbData = {
+      product_id: validated.productId,
+      movement_type: validated.movementType,
+      quantity: validated.quantity,
+      reference: validated.reference || null,
+      notes: validated.notes || null,
+      user_id: user.id,
+    };
     const { data, error } = await supabase
       .from("stock_movements")
-      .insert({ ...validated, user_id: user.id })
+      .insert(dbData)
       .select()
       .single();
 
