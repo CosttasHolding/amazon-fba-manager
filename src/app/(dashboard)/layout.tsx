@@ -9,6 +9,7 @@ import { Sidebar } from "@/components/sidebar";
 import { TopHeader } from "@/components/top-header";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { ErrorBoundaryWrapper } from "@/components/error-boundary-wrapper";
+import { HelpButton } from "@/components/help-button";
 
 export default async function DashboardLayout({
   children,
@@ -61,11 +62,12 @@ export default async function DashboardLayout({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <HelpButton />
           <Link
             href="/settings"
             className="w-9 h-9 rounded-xl flex items-center justify-center bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
-            title="Configuración"
-            aria-label="Configuración"
+            title="Configuraci\u00F3n"
+            aria-label="Configuraci\u00F3n"
           >
             <Settings className="w-4 h-4" />
           </Link>

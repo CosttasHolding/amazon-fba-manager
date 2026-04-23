@@ -1,5 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+
+const productUpdateSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  sku: z.string().min(1).max(100).optional(),
+  asin: z.string().max(100).nullable().optional(),
+  category: z.string().nullable().optional(),
+  status: z.enum(["active","paused","discontinued"]).optional(),
+  marketplace: z.string().max(10).optional(),
+  unit_cost: z.coerce.number().min(0).optional(),
+  sale_price: z.coerce.number().min(0).optional(),
+  fba_fee: z.coerce.number().min(0).optional(),
+  referral_fee: z.coerce.number().min(0).optional(),
+  shipping_cost: z.coerce.number().min(0).optional(),
+  storage_fee_monthly: z.coerce.number().min(0).optional(),
+  prep_cost: z.coerce.number().min(0).optional(),
+  taxes: z.coerce.number().min(0).optional(),
+  other_fees: z.coerce.number().min(0).optional(),
+  weight_kg: z.coerce.number().min(0).nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+});
 
 export async function GET(
   req: NextRequest,
@@ -81,29 +102,37 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
+    const parse = productUpdateSchema.safeParse(body);
+    if (!parse.success) {
+      return NextResponse.json(
+        { error: "Datos inv\u00E1lidos", details: parse.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
 
-    const dbData: Record<string, unknown> = {
-      name: body.name,
-      sku: body.sku,
-      asin: body.asin || null,
-      category: body.category || null,
-      status: body.status || "active",
-      marketplace: body.marketplace || "US",
-      unit_cost: body.unitCost ?? 0,
-      sale_price: body.salePrice ?? 0,
-      fba_fee: body.fbaFee ?? 0,
-      referral_fee: body.referralFee ?? 0,
-      shipping_cost: body.shippingCost ?? 0,
-      storage_fee_monthly: body.storageFeeMonthly ?? 0,
-      prep_cost: body.prepCost ?? 0,
-      taxes: body.taxes ?? 0,
-      other_fees: body.otherFees ?? 0,
-      weight_kg: body.weightKg ?? null,
-      min_stock: body.minStock ?? 10,
-      dimensions: body.dimensions || null,
-      image_url: body.imageUrl || null,
-      notes: body.notes || null,
-    };
+    const v = parse.data;
+    const dbData: Record<string, unknown> = {};
+    if (v.name !== undefined) dbData.name = v.name;
+    if (v.sku !== undefined) dbData.sku = v.sku;
+    if (v.asin !== undefined) dbData.asin = v.asin;
+    if (v.category !== undefined) dbData.category = v.category;
+    if (v.status !== undefined) dbData.status = v.status;
+    if (v.marketplace !== undefined) dbData.marketplace = v.marketplace;
+    if (v.unit_cost !== undefined) dbData.unit_cost = v.unit_cost;
+    if (v.sale_price !== undefined) dbData.sale_price = v.sale_price;
+    if (v.fba_fee !== undefined) dbData.fba_fee = v.fba_fee;
+    if (v.referral_fee !== undefined) dbData.referral_fee = v.referral_fee;
+    if (v.shipping_cost !== undefined) dbData.shipping_cost = v.shipping_cost;
+    if (v.storage_fee_monthly !== undefined) dbData.storage_fee_monthly = v.storage_fee_monthly;
+    if (v.prep_cost !== undefined) dbData.prep_cost = v.prep_cost;
+    if (v.taxes !== undefined) dbData.taxes = v.taxes;
+    if (v.other_fees !== undefined) dbData.other_fees = v.other_fees;
+    if (v.weight_kg !== undefined) dbData.weight_kg = v.weight_kg;
+    if (v.notes !== undefined) dbData.notes = v.notes;
+
+    if (Object.keys(dbData).length === 0) {
+      return NextResponse.json({ error: "No hay campos para actualizar" }, { status: 400 });
+    }
 
     const { data, error } = await supabase
       .from("products")

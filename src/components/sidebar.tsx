@@ -18,6 +18,8 @@ import {
   Wallet,
   Ship,
   RotateCcw,
+  Target,
+  Link2,
 } from "lucide-react";
 
 const navItems = [
@@ -28,9 +30,12 @@ const navItems = [
   { href: "/orders", icon: ClipboardList, label: "Pedidos" },
   { href: "/shipments", icon: Ship, label: "Shipments" },
   { href: "/inventory", icon: Warehouse, label: "Inventario" },
+  { href: "/forecasting", icon: TrendingUp, label: "Forecasting" },
   { href: "/sales", icon: TrendingUp, label: "Ventas" },
   { href: "/returns", icon: RotateCcw, label: "Returns" },
   { href: "/finances", icon: Wallet, label: "Finanzas" },
+  { href: "/ads", icon: Target, label: "PPC" },
+  { href: "/sp-api", icon: Link2, label: "Amazon API" },
   { href: "/calculator", icon: Calculator, label: "Calculadora" },
 ];
 

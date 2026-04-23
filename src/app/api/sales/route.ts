@@ -74,13 +74,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { data: product } = await supabase
+    const { data: product, error: productError } = await supabase
       .from("products")
       .select("id")
       .eq("id", productId)
       .eq("user_id", user.id)
       .single();
 
+    if (productError && productError.code !== "PGRST116") {
+      return NextResponse.json({ error: productError.message }, { status: 500 });
+    }
     if (!product) {
       return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
     }

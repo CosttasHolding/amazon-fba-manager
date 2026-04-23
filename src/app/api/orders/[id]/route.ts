@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { orderSchema } from "@/validations/order";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -32,7 +33,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (authError || !user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const body = await req.json();
-    const { data, error } = await supabase.from("purchase_orders").update(body).eq("id", id).eq("user_id", user.id).select().single();
+    const result = orderSchema.partial().safeParse(body);
+    if (!result.success) {
+      return NextResponse.json({ error: "Datos inv\u00E1lidos", details: result.error.flatten().fieldErrors }, { status: 400 });
+    }
+    const { data, error } = await supabase.from("purchase_orders").update(result.data).eq("id", id).eq("user_id", user.id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
   } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { fbaShipmentSchema } from "@/validations/fba-shipment";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -20,7 +21,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (authError || !user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const body = await req.json();
-    const { data, error } = await supabase.from("fba_shipments").update(body).eq("id", params.id).eq("user_id", user.id).select().single();
+    const result = fbaShipmentSchema.partial().safeParse(body);
+    if (!result.success) {
+      return NextResponse.json({ error: "Datos inv\u00E1lidos", details: result.error.flatten().fieldErrors }, { status: 400 });
+    }
+    const { data, error } = await supabase.from("fba_shipments").update(result.data).eq("id", params.id).eq("user_id", user.id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
   } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }

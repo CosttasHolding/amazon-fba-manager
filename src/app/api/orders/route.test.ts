@@ -18,7 +18,8 @@ function buildQueryChain(returnValue: unknown) {
   const chain = {
     select: mockSelect.mockReturnThis(),
     eq: mockEq.mockReturnThis(),
-    order: mockOrder.mockResolvedValue(returnValue),
+    order: vi.fn().mockReturnThis(),
+    range: mockOrder.mockResolvedValue(returnValue),
     insert: mockInsert.mockReturnThis(),
     single: vi.fn().mockResolvedValue(returnValue),
   };
@@ -48,7 +49,7 @@ describe("GET /api/orders", () => {
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    expect(json).toEqual([{ id: "o1", po_number: "PO-001" }]);
+    expect(json).toEqual({ data: [{ id: "o1", po_number: "PO-001" }], count: undefined, page: 1, limit: 50 });
     expect(mockFrom).toHaveBeenCalledWith("purchase_orders");
     expect(mockEq).toHaveBeenCalledWith("user_id", "user-123");
   });

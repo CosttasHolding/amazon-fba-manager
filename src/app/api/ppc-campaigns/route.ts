@@ -2,17 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
-const payoutSchema = z.object({
-  payout_period_start: z.string().min(1, "Fecha inicio requerida"),
-  payout_period_end: z.string().min(1, "Fecha fin requerida"),
-  amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
-  currency: z.string().max(3).default("USD"),
-  status: z.enum(["pending","transferred","failed"]).default("pending"),
-  amazon_reference: z.string().max(200).nullable().optional(),
-  bank_account_last4: z.string().max(4).nullable().optional(),
-  transfer_date: z.string().nullable().optional(),
+const campaignSchema = z.object({
+  product_id: z.string().uuid().nullable().optional(),
+  campaign_name: z.string().min(1).max(200),
+  campaign_id: z.string().max(100).nullable().optional(),
+  campaign_type: z.enum(["sp_auto","sp_manual_keyword","sp_manual_product","sb","sd"]).default("sp_auto"),
   marketplace: z.string().max(10).default("US"),
-  notes: z.string().max(2000).nullable().optional(),
+  status: z.enum(["enabled","paused","archived"]).default("enabled"),
+  daily_budget: z.coerce.number().min(0).default(0),
 });
 
 export async function GET(req: NextRequest) {
@@ -22,18 +19,12 @@ export async function GET(req: NextRequest) {
     if (authError || !user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
-    const year = searchParams.get("year");
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") || "50")));
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    let query = supabase.from("amazon_payouts").select("*", { count: "exact" }).eq("user_id", user.id).order("payout_period_start", { ascending: false }).range(from, to);
-    if (year) {
-      query = query.gte("payout_period_start", year + "-01-01").lte("payout_period_end", year + "-12-31");
-    }
-
-    const { data, error, count } = await query;
+    const { data, error, count } = await supabase.from("ppc_campaigns").select("*", { count: "exact" }).eq("user_id", user.id).order("created_at", { ascending: false }).range(from, to);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ data: data || [], count, page, limit });
   } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
@@ -46,11 +37,11 @@ export async function POST(req: NextRequest) {
     if (authError || !user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const body = await req.json();
-    const result = payoutSchema.safeParse(body);
+    const result = campaignSchema.safeParse(body);
     if (!result.success) return NextResponse.json({ error: "Datos invalidos", details: result.error.flatten().fieldErrors }, { status: 400 });
 
     const clean = { ...result.data, user_id: user.id };
-    const { data, error } = await supabase.from("amazon_payouts").insert(clean).select().single();
+    const { data, error } = await supabase.from("ppc_campaigns").insert(clean).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data, { status: 201 });
   } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
