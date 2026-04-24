@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { apiErrorResponse } from "@/lib/api-utils";
 
 const productUpdateSchema = z.object({
   name: z.string().min(1).max(255).optional(),
@@ -84,11 +85,11 @@ export async function GET(
 
     return NextResponse.json(enriched);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Error desconocido";
+    const message = err instanceof Error ? err.message : "";
     if (message.includes("PGRST116") || message.toLowerCase().includes("no rows") || message.toLowerCase().includes("not found")) {
-      return NextResponse.json({ error: message }, { status: 404 });
+      return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
     }
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiErrorResponse(err, 500, "GET /api/products/[id]");
   }
 }
 
@@ -148,8 +149,7 @@ export async function PUT(
     if (error) throw error;
     return NextResponse.json(data);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return apiErrorResponse(err, 400, "PUT /api/products/[id]");
   }
 }
 
@@ -174,7 +174,6 @@ export async function DELETE(
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiErrorResponse(err, 500, "DELETE /api/products/[id]");
   }
 }

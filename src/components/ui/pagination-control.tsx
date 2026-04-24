@@ -46,10 +46,11 @@ export function PaginationControl({
         Mostrando {start}-{end} de {totalItems}
       </p>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1" role="navigation" aria-label="Paginacion">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
+          aria-label="Pagina anterior"
           className={cn(
             "flex items-center justify-center w-9 h-9 rounded-lg transition-colors",
             currentPage === 1
@@ -72,6 +73,8 @@ export function PaginationControl({
             <button
               key={page}
               onClick={() => onPageChange(page)}
+              aria-label={`Ir a pagina ${page}`}
+              aria-current={page === currentPage ? "page" : undefined}
               className={cn(
                 "flex items-center justify-center w-9 h-9 rounded-lg text-sm font-display transition-colors",
                 page === currentPage
@@ -87,6 +90,7 @@ export function PaginationControl({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
+          aria-label="Pagina siguiente"
           className={cn(
             "flex items-center justify-center w-9 h-9 rounded-lg transition-colors",
             currentPage === totalPages

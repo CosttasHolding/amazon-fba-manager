@@ -16,6 +16,14 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
@@ -137,12 +145,9 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6 animate-fade-up">
       <PageHeader badge="PEDIDOS" title="\u00D3rdenes de Compra" subtitle={`${orders.length} \u00F3rdenes registradas`}>
-        <button
-          onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="h-4 w-4" /> Nueva Orden
-        </button>
+        <Button onClick={() => setShowModal(true)}>
+          <Plus className="h-4 w-4 mr-1.5" /> Nueva Orden
+        </Button>
       </PageHeader>
 
       {/* KPIs */}
@@ -161,10 +166,17 @@ export default function OrdersPage() {
         </div>
         <div className="flex items-center gap-1.5">
           <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="h-9 rounded-lg border border-border bg-muted/50 text-sm text-foreground px-3">
-            <option value="">Todos los estados</option>
-            {STATUS_FLOW.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
-          </select>
+          <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v)}>
+            <SelectTrigger className="h-9 bg-muted/50 border-border text-sm w-[180px]">
+              <SelectValue placeholder="Todos los estados" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Todos los estados</SelectItem>
+              {STATUS_FLOW.map((s) => (
+                <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

@@ -25,8 +25,10 @@ import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PaginationControl } from "@/components/ui/pagination-control";
 import { exportInventoryExcel } from "@/lib/export";
-import { useInventory } from "@/hooks/use-data";
+import { useInventoryQuery, useInventorySummary } from "@/hooks/use-data";
 import { ProductWithInventory } from "@/types";
+import { STOCK_STATUS_OPTIONS, DEFAULT_PAGE_SIZE } from "@/lib/constants";
+
 const stockVariant = (status: string): "success" | "warning" | "danger" | "info" | "neutral" => {
   switch (status) {
     case "low_stock": return "warning";
@@ -37,14 +39,6 @@ const stockVariant = (status: string): "success" | "warning" | "danger" | "info"
 };
 
 const stockLabel = (status: string) => (status || "normal").replace("_", " ");
-
-const STOCK_STATUS_OPTIONS = [
-  { value: "", label: "Todos los estados" },
-  { value: "normal", label: "Normal" },
-  { value: "low_stock", label: "Stock Bajo" },
-  { value: "out_of_stock", label: "Sin Stock" },
-  { value: "overstock", label: "Sobrestock" },
-];
 
 const SORT_OPTIONS = [
   { value: "name_asc", label: "Nombre A-Z" },
@@ -91,7 +85,6 @@ function StockoutDate({ p }: { p: ProductWithInventory }) {
 }
 
 export default function InventoryPage() {
-  const { inventory, isLoading, mutate } = useInventory();
   const [search, setSearch] = useState("");
   const [sortValue, setSortValue] = useState("name_asc");
   const [filterValues, setFilterValues] = useState<Record<string, string>>({
@@ -100,7 +93,26 @@ export default function InventoryPage() {
     availableMax: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = DEFAULT_PAGE_SIZE;
+
+  const queryParams = useMemo(() => ({
+    page: currentPage,
+    perPage: ITEMS_PER_PAGE,
+    search,
+    stockStatus: filterValues.stockStatus,
+    availableMin: filterValues.availableMin,
+    availableMax: filterValues.availableMax,
+    sort: sortValue,
+  }), [currentPage, search, filterValues, sortValue]);
+
+  const { inventory, pagination, isLoading, isError, mutate } = useInventoryQuery(queryParams);
+  const { summary, isLoading: summaryLoading, isError: summaryError } = useInventorySummary();
+
+  const exportQuery = useInventoryQuery({
+    ...queryParams,
+    page: 1,
+    perPage: 200,
+  });
 
   const handleFilterChange = (key: string, value: string) => {
     setFilterValues((prev) => ({ ...prev, [key]: value }));
@@ -116,63 +128,34 @@ export default function InventoryPage() {
     setCurrentPage(1);
   };
 
-  const filtered = useMemo(() => {
-    let result = inventory.filter((p: ProductWithInventory) => {
-      const matchSearch =
-        !search ||
-        p.name?.toLowerCase().includes(search.toLowerCase()) ||
-        p.sku?.toLowerCase().includes(search.toLowerCase());
-
-      const matchStockStatus =
-        !filterValues.stockStatus ||
-        (p.stock_status || "normal") === filterValues.stockStatus;
-
-      const available = p.stock_available || 0;
-      const matchAvailableMin =
-        filterValues.availableMin === "" || available >= parseFloat(filterValues.availableMin);
-      const matchAvailableMax =
-        filterValues.availableMax === "" || available <= parseFloat(filterValues.availableMax);
-
-      return matchSearch && matchStockStatus && matchAvailableMin && matchAvailableMax;
-    });
-
-    result.sort((a: ProductWithInventory, b: ProductWithInventory) => {
-      const totalA = (a.stock_available || 0) + (a.stock_inbound || 0) + (a.stock_warehouse || 0);
-      const totalB = (b.stock_available || 0) + (b.stock_inbound || 0) + (b.stock_warehouse || 0);
-      switch (sortValue) {
-        case "name_asc": return (a.name || "").localeCompare(b.name || "");
-        case "name_desc": return (b.name || "").localeCompare(a.name || "");
-        case "stock_asc": return totalA - totalB;
-        case "stock_desc": return totalB - totalA;
-        case "available_asc": return (a.stock_available || 0) - (b.stock_available || 0);
-        case "available_desc": return (b.stock_available || 0) - (a.stock_available || 0);
-        case "days_asc": return (a.days_of_stock || 999) - (b.days_of_stock || 999);
-        case "days_desc": return (b.days_of_stock || 999) - (a.days_of_stock || 999);
-        default: return 0;
-      }
-    });
-
-    return result;
-  }, [inventory, search, filterValues, sortValue]);
-
-  const paginated = useMemo(() => {
-    return filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  }, [filtered, currentPage]);
-
-  const totalUnits = inventory.reduce(
-    (sum: number, p: ProductWithInventory) => sum + (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0),
-    0
-  );
-  const lowStockCount = inventory.filter((p: ProductWithInventory) => p.stock_status === "low_stock").length;
-  const outOfStockCount = inventory.filter((p: ProductWithInventory) => p.stock_status === "out_of_stock").length;
-  const overstockCount = inventory.filter((p: ProductWithInventory) => p.stock_status === "overstock").length;
-
   const handleExport = () => {
-    exportInventoryExcel(filtered);
+    exportInventoryExcel(exportQuery.inventory);
   };
 
-  if (isLoading) {
+  const isPageLoading = isLoading || summaryLoading;
+
+  if (isPageLoading) {
     return <PageSkeleton kpiCount={4} rowCount={6} showSearch />;
+  }
+
+  if (isError || summaryError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center">
+          <AlertTriangle className="h-8 w-8 text-destructive" />
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-semibold text-foreground mb-1">Error al cargar datos</p>
+          <p className="text-sm text-muted-foreground mb-4">No se pudo obtener el inventario. Intenta de nuevo.</p>
+        </div>
+        <button
+          onClick={() => mutate()}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -204,32 +187,32 @@ export default function InventoryPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label="Total Unidades"
-          value={String(totalUnits)}
+          value={String(summary.totalUnits)}
           icon={Package}
           accentColor="cyan"
           animationDelay={0}
         />
         <KpiCard
           label="Stock Bajo"
-          value={String(lowStockCount)}
+          value={String(summary.lowStockCount)}
           icon={AlertTriangle}
           accentColor="amber"
           animationDelay={75}
-          trend={lowStockCount > 0 ? "down" : "neutral"}
-          trendValue={lowStockCount > 0 ? "Requiere atencion" : "OK"}
+          trend={summary.lowStockCount > 0 ? "down" : "neutral"}
+          trendValue={summary.lowStockCount > 0 ? "Requiere atencion" : "OK"}
         />
         <KpiCard
           label="Sin Stock"
-          value={String(outOfStockCount)}
+          value={String(summary.outOfStockCount)}
           icon={TrendingDown}
           accentColor="red"
           animationDelay={150}
-          trend={outOfStockCount > 0 ? "down" : "neutral"}
-          trendValue={outOfStockCount > 0 ? "Critico" : "OK"}
+          trend={summary.outOfStockCount > 0 ? "down" : "neutral"}
+          trendValue={summary.outOfStockCount > 0 ? "Critico" : "OK"}
         />
         <KpiCard
           label="Exceso Stock"
-          value={String(overstockCount)}
+          value={String(summary.overstockCount)}
           icon={Archive}
           accentColor="purple"
           animationDelay={225}
@@ -242,12 +225,15 @@ export default function InventoryPage() {
           aria-label="Buscar inventario"
           placeholder="Buscar por SKU o nombre..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
           className="pl-9 bg-muted/50 border-border"
         />
       </div>
 
-      {filtered.length === 0 && (
+      {inventory.length === 0 && (
         <EmptyState
           icon={Package}
           title={Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay datos de inventario"}
@@ -255,9 +241,9 @@ export default function InventoryPage() {
         />
       )}
 
-      {filtered.length > 0 && (
+      {inventory.length > 0 && (
         <DataTableWrapper
-          title={`${filtered.length} producto${filtered.length !== 1 ? "s" : ""}`}
+          title={`${pagination.total} producto${pagination.total !== 1 ? "s" : ""}`}
         >
           {/* Desktop */}
           <div className="hidden md:block overflow-x-auto">
@@ -276,7 +262,7 @@ export default function InventoryPage() {
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((p: ProductWithInventory) => {
+                {inventory.map((p: ProductWithInventory) => {
                   const total = (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0);
                   return (
                     <tr key={p.id} className={tableRowClass}>
@@ -319,7 +305,7 @@ export default function InventoryPage() {
 
           {/* Mobile */}
           <div className="md:hidden space-y-3 p-4">
-            {paginated.map((p: ProductWithInventory) => {
+            {inventory.map((p: ProductWithInventory) => {
               const total = (p.stock_available || 0) + (p.stock_inbound || 0) + (p.stock_warehouse || 0);
               return (
                 <div
@@ -362,12 +348,12 @@ export default function InventoryPage() {
               );
             })}
           </div>
-          {filtered.length > ITEMS_PER_PAGE && (
+          {pagination.total > ITEMS_PER_PAGE && (
             <div className="p-4 border-t border-border">
             <PaginationControl
-              currentPage={currentPage}
-              totalPages={Math.ceil(filtered.length / ITEMS_PER_PAGE)}
-              totalItems={filtered.length}
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.total}
               itemsPerPage={ITEMS_PER_PAGE}
               onPageChange={setCurrentPage}
             />

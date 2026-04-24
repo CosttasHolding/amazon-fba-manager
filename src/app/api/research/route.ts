@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { researchSchema } from "@/validations/research";
+import { apiErrorResponse } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,10 +16,13 @@ export async function GET(req: NextRequest) {
     const to = from + limit - 1;
 
     const { data, error, count } = await supabase.from("product_research").select("*", { count: "exact" }).eq("user_id", user.id).order("created_at", { ascending: false }).range(from, to);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error("[GET /api/research]", error);
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    }
     return NextResponse.json({ data: data || [], count, page, limit });
   } catch (error) {
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return apiErrorResponse(error, 500, "GET /api/research");
   }
 }
 
@@ -34,10 +38,13 @@ export async function POST(req: NextRequest) {
 
     const clean = { ...result.data, user_id: user.id };
     const { data, error } = await supabase.from("product_research").insert(clean).select().single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error("[POST /api/research]", error);
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    }
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return apiErrorResponse(error, 500, "POST /api/research");
   }
 }
 
@@ -56,10 +63,13 @@ export async function PUT(req: NextRequest) {
     if (!result.success) return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
 
     const { data, error } = await supabase.from("product_research").update(result.data).eq("id", id).eq("user_id", user.id).select().single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error("[PUT /api/research]", error);
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    }
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return apiErrorResponse(error, 500, "PUT /api/research");
   }
 }
 
@@ -74,9 +84,12 @@ export async function DELETE(req: NextRequest) {
     if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
 
     const { error } = await supabase.from("product_research").delete().eq("id", id).eq("user_id", user.id);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error("[DELETE /api/research]", error);
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    }
     return NextResponse.json({ message: "Eliminado" });
   } catch (error) {
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return apiErrorResponse(error, 500, "DELETE /api/research");
   }
 }

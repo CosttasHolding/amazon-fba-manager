@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { expenseSchema, type ExpenseFormData } from "@/validations/expense";
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
@@ -8,6 +11,7 @@ import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -75,13 +79,26 @@ export default function FinancesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [savingExpense, setSavingExpense] = useState(false);
-  const [expenseForm, setExpenseForm] = useState({
-    category: "other",
-    description: "",
-    amount: "",
-    expense_date: new Date().toISOString().split("T")[0],
-    vendor: "",
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<ExpenseFormData>({
+    resolver: zodResolver(expenseSchema),
+    defaultValues: {
+      category: "other",
+      description: "",
+      amount: 0,
+      expense_date: new Date().toISOString().split("T")[0],
+      vendor: "",
+    },
   });
+
+  const watchedCategory = watch("category");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,8 +107,14 @@ export default function FinancesPage() {
           fetch("/api/expenses"),
           fetch("/api/amazon-payouts"),
         ]);
-        if (expRes.ok) setExpenses(await expRes.json());
-        if (payRes.ok) setPayouts(await payRes.json());
+        if (expRes.ok) {
+          const expData = await expRes.json();
+          setExpenses(Array.isArray(expData) ? expData : expData.data || []);
+        }
+        if (payRes.ok) {
+          const payData = await payRes.json();
+          setPayouts(Array.isArray(payData) ? payData : payData.data || []);
+        }
       } catch (error) {
         console.error("Error cargando finanzas:", error);
         toast.error("Error al cargar datos financieros");
@@ -136,37 +159,31 @@ export default function FinancesPage() {
       .sort((a, b) => b.amount - a.amount);
   }, [expenses]);
 
-  const handleAddExpense = async () => {
-    if (!expenseForm.description || !expenseForm.amount) {
-      toast.error("Descripcion y monto son requeridos");
-      return;
-    }
+  const onSubmit = async (data: ExpenseFormData) => {
     setSavingExpense(true);
     try {
       const res = await fetch("/api/expenses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          category: expenseForm.category,
-          description: expenseForm.description,
-          amount: parseFloat(expenseForm.amount),
-          expense_date: expenseForm.expense_date,
-          vendor: expenseForm.vendor || null,
-        }),
+        body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Error");
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Error al registrar gasto");
+      }
       const newExp = await res.json();
       setExpenses((p) => [newExp, ...p]);
-      setExpenseForm({
+      reset({
         category: "other",
         description: "",
-        amount: "",
+        amount: 0,
         expense_date: new Date().toISOString().split("T")[0],
         vendor: "",
       });
       toast.success("Gasto registrado");
-    } catch {
-      toast.error("Error al registrar gasto");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error al registrar gasto";
+      toast.error(message);
     } finally {
       setSavingExpense(false);
     }
@@ -180,6 +197,7 @@ export default function FinancesPage() {
         badge="FINANZAS"
         title="Cash Flow"
         subtitle="Controla tus ingresos, gastos y rentabilidad real del negocio"
+        breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Finanzas" }]}
       />
 
       {/* KPIs */}
@@ -263,11 +281,14 @@ export default function FinancesPage() {
               <Receipt className="h-4 w-4 text-primary" />
               <span className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">Registrar Gasto</span>
             </div>
-            <div className="space-y-3">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
               <div>
                 <Label className="text-xs text-muted-foreground">Categoria</Label>
-                <Select value={expenseForm.category} onValueChange={(v) => setExpenseForm((p) => ({ ...p, category: v }))}>
-                  <SelectTrigger className="h-9 bg-muted/50 border-border text-sm">
+                <Select
+                  value={watchedCategory}
+                  onValueChange={(v) => setValue("category", v as ExpenseFormData["category"])}
+                >
+                  <SelectTrigger className="h-9 bg-background border-border text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -278,54 +299,55 @@ export default function FinancesPage() {
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Descripcion</Label>
+                <Label className="text-xs text-muted-foreground">Descripcion *</Label>
                 <Input
-                  value={expenseForm.description}
-                  onChange={(e) => setExpenseForm((p) => ({ ...p, description: e.target.value }))}
+                  {...register("description")}
                   placeholder="Ej: Subscription Helium 10"
-                  className="h-9 bg-muted/50 border-border text-sm"
+                  className="h-9 bg-background border-border text-sm"
                 />
+                {errors.description && (
+                  <p className="text-xs text-destructive mt-1">{errors.description.message}</p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Monto ($)</Label>
+                  <Label className="text-xs text-muted-foreground">Monto ($) *</Label>
                   <Input
                     type="number"
                     step="0.01"
-                    value={expenseForm.amount}
-                    onChange={(e) => setExpenseForm((p) => ({ ...p, amount: e.target.value }))}
+                    {...register("amount", { valueAsNumber: true })}
                     placeholder="0.00"
-                    className="h-9 bg-muted/50 border-border text-sm"
+                    className="h-9 bg-background border-border text-sm"
                   />
+                  {errors.amount && (
+                    <p className="text-xs text-destructive mt-1">{errors.amount.message}</p>
+                  )}
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Fecha</Label>
+                  <Label className="text-xs text-muted-foreground">Fecha *</Label>
                   <Input
                     type="date"
-                    value={expenseForm.expense_date}
-                    onChange={(e) => setExpenseForm((p) => ({ ...p, expense_date: e.target.value }))}
-                    className="h-9 bg-muted/50 border-border text-sm"
+                    {...register("expense_date")}
+                    className="h-9 bg-background border-border text-sm"
                   />
+                  {errors.expense_date && (
+                    <p className="text-xs text-destructive mt-1">{errors.expense_date.message}</p>
+                  )}
                 </div>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Proveedor (opcional)</Label>
                 <Input
-                  value={expenseForm.vendor}
-                  onChange={(e) => setExpenseForm((p) => ({ ...p, vendor: e.target.value }))}
+                  {...register("vendor")}
                   placeholder="Ej: Helium 10"
-                  className="h-9 bg-muted/50 border-border text-sm"
+                  className="h-9 bg-background border-border text-sm"
                 />
               </div>
-              <button
-                onClick={handleAddExpense}
-                disabled={savingExpense}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                {savingExpense ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              <Button type="submit" disabled={savingExpense} className="w-full" size="sm">
+                {savingExpense ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1.5" />}
                 Registrar gasto
-              </button>
-            </div>
+              </Button>
+            </form>
           </div>
 
           {/* Category breakdown */}
@@ -381,7 +403,7 @@ export default function FinancesPage() {
                       <StatusBadge status={e.category} />
                     </td>
                     <td className="px-4 py-3 text-foreground">{e.description}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{e.vendor || "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{e.vendor || "\u2014"}</td>
                     <td className="px-4 py-3 text-right font-display text-red-600 dark:text-rose-400">{fmt(e.amount)}</td>
                   </tr>
                 );

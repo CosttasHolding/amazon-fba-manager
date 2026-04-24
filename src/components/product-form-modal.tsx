@@ -22,20 +22,7 @@ import { Loader2, Package, DollarSign, Tag, FileText } from "lucide-react";
 
 type ProductFormData = z.infer<typeof productSchema>;
 
-const CATEGORIES = [
-  "Electronics", "Toys", "Home", "Kitchen", "Health", "Beauty", "Sports", "Books", "Other",
-] as const;
-
-const MARKETPLACES = [
-  { value: "US", label: "US" },
-  { value: "MX", label: "MX" },
-  { value: "CA", label: "CA" },
-  { value: "UK", label: "UK" },
-  { value: "DE", label: "DE" },
-  { value: "FR", label: "FR" },
-  { value: "IT", label: "IT" },
-  { value: "ES", label: "ES" },
-] as const;
+import { MARKETPLACES, PRODUCT_CATEGORIES } from "@/lib/constants";
 
 const STATUSES = [
   { value: "active", label: "Activo" },
@@ -124,44 +111,44 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="sm:col-span-2">
-                <Label className={labelClass}>Nombre *</Label>
-                <Input {...form.register("name")} placeholder="Nombre del producto" className={inputClass} />
+                <Label htmlFor="name" className={labelClass}>Nombre *</Label>
+                <Input id="name" {...form.register("name")} placeholder="Nombre del producto" className={inputClass} />
                 {form.formState.errors.name && (
                   <p className="text-xs text-destructive mt-0.5">{form.formState.errors.name.message}</p>
                 )}
               </div>
               <div>
-                <Label className={labelClass}>SKU *</Label>
-                <Input {...form.register("sku")} placeholder="SKU-001" className={inputClass} />
+                <Label htmlFor="sku" className={labelClass}>SKU *</Label>
+                <Input id="sku" {...form.register("sku")} placeholder="SKU-001" className={inputClass} />
                 {form.formState.errors.sku && (
                   <p className="text-xs text-destructive mt-0.5">{form.formState.errors.sku.message}</p>
                 )}
               </div>
               <div>
-                <Label className={labelClass}>ASIN</Label>
-                <Input {...form.register("asin")} placeholder="B0XXXXXX" className={inputClass} />
+                <Label htmlFor="asin" className={labelClass}>ASIN</Label>
+                <Input id="asin" {...form.register("asin")} placeholder="B0XXXXXX" className={inputClass} />
               </div>
               <div>
-                <Label className={labelClass}>Categoría</Label>
+                <Label htmlFor="category" className={labelClass}>Categoría</Label>
                 <Select
                   value={form.watch("category") || ""}
                   onValueChange={(v) => form.setValue("category", v as ProductFormData["category"])}
                 >
-                  <SelectTrigger className={inputClass}><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectTrigger id="category" className={inputClass}><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map((cat) => (
+                    {PRODUCT_CATEGORIES.map((cat) => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className={labelClass}>Marketplace</Label>
+                <Label htmlFor="marketplace" className={labelClass}>Marketplace</Label>
                 <Select
                   value={form.watch("marketplace")}
                   onValueChange={(v) => form.setValue("marketplace", v as ProductFormData["marketplace"])}
                 >
-                  <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="marketplace" className={inputClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {MARKETPLACES.map((m) => (
                       <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
@@ -170,12 +157,12 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
                 </Select>
               </div>
               <div>
-                <Label className={labelClass}>Estado</Label>
+                <Label htmlFor="status" className={labelClass}>Estado</Label>
                 <Select
                   value={form.watch("status")}
                   onValueChange={(v) => form.setValue("status", v as ProductFormData["status"])}
                 >
-                  <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="status" className={inputClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {STATUSES.map((s) => (
                       <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
@@ -184,8 +171,9 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
                 </Select>
               </div>
               <div>
-                <Label className={labelClass}>Peso (kg)</Label>
+                <Label htmlFor="weightKg" className={labelClass}>Peso (kg)</Label>
                 <Input
+                  id="weightKg"
                   type="number"
                   step="0.01"
                   {...form.register("weightKg", { valueAsNumber: true })}
@@ -204,8 +192,9 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
-                <Label className={labelClass}>Costo unitario *</Label>
+                <Label htmlFor="unitCost" className={labelClass}>Costo unitario *</Label>
                 <Input
+                  id="unitCost"
                   type="number"
                   step="0.01"
                   {...form.register("unitCost", { valueAsNumber: true })}
@@ -214,8 +203,9 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
                 />
               </div>
               <div>
-                <Label className={labelClass}>Envío</Label>
+                <Label htmlFor="shippingCost" className={labelClass}>Envío</Label>
                 <Input
+                  id="shippingCost"
                   type="number"
                   step="0.01"
                   {...form.register("shippingCost", { valueAsNumber: true })}
@@ -224,8 +214,9 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
                 />
               </div>
               <div>
-                <Label className={labelClass}>Prep</Label>
+                <Label htmlFor="prepCost" className={labelClass}>Prep</Label>
                 <Input
+                  id="prepCost"
                   type="number"
                   step="0.01"
                   {...form.register("prepCost", { valueAsNumber: true })}
@@ -234,8 +225,9 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
                 />
               </div>
               <div>
-                <Label className={labelClass}>Impuestos</Label>
+                <Label htmlFor="taxes" className={labelClass}>Impuestos</Label>
                 <Input
+                  id="taxes"
                   type="number"
                   step="0.01"
                   {...form.register("taxes", { valueAsNumber: true })}
@@ -254,8 +246,9 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               <div>
-                <Label className={labelClass}>Precio venta *</Label>
+                <Label htmlFor="salePrice" className={labelClass}>Precio venta *</Label>
                 <Input
+                  id="salePrice"
                   type="number"
                   step="0.01"
                   {...form.register("salePrice", { valueAsNumber: true })}
@@ -264,8 +257,9 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
                 />
               </div>
               <div>
-                <Label className={labelClass}>Referral fee</Label>
+                <Label htmlFor="referralFee" className={labelClass}>Referral fee</Label>
                 <Input
+                  id="referralFee"
                   type="number"
                   step="0.01"
                   {...form.register("referralFee", { valueAsNumber: true })}
@@ -274,8 +268,9 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
                 />
               </div>
               <div>
-                <Label className={labelClass}>FBA fee</Label>
+                <Label htmlFor="fbaFee" className={labelClass}>FBA fee</Label>
                 <Input
+                  id="fbaFee"
                   type="number"
                   step="0.01"
                   {...form.register("fbaFee", { valueAsNumber: true })}
@@ -284,8 +279,9 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
                 />
               </div>
               <div>
-                <Label className={labelClass}>Storage/mes</Label>
+                <Label htmlFor="storageFeeMonthly" className={labelClass}>Storage/mes</Label>
                 <Input
+                  id="storageFeeMonthly"
                   type="number"
                   step="0.01"
                   {...form.register("storageFeeMonthly", { valueAsNumber: true })}
@@ -294,8 +290,9 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
                 />
               </div>
               <div>
-                <Label className={labelClass}>Otros fees</Label>
+                <Label htmlFor="otherFees" className={labelClass}>Otros fees</Label>
                 <Input
+                  id="otherFees"
                   type="number"
                   step="0.01"
                   {...form.register("otherFees", { valueAsNumber: true })}
@@ -313,6 +310,7 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
               Notas
             </div>
             <Textarea
+              id="notes"
               {...form.register("notes")}
               placeholder="Notas adicionales sobre el producto..."
               className="min-h-[80px] bg-muted/50 border-border text-sm"

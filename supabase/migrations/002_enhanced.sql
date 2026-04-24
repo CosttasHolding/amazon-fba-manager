@@ -196,13 +196,13 @@ ALTER TABLE saved_calculations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_research ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purchase_orders ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS"own_suppliers"ON suppliers FOR ALL USING(auth.uid()=user_id);
-CREATE POLICY IF NOT EXISTS"own_product_suppliers"ON product_suppliers FOR ALL USING(user_id=auth.uid());
-CREATE POLICY IF NOT EXISTS"own_user_settings"ON user_settings FOR ALL USING(user_id=auth.uid());
-CREATE POLICY IF NOT EXISTS"own_supplier_quotes"ON supplier_quotes FOR ALL USING(user_id=auth.uid());
-CREATE POLICY IF NOT EXISTS"own_saved_calculations"ON saved_calculations FOR ALL USING(user_id=auth.uid());
-CREATE POLICY IF NOT EXISTS"own_research"ON product_research FOR ALL USING(user_id=auth.uid());
-CREATE POLICY IF NOT EXISTS"own_po"ON purchase_orders FOR ALL USING(user_id=auth.uid());
+CREATE POLICY IF NOT EXISTS "own_suppliers" ON suppliers FOR ALL USING(auth.uid() = user_id);
+CREATE POLICY IF NOT EXISTS "own_product_suppliers" ON product_suppliers FOR ALL USING(user_id = auth.uid());
+CREATE POLICY IF NOT EXISTS "own_user_settings" ON user_settings FOR ALL USING(user_id = auth.uid());
+CREATE POLICY IF NOT EXISTS "own_supplier_quotes" ON supplier_quotes FOR ALL USING(user_id = auth.uid());
+CREATE POLICY IF NOT EXISTS "own_saved_calculations" ON saved_calculations FOR ALL USING(user_id = auth.uid());
+CREATE POLICY IF NOT EXISTS "own_research" ON product_research FOR ALL USING(user_id = auth.uid());
+CREATE POLICY IF NOT EXISTS "own_po" ON purchase_orders FOR ALL USING(user_id = auth.uid());
 
 -- ============================================================
 -- 8. Triggers updated_at

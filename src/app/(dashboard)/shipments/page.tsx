@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
@@ -26,7 +26,7 @@ import {
   Calendar,
   MapPin,
   Loader2,
-  ArrowRight,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -47,10 +47,10 @@ interface Shipment {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  working: "En preparacion",
+  working: "En preparación",
   ready_to_ship: "Listo para enviar",
   shipped: "Enviado",
-  in_transit: "En transito",
+  in_transit: "En tránsito",
   delivered: "Entregado",
   checked_in: "Check-in",
   receiving: "Recibiendo",
@@ -81,9 +81,26 @@ const SHIPPING_ICONS: Record<string, React.ElementType> = {
 export default function ShipmentsPage() {
   const [loading, setLoading] = useState(true);
   const [shipments, setShipments] = useState<Shipment[]>([]);
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState("all");
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showModal) return;
+    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") setShowModal(false); };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [showModal]);
+
+  useEffect(() => {
+    if (!showModal) return;
+    const handleClick = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) setShowModal(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showModal]);
   const [form, setForm] = useState({
     shipment_name: "",
     destination_fulfillment_center: "",
@@ -104,7 +121,10 @@ export default function ShipmentsPage() {
   const fetchShipments = async () => {
     try {
       const res = await fetch("/api/fba-shipments");
-      if (res.ok) setShipments(await res.json());
+      if (res.ok) {
+        const json = await res.json();
+        setShipments(json.data || json || []);
+      }
     } catch (error) {
       console.error("Error cargando shipments:", error);
     } finally {
@@ -128,7 +148,7 @@ export default function ShipmentsPage() {
       if (!res.ok) throw new Error("Error");
       const newShipment = await res.json();
       setShipments((p) => [newShipment, ...p]);
-      setShowForm(false);
+      setShowModal(false);
       setForm({
         shipment_name: "", destination_fulfillment_center: "", shipping_method: "small_parcel",
         carrier: "", tracking_number: "", box_count: "", total_units: "",
@@ -150,8 +170,8 @@ export default function ShipmentsPage() {
     <div className="space-y-6 animate-fade-up">
       <PageHeader
         badge="SHIPMENTS"
-        title="Envios FBA"
-        subtitle="Gestion de inbound shipments a centros de fulfillment de Amazon"
+        title="Envíos FBA"
+        subtitle="Gestión de inbound shipments a centros de fulfillment de Amazon"
       />
 
       {/* Quick stats */}
@@ -174,75 +194,83 @@ export default function ShipmentsPage() {
         })}
       </div>
 
-      {/* Create form */}
-      <div className="rounded-2xl border border-border bg-card p-5">
+      {/* Nuevo Shipment Button */}
+      <div className="flex justify-end">
         <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 text-sm font-semibold text-foreground/80 uppercase tracking-wider"
+          onClick={() => setShowModal(true)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
         >
-          {showForm ? <ArrowRight className="h-4 w-4 rotate-90 transition-transform" /> : <Plus className="h-4 w-4" />}
-          {showForm ? "Ocultar formulario" : "Nuevo Shipment"}
+          <Plus className="h-4 w-4" /> Nuevo Shipment
         </button>
-        {showForm && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 pt-4 border-t border-border">
-            <div className="sm:col-span-2">
-              <Label className="text-xs text-muted-foreground">Nombre del shipment *</Label>
-              <Input value={form.shipment_name} onChange={(e) => setForm((p) => ({ ...p, shipment_name: e.target.value }))} placeholder="Ej: Shipment Kitchen Set - Abril" className="h-9 bg-muted/50 border-border text-sm" />
+      </div>
+
+      {/* Create Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <div ref={modalRef} className="bg-card border border-border rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-foreground">Nuevo Shipment</h3>
+              <button onClick={() => setShowModal(false)} className="p-1 rounded-lg hover:bg-muted transition-colors">
+                <X className="h-4 w-4 text-muted-foreground" />
+              </button>
             </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Fulfillment Center</Label>
-              <Input value={form.destination_fulfillment_center} onChange={(e) => setForm((p) => ({ ...p, destination_fulfillment_center: e.target.value }))} placeholder="Ej: TPA1" className="h-9 bg-muted/50 border-border text-sm" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="sm:col-span-2">
+                <Label className="text-xs text-muted-foreground">Nombre del shipment *</Label>
+                <Input value={form.shipment_name} onChange={(e) => setForm((p) => ({ ...p, shipment_name: e.target.value }))} placeholder="Ej: Shipment Kitchen Set - Abril" className="h-9 bg-muted/50 border-border text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Fulfillment Center</Label>
+                <Input value={form.destination_fulfillment_center} onChange={(e) => setForm((p) => ({ ...p, destination_fulfillment_center: e.target.value }))} placeholder="Ej: TPA1" className="h-9 bg-muted/50 border-border text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Método de envío</Label>
+                <Select value={form.shipping_method} onValueChange={(v) => setForm((p) => ({ ...p, shipping_method: v }))}>
+                  <SelectTrigger className="h-9 bg-muted/50 border-border text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="small_parcel">Small Parcel</SelectItem>
+                    <SelectItem value="ltl">LTL</SelectItem>
+                    <SelectItem value="ftl">FTL</SelectItem>
+                    <SelectItem value="air">Aéreo</SelectItem>
+                    <SelectItem value="sea">Marítimo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Carrier</Label>
+                <Input value={form.carrier} onChange={(e) => setForm((p) => ({ ...p, carrier: e.target.value }))} placeholder="Ej: FedEx" className="h-9 bg-muted/50 border-border text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Tracking</Label>
+                <Input value={form.tracking_number} onChange={(e) => setForm((p) => ({ ...p, tracking_number: e.target.value }))} placeholder="Número de tracking" className="h-9 bg-muted/50 border-border text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Cajas</Label>
+                <Input type="number" value={form.box_count} onChange={(e) => setForm((p) => ({ ...p, box_count: e.target.value }))} placeholder="0" className="h-9 bg-muted/50 border-border text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Unidades</Label>
+                <Input type="number" value={form.total_units} onChange={(e) => setForm((p) => ({ ...p, total_units: e.target.value }))} placeholder="0" className="h-9 bg-muted/50 border-border text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Fecha de envío</Label>
+                <Input type="date" value={form.ship_date} onChange={(e) => setForm((p) => ({ ...p, ship_date: e.target.value }))} className="h-9 bg-muted/50 border-border text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Llegada estimada</Label>
+                <Input type="date" value={form.estimated_arrival} onChange={(e) => setForm((p) => ({ ...p, estimated_arrival: e.target.value }))} className="h-9 bg-muted/50 border-border text-sm" />
+              </div>
             </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Metodo de envio</Label>
-              <Select value={form.shipping_method} onValueChange={(v) => setForm((p) => ({ ...p, shipping_method: v }))}>
-                <SelectTrigger className="h-9 bg-muted/50 border-border text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="small_parcel">Small Parcel</SelectItem>
-                  <SelectItem value="ltl">LTL</SelectItem>
-                  <SelectItem value="ftl">FTL</SelectItem>
-                  <SelectItem value="air">Aereo</SelectItem>
-                  <SelectItem value="sea">Maritimo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Carrier</Label>
-              <Input value={form.carrier} onChange={(e) => setForm((p) => ({ ...p, carrier: e.target.value }))} placeholder="Ej: FedEx" className="h-9 bg-muted/50 border-border text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Tracking</Label>
-              <Input value={form.tracking_number} onChange={(e) => setForm((p) => ({ ...p, tracking_number: e.target.value }))} placeholder="Numero de tracking" className="h-9 bg-muted/50 border-border text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Cajas</Label>
-              <Input type="number" value={form.box_count} onChange={(e) => setForm((p) => ({ ...p, box_count: e.target.value }))} placeholder="0" className="h-9 bg-muted/50 border-border text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Unidades</Label>
-              <Input type="number" value={form.total_units} onChange={(e) => setForm((p) => ({ ...p, total_units: e.target.value }))} placeholder="0" className="h-9 bg-muted/50 border-border text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Fecha de envio</Label>
-              <Input type="date" value={form.ship_date} onChange={(e) => setForm((p) => ({ ...p, ship_date: e.target.value }))} className="h-9 bg-muted/50 border-border text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Llegada estimada</Label>
-              <Input type="date" value={form.estimated_arrival} onChange={(e) => setForm((p) => ({ ...p, estimated_arrival: e.target.value }))} className="h-9 bg-muted/50 border-border text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <button
-                onClick={handleSubmit}
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
+            <div className="flex justify-end gap-3 pt-2">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-muted transition-colors">Cancelar</button>
+              <button onClick={handleSubmit} disabled={saving} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                 Crear Shipment
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Shipments table */}
       <DataTableWrapper title="Shipments" icon={Truck}>

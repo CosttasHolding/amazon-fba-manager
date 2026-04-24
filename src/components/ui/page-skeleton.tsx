@@ -68,7 +68,7 @@ export function ChartSkeleton() {
             key={i}
             className="flex-1 rounded-t-md"
             style={{
-              height: `${30 + Math.random() * 60}%`,
+              height: `${30 + ((i * 17) % 60)}%`,
               animationDelay: `${i * 40}ms`,
             }}
           />

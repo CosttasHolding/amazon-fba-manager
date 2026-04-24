@@ -15,6 +15,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { toast } from "sonner";
@@ -88,7 +89,7 @@ export default function OrderDetailPage() {
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <AlertTriangle className="h-8 w-8 text-destructive" />
         <p className="text-muted-foreground">Orden no encontrada</p>
-        <button onClick={() => router.push("/orders")} className="px-4 py-2 rounded-xl bg-muted text-foreground text-sm hover:bg-muted/80 transition-colors">Volver a pedidos</button>
+        <Button variant="outline" onClick={() => router.push("/orders")}>Volver a pedidos</Button>
       </div>
     );
   }
@@ -105,9 +106,9 @@ export default function OrderDetailPage() {
         subtitle={order.suppliers?.name || "Sin proveedor"}
         breadcrumbs={[{ label: "Pedidos", href: "/orders" }, { label: order.po_number || "Detalle" }]}
       >
-        <button onClick={() => router.push("/orders")} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/50 border border-border text-muted-foreground text-sm hover:text-foreground hover:bg-muted transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Volver
-        </button>
+        <Button variant="outline" onClick={() => router.push("/orders")}>
+          <ArrowLeft className="h-4 w-4 mr-1.5" /> Volver
+        </Button>
       </PageHeader>
 
       {/* Timeline */}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { calcRefFee, calcFBAFee, calcMetrics } from "@/lib/calculations";
 import { z } from "zod";
+import { apiErrorResponse } from "@/lib/api-utils";
 
 const calcSchema = z.object({
   unitCost: z.coerce.number().min(0),
@@ -29,7 +30,6 @@ export async function POST(req: NextRequest) {
     const result = calcMetrics(unitCost, 0, 0, 0, salePrice, referralFee, fbaFee, 0, 0);
     return NextResponse.json({ ...result, referralFee, fbaFee });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return apiErrorResponse(err, 400, "POST /api/calculator");
   }
 }

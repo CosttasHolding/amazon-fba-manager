@@ -94,8 +94,8 @@ export default function SuppliersPage() {
     try {
       const res = await fetch("/api/suppliers");
       if (res.ok) {
-        const data = await res.json();
-        setSuppliers(data);
+        const json = await res.json();
+        setSuppliers(json.data || json || []);
       }
     } catch (error) {
       console.error("Error fetching suppliers:", error);

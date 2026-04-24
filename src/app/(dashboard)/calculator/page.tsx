@@ -3,6 +3,14 @@
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { fmt, fmtPct } from "@/lib/utils";
 import { calcFBAFee } from "@/lib/calculations";
 import {
@@ -156,17 +164,31 @@ export default function CalculatorPage() {
             </div>
             <div>
               <Label className={labelCls}>Categoría</Label>
-              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full h-11 rounded-xl border border-border bg-card text-sm text-foreground px-3 font-display">
-                {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label} ({c.refPct}%)</option>)}
-              </select>
+              <Select value={category} onValueChange={(v) => setCategory(v)}>
+                <SelectTrigger className="h-11 bg-card border-border text-sm font-display">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label} ({c.refPct}%)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className={labelCls}>Envío</Label>
-              <select value={shippingMethod} onChange={(e) => handleShipping(e.target.value)} className="w-full h-11 rounded-xl border border-border bg-card text-sm text-foreground px-3 font-display">
-                <option value="air">Aéreo (${SHIPPING_RATES.air}/kg)</option>
-                <option value="sea">Marítimo (${SHIPPING_RATES.sea}/kg)</option>
-                <option value="express">Express (${SHIPPING_RATES.express}/kg)</option>
-              </select>
+              <Select value={shippingMethod} onValueChange={(v) => handleShipping(v)}>
+                <SelectTrigger className="h-11 bg-card border-border text-sm font-display">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="air">Aéreo (${SHIPPING_RATES.air}/kg)</SelectItem>
+                  <SelectItem value="sea">Marítimo (${SHIPPING_RATES.sea}/kg)</SelectItem>
+                  <SelectItem value="express">Express (${SHIPPING_RATES.express}/kg)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         )}
@@ -230,7 +252,7 @@ export default function CalculatorPage() {
         {/* Right: Display (2 cols) */}
         <div className="lg:col-span-2 space-y-4">
           {/* Digital Display */}
-          <div className="rounded-2xl border border-border bg-[#0a1020] p-5 space-y-4 relative overflow-hidden">
+          <div className="rounded-2xl border border-border bg-card p-5 space-y-4 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-3xl" />
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-3">
@@ -342,9 +364,9 @@ export default function CalculatorPage() {
       {/* Save */}
       {result && (
         <div className="flex justify-end">
-          <button onClick={handleSave} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium text-sm">
-            <Save className="h-4 w-4" /> Guardar análisis
-          </button>
+          <Button onClick={handleSave}>
+            <Save className="h-4 w-4 mr-1.5" /> Guardar análisis
+          </Button>
         </div>
       )}
 

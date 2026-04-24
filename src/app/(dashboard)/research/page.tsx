@@ -17,6 +17,15 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -204,16 +213,16 @@ export default function ResearchPage() {
       <PageHeader badge="RESEARCH" title="Research de Productos" subtitle={`${items.length} productos en pipeline`}>
         <div className="flex items-center gap-2">
           <div className="flex items-center p-1 rounded-xl bg-muted/30 border border-border/50">
-            <button onClick={() => setView("kanban")} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5", view === "kanban" ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "text-muted-foreground hover:text-foreground")}>
-              <LayoutGrid className="h-3.5 w-3.5" /> Kanban
-            </button>
-            <button onClick={() => setView("list")} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5", view === "list" ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "text-muted-foreground hover:text-foreground")}>
-              <List className="h-3.5 w-3.5" /> Lista
-            </button>
+            <Button variant={view === "kanban" ? "secondary" : "ghost"} size="xs" onClick={() => setView("kanban")}>
+              <LayoutGrid className="h-3.5 w-3.5 mr-1" /> Kanban
+            </Button>
+            <Button variant={view === "list" ? "secondary" : "ghost"} size="xs" onClick={() => setView("list")}>
+              <List className="h-3.5 w-3.5 mr-1" /> Lista
+            </Button>
           </div>
-          <button onClick={() => { resetForm(); setEditingItem(null); setShowModal(true); }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-            <Plus className="h-4 w-4" /> Nuevo
-          </button>
+          <Button onClick={() => { resetForm(); setEditingItem(null); setShowModal(true); }}>
+            <Plus className="h-4 w-4 mr-1.5" /> Nuevo
+          </Button>
         </div>
       </PageHeader>
 
@@ -225,10 +234,17 @@ export default function ResearchPage() {
         </div>
         <div className="flex items-center gap-1.5">
           <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as FilterStatus)} className="h-9 rounded-lg border border-border bg-muted/50 text-sm text-foreground px-3">
-            <option value="all">Todos los estados</option>
-            {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>)}
-          </select>
+          <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
+            <SelectTrigger className="h-9 bg-muted/50 border-border text-sm w-[180px]">
+              <SelectValue placeholder="Todos los estados" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los estados</SelectItem>
+              {STATUS_ORDER.map((s) => (
+                <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -254,17 +270,17 @@ export default function ResearchPage() {
                       {item.niche && <p className="text-[10px] text-muted-foreground">{item.niche}</p>}
                       <div className="flex flex-wrap gap-2">
                         {item.estimated_roi !== null && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
                             <TrendingUp className="h-2.5 w-2.5" /> {item.estimated_roi}%
                           </span>
                         )}
                         {item.estimated_cogs !== null && item.estimated_selling_price !== null && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">
+                          <span className="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">
                             <DollarSign className="h-2.5 w-2.5" /> ${item.estimated_selling_price}
                           </span>
                         )}
                         {item.competition_level && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded capitalize">
+                          <span className="inline-flex items-center gap-1 text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded capitalize">
                             <Star className="h-2.5 w-2.5" /> {item.competition_level}
                           </span>
                         )}
@@ -272,9 +288,16 @@ export default function ResearchPage() {
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-[10px] text-muted-foreground">{new Date(item.created_at).toLocaleDateString("es-ES")}</span>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <select value={item.status} onClick={(e) => e.stopPropagation()} onChange={(e) => handleStatusChange(item, e.target.value)} className="text-[10px] bg-muted/50 border border-border rounded px-1 py-0.5">
-                            {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>)}
-                          </select>
+                          <Select value={item.status} onValueChange={(v) => handleStatusChange(item, v)}>
+                            <SelectTrigger className="h-5 text-[10px] bg-muted/50 border-border px-1 py-0" onClick={(e) => e.stopPropagation()}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {STATUS_ORDER.map((s) => (
+                                <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>
@@ -329,9 +352,9 @@ export default function ResearchPage() {
                         <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium border", PRIORITY_COLORS[item.priority])}>P{item.priority}</span>
                       </td>
                       <td className="p-4 text-center">
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                        <Button variant="ghost" size="icon-xs" onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}>
                           <Trash2 className="h-4 w-4" />
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -345,10 +368,12 @@ export default function ResearchPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-          <div ref={modalRef} className="bg-popover border border-border rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 animate-scale-in">
+          <div ref={modalRef} className="bg-card border border-border rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 animate-scale-in">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-foreground">{editingItem ? "Editar Research" : "Nuevo Producto en Research"}</h3>
-              <button onClick={() => setShowModal(false)} className="p-1 rounded-lg hover:bg-muted transition-colors"><X className="h-4 w-4 text-muted-foreground" /></button>
+              <Button variant="ghost" size="icon-xs" onClick={() => setShowModal(false)}>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2"><Label className="text-xs text-muted-foreground">Nombre *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-9 bg-muted/50 border-border text-sm" /></div>
@@ -356,9 +381,14 @@ export default function ResearchPage() {
               <div><Label className="text-xs text-muted-foreground">ASIN Referencia</Label><Input value={form.asin_reference} onChange={(e) => setForm({ ...form, asin_reference: e.target.value })} className="h-9 bg-muted/50 border-border text-sm" /></div>
               <div><Label className="text-xs text-muted-foreground">Categoría Amazon</Label><Input value={form.amazon_category} onChange={(e) => setForm({ ...form, amazon_category: e.target.value })} className="h-9 bg-muted/50 border-border text-sm" /></div>
               <div><Label className="text-xs text-muted-foreground">Competencia</Label>
-                <select value={form.competition_level} onChange={(e) => setForm({ ...form, competition_level: e.target.value })} className="w-full h-9 rounded-lg border border-border bg-muted/50 text-sm text-foreground px-3">
-                  <option value="">—</option><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option>
-                </select>
+                <Select value={form.competition_level} onValueChange={(v) => setForm({ ...form, competition_level: v })}>
+                  <SelectTrigger className="h-9 bg-muted/50 border-border text-sm"><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Baja</SelectItem>
+                    <SelectItem value="medium">Media</SelectItem>
+                    <SelectItem value="high">Alta</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div><Label className="text-xs text-muted-foreground">Ventas mensuales est.</Label><Input type="number" value={form.estimated_monthly_sales} onChange={(e) => setForm({ ...form, estimated_monthly_sales: e.target.value })} className="h-9 bg-muted/50 border-border text-sm" /></div>
               <div><Label className="text-xs text-muted-foreground">Precio promedio est.</Label><Input type="number" step="0.01" value={form.average_price} onChange={(e) => setForm({ ...form, average_price: e.target.value })} className="h-9 bg-muted/50 border-border text-sm" /></div>
@@ -369,23 +399,33 @@ export default function ResearchPage() {
               <div><Label className="text-xs text-muted-foreground">Precio venta est. ($)</Label><Input type="number" step="0.01" value={form.estimated_selling_price} onChange={(e) => setForm({ ...form, estimated_selling_price: e.target.value })} className="h-9 bg-muted/50 border-border text-sm" /></div>
               <div><Label className="text-xs text-muted-foreground">ROI est. (%)</Label><Input type="number" step="0.01" value={form.estimated_roi} onChange={(e) => setForm({ ...form, estimated_roi: e.target.value })} className="h-9 bg-muted/50 border-border text-sm" /></div>
               <div><Label className="text-xs text-muted-foreground">Prioridad (1-5)</Label>
-                <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} className="w-full h-9 rounded-lg border border-border bg-muted/50 text-sm text-foreground px-3">
-                  {[1,2,3,4,5].map((p) => <option key={p} value={p}>P{p} {p===1?"(Alta)":p===5?"(Baja)":""}</option>)}
-                </select>
+                <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
+                  <SelectTrigger className="h-9 bg-muted/50 border-border text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[1,2,3,4,5].map((p) => (
+                      <SelectItem key={p} value={String(p)}>P{p} {p===1?"(Alta)":p===5?"(Baja)":""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div><Label className="text-xs text-muted-foreground">Estado</Label>
-                <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as ProductResearch["status"] })} className="w-full h-9 rounded-lg border border-border bg-muted/50 text-sm text-foreground px-3">
-                  {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>)}
-                </select>
+                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as ProductResearch["status"] })}>
+                  <SelectTrigger className="h-9 bg-muted/50 border-border text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {STATUS_ORDER.map((s) => (
+                      <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="sm:col-span-2"><Label className="text-xs text-muted-foreground">Diferenciación</Label><Input value={form.differentiation_notes} onChange={(e) => setForm({ ...form, differentiation_notes: e.target.value })} className="h-9 bg-muted/50 border-border text-sm" /></div>
-              <div className="sm:col-span-2"><Label className="text-xs text-muted-foreground">Notas</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="h-9 bg-muted/50 border-border text-sm" /></div>
+              <div className="sm:col-span-2"><Label className="text-xs text-muted-foreground">Diferenciación</Label><Textarea value={form.differentiation_notes} onChange={(e) => setForm({ ...form, differentiation_notes: e.target.value })} className="bg-muted/50 border-border text-sm min-h-[60px]" /></div>
+              <div className="sm:col-span-2"><Label className="text-xs text-muted-foreground">Notas</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="bg-muted/50 border-border text-sm min-h-[60px]" /></div>
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-muted transition-colors">Cancelar</button>
-              <button onClick={handleSave} disabled={!form.name} className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
+              <Button variant="outline" onClick={() => setShowModal(false)}>Cancelar</Button>
+              <Button onClick={handleSave} disabled={!form.name}>
                 {editingItem ? "Guardar cambios" : "Crear producto"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

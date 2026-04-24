@@ -89,15 +89,64 @@ export default function RegisterPage() {
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
+            <label htmlFor="fullName" className="text-sm text-white/80 font-medium flex items-center gap-1.5">
               <User className="h-3.5 w-3.5 text-white/40" />
               Nombre completo
             </label>
             <Input
+              id="fullName"
               type="text"
               placeholder="Tu nombre completo"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
+              required
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="email" className="text-sm text-white/80 font-medium flex items-center gap-1.5">
+              <Mail className="h-3.5 w-3.5 text-white/40" />
+              Email
+            </label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="password" className="text-sm text-white/80 font-medium flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5 text-white/40" />
+              Contrase\u00F1a
+            </label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="M\u00EDnimo 8 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="confirmPassword" className="text-sm text-white/80 font-medium flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5 text-white/40" />
+              Confirmar contrase\u00F1a
+            </label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="Repite la contrase\u00F1a"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               required
               className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
             />

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { fmt, fmtPct, roiColor, profitColor } from "@/lib/utils";
-import { Search, Plus, Package, TrendingUp, DollarSign, BarChart3 } from "lucide-react";
+import { Search, Plus, Package, TrendingUp, DollarSign, BarChart3, AlertTriangle } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -16,10 +16,11 @@ import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { exportProductsExcel } from "@/lib/export";
-import { useProducts } from "@/hooks/use-data";
+import { useProductsQuery, useProductSummary } from "@/hooks/use-data";
 import { ProductWithInventory } from "@/types";
+import { MARKETPLACES, DEFAULT_PAGE_SIZE } from "@/lib/constants";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = DEFAULT_PAGE_SIZE;
 
 const STATUS_OPTIONS = [
   { value: "", label: "Todos los estados" },
@@ -30,14 +31,7 @@ const STATUS_OPTIONS = [
 
 const MARKETPLACE_OPTIONS = [
   { value: "", label: "Todos" },
-  { value: "US", label: "US" },
-  { value: "MX", label: "MX" },
-  { value: "CA", label: "CA" },
-  { value: "UK", label: "UK" },
-  { value: "DE", label: "DE" },
-  { value: "FR", label: "FR" },
-  { value: "IT", label: "IT" },
-  { value: "ES", label: "ES" },
+  ...MARKETPLACES.map((m) => ({ value: m.value, label: m.label })),
 ];
 
 const SORT_OPTIONS = [
@@ -57,7 +51,7 @@ const SORT_OPTIONS = [
 
 export default function ProductsPage() {
   const router = useRouter();
-  const { products, isLoading, mutate } = useProducts();
+
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showNewModal, setShowNewModal] = useState(false);
@@ -73,10 +67,29 @@ export default function ProductsPage() {
     roiMax: "",
   });
 
-  const categories = useMemo(() => {
-    const cats = [...new Set(products.map((p: ProductWithInventory) => p.category).filter(Boolean))] as string[];
-    return cats.sort();
-  }, [products]);
+  const queryParams = useMemo(() => ({
+    page: currentPage,
+    perPage: ITEMS_PER_PAGE,
+    search,
+    status: filterValues.status,
+    stockStatus: filterValues.stockStatus,
+    category: filterValues.category,
+    marketplace: filterValues.marketplace,
+    priceMin: filterValues.priceMin,
+    priceMax: filterValues.priceMax,
+    roiMin: filterValues.roiMin,
+    roiMax: filterValues.roiMax,
+    sort: sortValue,
+  }), [currentPage, search, filterValues, sortValue]);
+
+  const { products, pagination, isLoading, isError, mutate } = useProductsQuery(queryParams);
+  const { summary, isLoading: summaryLoading, isError: summaryError } = useProductSummary();
+
+  const exportQuery = useProductsQuery({
+    ...queryParams,
+    page: 1,
+    perPage: 200,
+  });
 
   const filterConfig: FilterConfig[] = useMemo(() => [
     {
@@ -92,7 +105,7 @@ export default function ProductsPage() {
       label: "Categoria",
       options: [
         { value: "", label: "Todas las categorias" },
-        ...categories.map((c) => ({ value: c, label: c })),
+        ...(summary.categories || []).map((c: string) => ({ value: c, label: c })),
       ],
       color: "purple",
     },
@@ -117,7 +130,7 @@ export default function ProductsPage() {
       suffix: "%",
       step: 1,
     },
-  ], [categories]);
+  ], [summary.categories]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilterValues((prev) => ({ ...prev, [key]: value }));
@@ -137,71 +150,34 @@ export default function ProductsPage() {
     setCurrentPage(1);
   };
 
-  const filtered = useMemo(() => {
-    let result = products.filter((p) => {
-      const matchSearch =
-        p.name?.toLowerCase().includes(search.toLowerCase()) ||
-        p.sku?.toLowerCase().includes(search.toLowerCase()) ||
-        p.asin?.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = !filterValues.status || p.status === filterValues.status;
-      const matchCategory = !filterValues.category || p.category === filterValues.category;
-      const matchMarketplace = !filterValues.marketplace || p.marketplace === filterValues.marketplace;
-
-      const price = p.sale_price || 0;
-      const matchPriceMin = filterValues.priceMin === "" || price >= parseFloat(filterValues.priceMin);
-      const matchPriceMax = filterValues.priceMax === "" || price <= parseFloat(filterValues.priceMax);
-
-      const roi = p.roi || 0;
-      const matchRoiMin = filterValues.roiMin === "" || roi >= parseFloat(filterValues.roiMin);
-      const matchRoiMax = filterValues.roiMax === "" || roi <= parseFloat(filterValues.roiMax);
-
-      return matchSearch && matchStatus && matchCategory && matchMarketplace && matchPriceMin && matchPriceMax && matchRoiMin && matchRoiMax;
-    });
-
-    result.sort((a, b) => {
-      switch (sortValue) {
-        case "newest": return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-        case "oldest": return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
-        case "name_asc": return (a.name || "").localeCompare(b.name || "");
-        case "name_desc": return (b.name || "").localeCompare(a.name || "");
-        case "price_asc": return (a.sale_price || 0) - (b.sale_price || 0);
-        case "price_desc": return (b.sale_price || 0) - (a.sale_price || 0);
-        case "profit_asc": return (a.net_profit || 0) - (b.net_profit || 0);
-        case "profit_desc": return (b.net_profit || 0) - (a.net_profit || 0);
-        case "roi_asc": return (a.roi || 0) - (b.roi || 0);
-        case "roi_desc": return (b.roi || 0) - (a.roi || 0);
-        case "stock_asc": return (a.stock_available || 0) - (b.stock_available || 0);
-        case "stock_desc": return (b.stock_available || 0) - (a.stock_available || 0);
-        default: return 0;
-      }
-    });
-
-    return result;
-  }, [products, search, filterValues, sortValue]);
-
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
-  const activeCount = products.filter((p) => p.status === "active").length;
-  const avgRoi =
-    products.length > 0
-      ? products.reduce((sum, p) => sum + (p.roi || 0), 0) / products.length
-      : 0;
-  const totalProfit = products.reduce((sum, p) => sum + (p.net_profit || 0), 0);
-  const avgPrice =
-    products.length > 0
-      ? products.reduce((sum, p) => sum + (p.sale_price || 0), 0) / products.length
-      : 0;
-
   const handleExport = () => {
-    exportProductsExcel(filtered);
+    exportProductsExcel(exportQuery.products);
   };
 
-  if (isLoading) {
+  const isPageLoading = isLoading || summaryLoading;
+
+  if (isPageLoading) {
     return <PageSkeleton kpiCount={4} rowCount={8} showSearch />;
+  }
+
+  if (isError || summaryError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center">
+          <AlertTriangle className="h-8 w-8 text-destructive" />
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-semibold text-foreground mb-1">Error al cargar datos</p>
+          <p className="text-sm text-muted-foreground mb-4">No se pudieron obtener los productos. Intenta de nuevo.</p>
+        </div>
+        <button
+          onClick={() => mutate()}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -209,7 +185,7 @@ export default function ProductsPage() {
       <PageHeader
         badge="INVENTARIO"
         title="Catalogo de Productos"
-        subtitle={`${products.length} producto${products.length !== 1 ? "s" : ""} registrado${products.length !== 1 ? "s" : ""}`}
+        subtitle={`${summary.totalCount} producto${summary.totalCount !== 1 ? "s" : ""} registrado${summary.totalCount !== 1 ? "s" : ""}`}
       >
         <FilterPanel
           filters={filterConfig}
@@ -241,31 +217,31 @@ export default function ProductsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <KpiCard
           label="Total Productos"
-          value={String(products.length)}
-          subtitle={`${activeCount} activos`}
+          value={String(summary.totalCount)}
+          subtitle={`${summary.activeCount} activos`}
           icon={Package}
           accentColor="cyan"
           animationDelay={0}
         />
         <KpiCard
           label="ROI Promedio"
-          value={fmtPct(avgRoi)}
+          value={fmtPct(summary.avgRoi)}
           icon={TrendingUp}
           accentColor="green"
-          trend={avgRoi >= 20 ? "up" : avgRoi > 0 ? "neutral" : "down"}
-          trendValue={avgRoi >= 20 ? "Saludable" : "Revisar"}
+          trend={summary.avgRoi >= 20 ? "up" : summary.avgRoi > 0 ? "neutral" : "down"}
+          trendValue={summary.avgRoi >= 20 ? "Saludable" : "Revisar"}
           animationDelay={75}
         />
         <KpiCard
           label="Ganancia Total"
-          value={fmt(totalProfit)}
+          value={fmt(summary.totalProfit)}
           icon={DollarSign}
           accentColor="green"
           animationDelay={150}
         />
         <KpiCard
           label="Precio Promedio"
-          value={fmt(avgPrice)}
+          value={fmt(summary.avgPrice)}
           icon={BarChart3}
           accentColor="purple"
           animationDelay={225}
@@ -288,7 +264,7 @@ export default function ProductsPage() {
 
       {/* Mobile cards */}
       <div className="lg:hidden space-y-3">
-        {filtered.length === 0 ? (
+        {products.length === 0 ? (
           <EmptyState
             icon={Package}
             title={search || Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay productos"}
@@ -296,11 +272,14 @@ export default function ProductsPage() {
             action={!search && !Object.values(filterValues).some(Boolean) ? { label: "Crear producto", onClick: () => setShowNewModal(true) } : undefined}
           />
         ) : (
-          paginated.map((product) => (
+          products.map((product) => (
             <div
               key={product.id}
+              role="button"
+              tabIndex={0}
               className="rounded-2xl border border-border bg-card p-4 cursor-pointer active:scale-[0.98] transition-all hover:border-border/80"
               onClick={() => router.push(`/products/${product.id}`)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(`/products/${product.id}`); } }}
             >
               <div className="flex items-start justify-between mb-2">
                 <div>
@@ -335,7 +314,7 @@ export default function ProductsPage() {
       {/* Desktop table */}
       <div className="hidden lg:block">
         <DataTableWrapper>
-          {filtered.length === 0 ? (
+          {products.length === 0 ? (
             <EmptyState
               icon={Package}
               title={search || Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay productos"}
@@ -356,7 +335,7 @@ export default function ProductsPage() {
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((product) => (
+                {products.map((product) => (
                   <tr
                     key={product.id}
                     className={`${tableRowClass} cursor-pointer`}
@@ -406,11 +385,11 @@ export default function ProductsPage() {
         </DataTableWrapper>
       </div>
 
-      {filtered.length > ITEMS_PER_PAGE && (
+      {pagination.total > ITEMS_PER_PAGE && (
         <PaginationControl
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filtered.length}
+          currentPage={pagination.page}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.total}
           itemsPerPage={ITEMS_PER_PAGE}
           onPageChange={setCurrentPage}
         />

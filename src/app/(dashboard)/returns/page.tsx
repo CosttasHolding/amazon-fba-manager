@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { returnSchema, type ReturnFormData } from "@/validations/return";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -18,6 +22,12 @@ import { fmt } from "@/lib/utils";
 import { RotateCcw, ShieldCheck, Plus, Loader2 } from "lucide-react";
 
 type Tab = "returns" | "reimbursements";
+
+interface ProductOption {
+  id: string;
+  name: string;
+  sku: string;
+}
 
 interface ReturnItem {
   id: string;
@@ -42,17 +52,17 @@ interface ReimbursementItem {
 
 const RETURN_REASONS: Record<string, string> = {
   defective: "Defectuoso",
-  damaged_by_carrier: "Danado por carrier",
-  customer_damaged: "Danado por cliente",
-  different_from_description: "Diferente a descripcion",
+  damaged_by_carrier: "Da\u00F1ado por carrier",
+  customer_damaged: "Da\u00F1ado por cliente",
+  different_from_description: "Diferente a descripci\u00F3n",
   expired_item: "Vencido",
   fraud: "Fraude",
   missing_parts: "Faltan partes",
   no_longer_wanted: "Ya no lo quiere",
   not_as_described: "No como se describe",
-  ordered_wrong_item: "Ordeno mal",
+  ordered_wrong_item: "Orden\u00F3 mal",
   quality_not_acceptable: "Calidad baja",
-  arrived_late: "Llego tarde",
+  arrived_late: "Lleg\u00F3 tarde",
   undeliverable: "No entregable",
   unauthorized_purchase: "Compra no autorizada",
   other: "Otro",
@@ -61,7 +71,7 @@ const RETURN_REASONS: Record<string, string> = {
 const RETURN_STATUS: Record<string, string> = {
   requested: "Solicitado",
   received_at_customer: "En cliente",
-  in_transit: "En transito",
+  in_transit: "En tr\u00E1nsito",
   received_at_fc: "En FC",
   inspected: "Inspeccionado",
   refunded: "Reembolsado",
@@ -71,10 +81,10 @@ const RETURN_STATUS: Record<string, string> = {
 
 const REIMB_TYPES: Record<string, string> = {
   lost_inbound: "Perdido inbound",
-  damaged_inbound: "Danado inbound",
+  damaged_inbound: "Da\u00F1ado inbound",
   lost_warehouse: "Perdido warehouse",
-  damaged_warehouse: "Danado warehouse",
-  customer_return: "Devolucion cliente",
+  damaged_warehouse: "Da\u00F1ado warehouse",
+  customer_return: "Devoluci\u00F3n cliente",
   removal_order: "Removal order",
   other: "Otro",
 };
@@ -92,18 +102,31 @@ export default function ReturnsPage() {
   const [loading, setLoading] = useState(true);
   const [returns, setReturns] = useState<ReturnItem[]>([]);
   const [reimbursements, setReimbursements] = useState<ReimbursementItem[]>([]);
+  const [products, setProducts] = useState<ProductOption[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Form state
-  const [form, setForm] = useState({
-    product_id: "",
-    quantity: "1",
-    return_reason: "other",
-    refund_amount: "",
-    status: "requested",
-    return_date: new Date().toISOString().split("T")[0],
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<ReturnFormData>({
+    resolver: zodResolver(returnSchema),
+    defaultValues: {
+      quantity: 1,
+      return_reason: "other",
+      refund_amount: 0,
+      status: "requested",
+      return_date: new Date().toISOString().split("T")[0],
+    },
   });
+
+  const watchedReason = watch("return_reason");
+  const watchedStatus = watch("status");
+  const watchedProduct = watch("product_id");
 
   useEffect(() => {
     fetchData();
@@ -111,12 +134,24 @@ export default function ReturnsPage() {
 
   const fetchData = async () => {
     try {
-      const [rRes, reRes] = await Promise.all([
+      const [rRes, reRes, pRes] = await Promise.all([
         fetch("/api/returns"),
         fetch("/api/reimbursements"),
+        fetch("/api/products?page=1&perPage=200"),
       ]);
       if (rRes.ok) setReturns(await rRes.json());
       if (reRes.ok) setReimbursements(await reRes.json());
+      if (pRes.ok) {
+        const pData = await pRes.json();
+        const list = Array.isArray(pData) ? pData : pData.data || [];
+        setProducts(
+          list.map((p: { id: string; name: string; sku: string }) => ({
+            id: p.id,
+            name: p.name,
+            sku: p.sku,
+          }))
+        );
+      }
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -124,37 +159,46 @@ export default function ReturnsPage() {
     }
   };
 
-  const handleAddReturn = async () => {
-    if (!form.product_id) { toast.error("Producto requerido"); return; }
+  const onSubmit = async (data: ReturnFormData) => {
     setSaving(true);
     try {
       const res = await fetch("/api/returns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          product_id: form.product_id,
-          quantity: parseInt(form.quantity),
-          return_reason: form.return_reason,
-          refund_amount: parseFloat(form.refund_amount) || 0,
-          status: form.status,
-          return_date: form.return_date,
-        }),
+        body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Error");
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Error al registrar");
+      }
       const newItem = await res.json();
       setReturns((p) => [newItem, ...p]);
       setShowForm(false);
-      toast.success("Devolucion registrada");
-    } catch {
-      toast.error("Error al registrar");
+      reset({
+        product_id: "",
+        quantity: 1,
+        return_reason: "other",
+        refund_amount: 0,
+        status: "requested",
+        return_date: new Date().toISOString().split("T")[0],
+      });
+      toast.success("Devoluci\u00F3n registrada");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Error al registrar";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
   };
 
   const totalRefund = returns.reduce((s, r) => s + (r.refund_amount || 0), 0);
-  const totalReimb = reimbursements.filter((r) => r.status === "paid").reduce((s, r) => s + r.amount, 0);
-  const pendingReimb = reimbursements.filter((r) => r.status === "pending" || r.status === "submitted").reduce((s, r) => s + r.amount, 0);
+  const totalReimb = reimbursements
+    .filter((r) => r.status === "paid")
+    .reduce((s, r) => s + r.amount, 0);
+  const pendingReimb = reimbursements
+    .filter((r) => r.status === "pending" || r.status === "submitted")
+    .reduce((s, r) => s + r.amount, 0);
 
   if (loading) return <PageSkeleton />;
 
@@ -164,24 +208,52 @@ export default function ReturnsPage() {
         badge="POST-VENTA"
         title="Devoluciones y Reembolsos"
         subtitle="Trackea returns de clientes y reclama reembolsos a Amazon"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Devoluciones y Reembolsos" },
+        ]}
       />
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-border bg-card p-5">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Total Returns</p>
-          <p className="text-2xl font-display font-bold text-foreground">{returns.length}</p>
-          <p className="text-xs text-muted-foreground">{fmt(totalRefund)} en reembolsos</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Total Returns
+          </p>
+          <p className="text-2xl font-display font-bold text-foreground">
+            {returns.length}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {fmt(totalRefund)} en reembolsos
+          </p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-5">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Reembolsos Pagados</p>
-          <p className="text-2xl font-display font-bold text-green-600 dark:text-emerald-400">{fmt(totalReimb)}</p>
-          <p className="text-xs text-muted-foreground">{reimbursements.filter((r) => r.status === "paid").length} aprobados</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Reembolsos Pagados
+          </p>
+          <p className="text-2xl font-display font-bold text-green-600 dark:text-emerald-400">
+            {fmt(totalReimb)}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {reimbursements.filter((r) => r.status === "paid").length}{" "}
+            aprobados
+          </p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-5">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pendientes de Cobro</p>
-          <p className="text-2xl font-display font-bold text-amber-600 dark:text-amber-400">{fmt(pendingReimb)}</p>
-          <p className="text-xs text-muted-foreground">{reimbursements.filter((r) => r.status === "pending" || r.status === "submitted").length} abiertos</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Pendientes de Cobro
+          </p>
+          <p className="text-2xl font-display font-bold text-amber-600 dark:text-amber-400">
+            {fmt(pendingReimb)}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {
+              reimbursements.filter(
+                (r) => r.status === "pending" || r.status === "submitted"
+              ).length
+            }{" "}
+            abiertos
+          </p>
         </div>
       </div>
 
@@ -189,7 +261,11 @@ export default function ReturnsPage() {
       <div className="flex gap-2 border-b border-border">
         <button
           onClick={() => setTab("returns")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${tab === "returns" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            tab === "returns"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
         >
           <span className="flex items-center gap-1.5">
             <RotateCcw className="h-4 w-4" />
@@ -198,7 +274,11 @@ export default function ReturnsPage() {
         </button>
         <button
           onClick={() => setTab("reimbursements")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${tab === "reimbursements" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            tab === "reimbursements"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
         >
           <span className="flex items-center gap-1.5">
             <ShieldCheck className="h-4 w-4" />
@@ -208,46 +288,151 @@ export default function ReturnsPage() {
       </div>
 
       {/* Quick add */}
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <button onClick={() => setShowForm(!showForm)} className="text-sm font-semibold text-foreground/80 uppercase tracking-wider flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          {tab === "returns" ? "Registrar Devolucion" : "Registrar Reembolso"}
-        </button>
-        {showForm && tab === "returns" && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 pt-4 border-t border-border">
-            <div>
-              <Label className="text-xs text-muted-foreground">Producto ID</Label>
-              <Input value={form.product_id} onChange={(e) => setForm((p) => ({ ...p, product_id: e.target.value }))} placeholder="UUID del producto" className="h-9 bg-muted/50 border-border text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Cantidad</Label>
-              <Input type="number" value={form.quantity} onChange={(e) => setForm((p) => ({ ...p, quantity: e.target.value }))} className="h-9 bg-muted/50 border-border text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Motivo</Label>
-              <Select value={form.return_reason} onValueChange={(v) => setForm((p) => ({ ...p, return_reason: v }))}>
-                <SelectTrigger className="h-9 bg-muted/50 border-border text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(RETURN_REASONS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Reembolso ($)</Label>
-              <Input type="number" step="0.01" value={form.refund_amount} onChange={(e) => setForm((p) => ({ ...p, refund_amount: e.target.value }))} className="h-9 bg-muted/50 border-border text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Fecha</Label>
-              <Input type="date" value={form.return_date} onChange={(e) => setForm((p) => ({ ...p, return_date: e.target.value }))} className="h-9 bg-muted/50 border-border text-sm" />
-            </div>
-            <div className="flex items-end">
-              <button onClick={handleAddReturn} disabled={saving} className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      {tab === "returns" && (
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowForm(!showForm)}
+          >
+            <Plus className="h-4 w-4 mr-1.5" />
+            {showForm ? "Cancelar" : "Registrar Devoluci\u00F3n"}
+          </Button>
+
+          {showForm && (
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 pt-4 border-t border-border"
+            >
+              <div>
+                <Label className="text-xs text-muted-foreground">
+                  Producto *
+                </Label>
+                <Select
+                  value={watchedProduct || ""}
+                  onValueChange={(v) =>
+                    setValue("product_id", v, { shouldValidate: true })
+                  }
+                >
+                  <SelectTrigger className="h-9 bg-background border-border text-sm">
+                    <SelectValue placeholder="Seleccionar producto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.length === 0 && (
+                      <SelectItem value="" disabled>
+                        Sin productos
+                      </SelectItem>
+                    )}
+                    {products.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name} ({p.sku})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.product_id && (
+                  <p className="text-xs text-destructive mt-1">
+                    {errors.product_id.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">
+                  Cantidad *
+                </Label>
+                <Input
+                  type="number"
+                  {...register("quantity", { valueAsNumber: true })}
+                  className="h-9 bg-background border-border text-sm"
+                />
+                {errors.quantity && (
+                  <p className="text-xs text-destructive mt-1">
+                    {errors.quantity.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Motivo</Label>
+                <Select
+                  value={watchedReason}
+                  onValueChange={(v) =>
+                    setValue("return_reason", v as ReturnFormData["return_reason"])
+                  }
+                >
+                  <SelectTrigger className="h-9 bg-background border-border text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(RETURN_REASONS).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">
+                  Reembolso ($)
+                </Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  {...register("refund_amount", { valueAsNumber: true })}
+                  className="h-9 bg-background border-border text-sm"
+                />
+                {errors.refund_amount && (
+                  <p className="text-xs text-destructive mt-1">
+                    {errors.refund_amount.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Fecha</Label>
+                <Input
+                  type="date"
+                  {...register("return_date")}
+                  className="h-9 bg-background border-border text-sm"
+                />
+                {errors.return_date && (
+                  <p className="text-xs text-destructive mt-1">
+                    {errors.return_date.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Estado</Label>
+                <Select
+                  value={watchedStatus}
+                  onValueChange={(v) =>
+                    setValue("status", v as ReturnFormData["status"])
+                  }
+                >
+                  <SelectTrigger className="h-9 bg-background border-border text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(RETURN_STATUS).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="sm:col-span-3 flex justify-end">
+                <Button type="submit" disabled={saving} size="sm">
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Guardar"
+                  )}
+                </Button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
 
       {/* Table */}
       {tab === "returns" ? (
@@ -256,25 +441,56 @@ export default function ReturnsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Producto</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Motivo</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Cant</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Reembolso</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Estado</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">
+                    Producto
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">
+                    Motivo
+                  </th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">
+                    Cant
+                  </th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">
+                    Reembolso
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">
+                    Estado
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
                 {returns.map((r) => (
-                  <tr key={r.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 text-foreground">{r.products?.name || "—"}</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{RETURN_REASONS[r.return_reason || "other"] || r.return_reason}</td>
-                    <td className="px-4 py-3 text-right font-display">{r.quantity}</td>
-                    <td className="px-4 py-3 text-right font-display text-red-600 dark:text-rose-400">{fmt(r.refund_amount || 0)}</td>
-                    <td className="px-4 py-3 text-xs">{RETURN_STATUS[r.status] || r.status}</td>
+                  <tr
+                    key={r.id}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
+                    <td className="px-4 py-3 text-foreground">
+                      {r.products?.name || "\u2014"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                      {RETURN_REASONS[r.return_reason || "other"] ||
+                        r.return_reason}
+                    </td>
+                    <td className="px-4 py-3 text-right font-display">
+                      {r.quantity}
+                    </td>
+                    <td className="px-4 py-3 text-right font-display text-red-600 dark:text-rose-400">
+                      {fmt(r.refund_amount || 0)}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {RETURN_STATUS[r.status] || r.status}
+                    </td>
                   </tr>
                 ))}
                 {returns.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground text-sm">Sin devoluciones registradas</td></tr>
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-8 text-center text-muted-foreground text-sm"
+                    >
+                      Sin devoluciones registradas
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -286,25 +502,56 @@ export default function ReturnsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Producto</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Tipo</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Cant</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Monto</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Estado</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">
+                    Producto
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">
+                    Tipo
+                  </th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">
+                    Cant
+                  </th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">
+                    Monto
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">
+                    Estado
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
                 {reimbursements.map((r) => (
-                  <tr key={r.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 text-foreground">{r.products?.name || "—"}</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{REIMB_TYPES[r.reimbursement_type] || r.reimbursement_type}</td>
-                    <td className="px-4 py-3 text-right font-display">{r.quantity}</td>
-                    <td className="px-4 py-3 text-right font-display text-green-600 dark:text-emerald-400">{fmt(r.amount)}</td>
-                    <td className="px-4 py-3 text-xs">{REIMB_STATUS[r.status] || r.status}</td>
+                  <tr
+                    key={r.id}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
+                    <td className="px-4 py-3 text-foreground">
+                      {r.products?.name || "\u2014"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                      {REIMB_TYPES[r.reimbursement_type] ||
+                        r.reimbursement_type}
+                    </td>
+                    <td className="px-4 py-3 text-right font-display">
+                      {r.quantity}
+                    </td>
+                    <td className="px-4 py-3 text-right font-display text-green-600 dark:text-emerald-400">
+                      {fmt(r.amount)}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {REIMB_STATUS[r.status] || r.status}
+                    </td>
                   </tr>
                 ))}
                 {reimbursements.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground text-sm">Sin reembolsos registrados</td></tr>
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-8 text-center text-muted-foreground text-sm"
+                    >
+                      Sin reembolsos registrados
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>

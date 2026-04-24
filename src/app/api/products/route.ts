@@ -2,12 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { productSchema } from '@/validations/product';
 
+function parseSort(sort: string | null): { column: string; ascending: boolean } {
+  switch (sort) {
+    case 'oldest': return { column: 'created_at', ascending: true };
+    case 'name_asc': return { column: 'name', ascending: true };
+    case 'name_desc': return { column: 'name', ascending: false };
+    case 'price_asc': return { column: 'sale_price', ascending: true };
+    case 'price_desc': return { column: 'sale_price', ascending: false };
+    case 'profit_asc': return { column: 'net_profit', ascending: true };
+    case 'profit_desc': return { column: 'net_profit', ascending: false };
+    case 'roi_asc': return { column: 'roi', ascending: true };
+    case 'roi_desc': return { column: 'roi', ascending: false };
+    case 'stock_asc': return { column: 'stock_available', ascending: true };
+    case 'stock_desc': return { column: 'stock_available', ascending: false };
+    default: return { column: 'created_at', ascending: false };
+  }
+}
+
 export async function GET(req: NextRequest) {
     try {
         const supabase = await createClient();
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
 
         if (!user)
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -16,6 +31,13 @@ export async function GET(req: NextRequest) {
         const search = searchParams.get('search') || '';
         const status = searchParams.get('status');
         const stockStatus = searchParams.get('stockStatus');
+        const category = searchParams.get('category');
+        const marketplace = searchParams.get('marketplace');
+        const priceMin = searchParams.get('priceMin');
+        const priceMax = searchParams.get('priceMax');
+        const roiMin = searchParams.get('roiMin');
+        const roiMax = searchParams.get('roiMax');
+        const sort = searchParams.get('sort');
         const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
         const perPage = Math.min(200, Math.max(1, parseInt(searchParams.get('perPage') || '20') || 20));
 
@@ -30,10 +52,17 @@ export async function GET(req: NextRequest) {
         }
         if (status) query = query.eq('status', status);
         if (stockStatus) query = query.eq('stock_status', stockStatus);
+        if (category) query = query.eq('category', category);
+        if (marketplace) query = query.eq('marketplace', marketplace);
+        if (priceMin !== null && priceMin !== '') query = query.gte('sale_price', parseFloat(priceMin));
+        if (priceMax !== null && priceMax !== '') query = query.lte('sale_price', parseFloat(priceMax));
+        if (roiMin !== null && roiMin !== '') query = query.gte('roi', parseFloat(roiMin));
+        if (roiMax !== null && roiMax !== '') query = query.lte('roi', parseFloat(roiMax));
 
+        const { column, ascending } = parseSort(sort);
         const { data, count, error } = await query
             .range((page - 1) * perPage, page * perPage - 1)
-            .order('created_at', { ascending: false });
+            .order(column, { ascending });
 
         if (error) throw error;
 
@@ -47,17 +76,15 @@ export async function GET(req: NextRequest) {
             },
         });
     } catch (err) {
-        const message = err instanceof Error ? err.message : "Error desconocido";
-        return NextResponse.json({ error: message }, { status: 500 });
+        console.error('[GET /api/products]', err);
+        return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
     }
 }
 
 export async function POST(req: NextRequest) {
     try {
         const supabase = await createClient();
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
 
         if (!user)
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -65,7 +92,6 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const validated = productSchema.parse(body);
 
-        // Convertir camelCase a snake_case para Supabase
         const dbData = {
             user_id: user.id,
             sku: validated.sku,
@@ -97,6 +123,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ data }, { status: 201 });
     } catch (err) {
+        console.error('[POST /api/products]', err);
         const message = err instanceof Error ? err.message : "Error desconocido";
         return NextResponse.json({ error: message }, { status: 400 });
     }

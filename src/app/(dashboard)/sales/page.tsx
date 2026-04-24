@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { DollarSign, TrendingUp, ShoppingCart, BarChart3, Activity, Plus, FileUp, FileText } from "lucide-react";
+import { DollarSign, TrendingUp, ShoppingCart, BarChart3, Activity, Plus, FileUp, FileText, AlertTriangle } from "lucide-react";
 import { fmt } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard } from "@/components/ui/kpi-card";
@@ -11,10 +11,12 @@ import { FilterPanel, FilterConfig } from "@/components/ui/filter-panel";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { ExportButton } from "@/components/ui/export-button";
 import { exportSalesExcel } from "@/lib/export";
-import { useSales } from "@/hooks/use-data";
+import { useSalesQuery, useSalesSummary } from "@/hooks/use-data";
 import { SaleFormModal } from "@/components/sale-form-modal";
 import { toast } from "sonner";
+import { PaginationControl } from "@/components/ui/pagination-control";
 import type { Sale } from "@/types";
+import { CSV_MAX_SIZE_MB, CSV_MAX_ROWS } from "@/lib/constants";
 
 const RevenueTrendChart = dynamic(
   () => import("@/components/charts/revenue-trend-chart").then((m) => m.RevenueTrendChart),
@@ -54,11 +56,12 @@ const FILTER_CONFIG: FilterConfig[] = [
   { type: "range", key: "profit", label: "Profit", prefix: "$", step: 0.01 },
 ];
 
+const ITEMS_PER_PAGE = 20;
+
 export default function SalesPage() {
-  const { sales: rawSales, isLoading, mutate } = useSales();
-  const sales = rawSales as EnrichedSale[];
   const [sortValue, setSortValue] = useState("date_desc");
   const [showModal, setShowModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [filterValues, setFilterValues] = useState<Record<string, string>>({
     dateFrom: "",
     dateTo: "",
@@ -68,8 +71,36 @@ export default function SalesPage() {
     profitMax: "",
   });
 
+  const tableQueryParams = useMemo(() => ({
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
+    dateFrom: filterValues.dateFrom,
+    dateTo: filterValues.dateTo,
+    revenueMin: filterValues.revenueMin,
+    revenueMax: filterValues.revenueMax,
+    profitMin: filterValues.profitMin,
+    profitMax: filterValues.profitMax,
+    sort: sortValue,
+  }), [currentPage, filterValues, sortValue]);
+
+  const chartQueryParams = useMemo(() => ({
+    page: 1,
+    limit: 200,
+    dateFrom: filterValues.dateFrom,
+    dateTo: filterValues.dateTo,
+    sort: "date_desc" as const,
+  }), [filterValues.dateFrom, filterValues.dateTo]);
+
+  const { sales: tableSalesRaw, pagination, isLoading, isError, mutate } = useSalesQuery(tableQueryParams);
+  const { sales: chartSalesRaw } = useSalesQuery(chartQueryParams);
+  const { summary, isLoading: summaryLoading, isError: summaryError } = useSalesSummary();
+
+  const tableSales = tableSalesRaw as EnrichedSale[];
+  const chartSales = chartSalesRaw as EnrichedSale[];
+
   const handleFilterChange = (key: string, value: string) => {
     setFilterValues((prev) => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
   };
 
   const clearFilters = () => {
@@ -81,42 +112,12 @@ export default function SalesPage() {
       profitMin: "",
       profitMax: "",
     });
+    setCurrentPage(1);
   };
-
-  const filtered = useMemo(() => {
-    const result = sales.filter((s) => {
-      const rev = s.revenue || 0;
-      const prof = s.profit || 0;
-      const sd = s.sale_date || "";
-      const ok1 = !filterValues.dateFrom || sd >= filterValues.dateFrom;
-      const ok2 = !filterValues.dateTo || sd <= filterValues.dateTo;
-      const ok3 = filterValues.revenueMin === "" || rev >= parseFloat(filterValues.revenueMin);
-      const ok4 = filterValues.revenueMax === "" || rev <= parseFloat(filterValues.revenueMax);
-      const ok5 = filterValues.profitMin === "" || prof >= parseFloat(filterValues.profitMin);
-      const ok6 = filterValues.profitMax === "" || prof <= parseFloat(filterValues.profitMax);
-      return ok1 && ok2 && ok3 && ok4 && ok5 && ok6;
-    });
-
-    result.sort((a, b) => {
-      switch (sortValue) {
-        case "date_desc": return new Date(b.sale_date || 0).getTime() - new Date(a.sale_date || 0).getTime();
-        case "date_asc": return new Date(a.sale_date || 0).getTime() - new Date(b.sale_date || 0).getTime();
-        case "revenue_desc": return (b.revenue || 0) - (a.revenue || 0);
-        case "revenue_asc": return (a.revenue || 0) - (b.revenue || 0);
-        case "profit_desc": return (b.profit || 0) - (a.profit || 0);
-        case "profit_asc": return (a.profit || 0) - (b.profit || 0);
-        case "units_desc": return (b.units_sold || 0) - (a.units_sold || 0);
-        case "units_asc": return (a.units_sold || 0) - (b.units_sold || 0);
-        default: return 0;
-      }
-    });
-
-    return result;
-  }, [sales, filterValues, sortValue]);
 
   const chartData = useMemo(() => {
     const byDate: Record<string, { revenue: number; profit: number; units: number }> = {};
-    for (const s of sales) {
+    for (const s of chartSales) {
       const date = s.sale_date || "";
       if (!date) continue;
       if (!byDate[date]) byDate[date] = { revenue: 0, profit: 0, units: 0 };
@@ -133,15 +134,10 @@ export default function SalesPage() {
         profit: Math.round(entry[1].profit * 100) / 100,
         units: entry[1].units,
       }));
-  }, [sales]);
-
-  const totalRevenue = sales.reduce((sum, s) => sum + (s.revenue || 0), 0);
-  const totalUnits = sales.reduce((sum, s) => sum + (s.units_sold || 0), 0);
-  const totalFees = sales.reduce((sum, s) => sum + (s.amazon_fees || 0), 0);
-  const totalProfit = sales.reduce((sum, s) => sum + (s.profit || 0), 0);
+  }, [chartSales]);
 
   const handleExport = () => {
-    exportSalesExcel(filtered);
+    exportSalesExcel(tableSales);
   };
 
   const handleSaleSuccess = () => {
@@ -151,11 +147,21 @@ export default function SalesPage() {
   const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > CSV_MAX_SIZE_MB * 1024 * 1024) {
+      toast.error(`El archivo excede ${CSV_MAX_SIZE_MB}MB`);
+      e.target.value = "";
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
       if (!text) return;
       const lines = text.split("\n").filter((l) => l.trim().length > 0);
+      if (lines.length > CSV_MAX_ROWS) {
+        toast.error(`CSV demasiado grande. Maximo ${CSV_MAX_ROWS} filas.`);
+        e.target.value = "";
+        return;
+      }
       const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
       const dateIdx = headers.indexOf("date");
       const skuIdx = headers.indexOf("sku");
@@ -180,24 +186,25 @@ export default function SalesPage() {
     doc.text("Reporte Mensual de Ventas", 14, 20);
     doc.setFontSize(10);
     doc.text("Periodo: " + new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" }), 14, 30);
-    doc.text("Revenue Total: " + fmt(totalRevenue), 14, 40);
-    doc.text("Profit Total: " + fmt(totalProfit), 14, 48);
-    doc.text("Unidades: " + totalUnits, 14, 56);
-    doc.text("Fees Amazon: " + fmt(totalFees), 14, 64);
+    doc.text("Revenue Total: " + fmt(summary.totalRevenue), 14, 40);
+    doc.text("Profit Total: " + fmt(summary.totalProfit), 14, 48);
+    doc.text("Unidades: " + summary.totalUnits, 14, 56);
+    doc.text("Fees Amazon: " + fmt(summary.totalFees), 14, 64);
 
-    if (filtered.length > 0) {
-      const body = filtered.slice(0, 50).map((s) => [
-        s.sale_date,
-        s.products ? s.products.name : "N/A",
-        String(s.units_sold),
-        fmt(s.revenue),
-        fmt(s.amazon_fees),
-        fmt(s.profit),
-      ]);
+    const pdfData = chartSales.slice(0, 50).map((s) => [
+      s.sale_date,
+      s.products ? s.products.name : "N/A",
+      String(s.units_sold),
+      fmt(s.revenue),
+      fmt(s.amazon_fees),
+      fmt(s.profit),
+    ]);
+
+    if (pdfData.length > 0) {
       autoTable(doc, {
         startY: 72,
         head: [["Fecha", "Producto", "Unidades", "Revenue", "Fees", "Profit"]],
-        body,
+        body: pdfData,
         theme: "grid",
         styles: { fontSize: 8 },
         headStyles: { fillColor: [0, 172, 210] },
@@ -207,8 +214,30 @@ export default function SalesPage() {
     toast.success("Reporte PDF generado");
   };
 
-  if (isLoading) {
+  const isPageLoading = isLoading || summaryLoading;
+
+  if (isPageLoading) {
     return <PageSkeleton kpiCount={4} rowCount={8} showCharts showSearch={false} />;
+  }
+
+  if (isError || summaryError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center">
+          <AlertTriangle className="h-8 w-8 text-destructive" />
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-semibold text-foreground mb-1">Error al cargar datos</p>
+          <p className="text-sm text-muted-foreground mb-4">No se pudieron obtener las ventas. Intenta de nuevo.</p>
+        </div>
+        <button
+          onClick={() => mutate()}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -246,19 +275,19 @@ export default function SalesPage() {
       </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label="Revenue Total" value={fmt(totalRevenue)} icon={DollarSign} accentColor="cyan" animationDelay={0} />
-        <KpiCard label="Profit Total" value={fmt(totalProfit)} icon={TrendingUp} accentColor="green" animationDelay={75} trend={totalProfit >= 0 ? "up" : "down"} trendValue={totalProfit >= 0 ? "Positivo" : "Negativo"} />
-        <KpiCard label="Unidades" value={String(totalUnits)} icon={ShoppingCart} accentColor="amber" animationDelay={150} />
-        <KpiCard label="Fees Amazon" value={fmt(totalFees)} icon={BarChart3} accentColor="red" animationDelay={225} />
+        <KpiCard label="Revenue Total" value={fmt(summary.totalRevenue)} icon={DollarSign} accentColor="cyan" animationDelay={0} />
+        <KpiCard label="Profit Total" value={fmt(summary.totalProfit)} icon={TrendingUp} accentColor="green" animationDelay={75} trend={summary.totalProfit >= 0 ? "up" : "down"} trendValue={summary.totalProfit >= 0 ? "Positivo" : "Negativo"} />
+        <KpiCard label="Unidades" value={String(summary.totalUnits)} icon={ShoppingCart} accentColor="amber" animationDelay={150} />
+        <KpiCard label="Fees Amazon" value={fmt(summary.totalFees)} icon={BarChart3} accentColor="red" animationDelay={225} />
       </div>
 
-      {sales.length > 0 && (
+      {chartSales.length > 0 && (
         <DataTableWrapper title="Tendencia de Revenue y Profit" icon={Activity}>
           <div className="p-4"><RevenueTrendChart data={chartData} /></div>
         </DataTableWrapper>
       )}
 
-      {sales.length === 0 && (
+      {tableSales.length === 0 && (
         <div className="rounded-2xl border border-border bg-card p-12 text-center">
           <ShoppingCart className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground/70 mb-1">No hay ventas registradas</h3>
@@ -273,8 +302,8 @@ export default function SalesPage() {
         </div>
       )}
 
-      {filtered.length > 0 && (
-        <DataTableWrapper title={`${filtered.length} venta${filtered.length !== 1 ? "s" : ""}`}>
+      {tableSales.length > 0 && (
+        <DataTableWrapper title={`${pagination.total} venta${pagination.total !== 1 ? "s" : ""}`}>
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -288,7 +317,7 @@ export default function SalesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((s) => {
+                {tableSales.map((s) => {
                   const profitClass = (s.profit || 0) >= 0 ? "text-emerald-500" : "text-red-500";
                   return (
                     <tr key={s.id} className={tableRowClass}>
@@ -305,7 +334,7 @@ export default function SalesPage() {
             </table>
           </div>
           <div className="md:hidden space-y-3 p-4">
-            {filtered.map((s) => {
+            {tableSales.map((s) => {
               const profitColorMobile = (s.profit || 0) >= 0 ? "text-emerald-500" : "text-red-500";
               return (
                 <div key={s.id} className="rounded-xl border border-border bg-card p-4">
@@ -334,10 +363,22 @@ export default function SalesPage() {
               );
             })}
           </div>
+
+          {pagination.total > ITEMS_PER_PAGE && (
+            <div className="p-4 border-t border-border">
+              <PaginationControl
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                totalItems={pagination.total}
+                itemsPerPage={ITEMS_PER_PAGE}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
         </DataTableWrapper>
       )}
 
-      {sales.length > 0 && filtered.length === 0 && (
+      {chartSales.length > 0 && tableSales.length === 0 && (
         <div className="rounded-2xl border border-border bg-card p-12 text-center">
           <ShoppingCart className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground/70 mb-1">Sin resultados</h3>

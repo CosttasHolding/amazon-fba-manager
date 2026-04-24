@@ -1,9 +1,11 @@
-export const fetcher = async (url: string) => {
+export async function fetcher<T = unknown>(url: string): Promise<T> {
   const res = await fetch(url);
   if (!res.ok) {
-    const error = new Error("Error al obtener datos");
+    const body = await res.text().catch(() => "Error al obtener datos");
+    const error = new Error(body || "Error al obtener datos");
+    (error as Error & { status?: number }).status = res.status;
     throw error;
   }
   const json = await res.json();
   return json.data !== undefined ? json.data : json;
-};
+}

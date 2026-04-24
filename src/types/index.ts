@@ -104,6 +104,41 @@ export interface DashboardMetrics {
     margin_net_avg: number;
 }
 
+export interface TopProduct {
+  id: string;
+  name: string;
+  sku: string;
+  sale_price: number;
+  net_profit: number;
+  roi: number;
+  status: string;
+  stock_available: number;
+  sales_velocity_30d: number;
+}
+
+export interface StockAlert {
+  id: string;
+  type: string;
+  product_name: string;
+  sku: string;
+  current_stock: number;
+  threshold: number;
+}
+
+export interface ChartData {
+  salesChartData: { date: string; revenue: number; units: number }[];
+  salesChartDataWeekly: { date: string; revenue: number; units: number }[];
+  categoryChartData: { name: string; value: number; count: number }[];
+  profitChartData: { name: string; profit: number; roi: number; sku: string }[];
+}
+
+export interface DashboardResponse {
+  metrics: DashboardMetrics;
+  topProducts: TopProduct[];
+  alerts: StockAlert[];
+  charts: ChartData;
+}
+
 // ============================================
 // Suppliers (Fase 2)
 // ============================================

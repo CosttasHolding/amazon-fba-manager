@@ -50,12 +50,23 @@ export async function POST(req: NextRequest) {
     if (authError || !user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const body = await req.json();
+    console.log("[expenses POST] body:", JSON.stringify(body));
+
     const result = expenseSchema.safeParse(body);
-    if (!result.success) return NextResponse.json({ error: "Datos invalidos", details: result.error.flatten().fieldErrors }, { status: 400 });
+    if (!result.success) {
+      console.error("[expenses POST] validation error:", result.error.flatten().fieldErrors);
+      return NextResponse.json({ error: "Datos invalidos", details: result.error.flatten().fieldErrors }, { status: 400 });
+    }
 
     const clean = { ...result.data, user_id: user.id };
     const { data, error } = await supabase.from("expenses").insert(clean).select().single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error("[expenses POST] supabase error:", error.message, error.code, error.details);
+      return NextResponse.json({ error: "Error al guardar en la base de datos" }, { status: 500 });
+    }
     return NextResponse.json(data, { status: 201 });
-  } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
+  } catch (err) {
+    console.error("[expenses POST] unexpected error:", err);
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  }
 }

@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
     return NextResponse.json({ data }, { status: 201 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    return NextResponse.json({ error: message }, { status: 400 });
+    console.error("[POST /api/inventory/movements]", err);
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 400 });
   }
 }

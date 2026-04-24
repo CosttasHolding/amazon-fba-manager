@@ -100,14 +100,47 @@
 - [x] Verificacion final: 0 var, 0 any en todo src/
 - [x] Test build 0 errores + test suite 19/19
 
+### SPRINT 11 — Fixes Audit #1 y #3 [COMPLETADO]
+- [x] Fix hydration mismatch: reemplazar Math.random() en ChartSkeleton por alturas deterministicas
+- [x] Server-side pagination en /api/products, /api/inventory, /api/sales
+- [x] APIs /summary para KPIs (products, inventory, sales) con queries ligeras
+- [x] Hooks nuevos: useProductsQuery, useInventoryQuery, useSalesQuery + summaries
+- [x] Refactor products/page.tsx a paginacion server-side
+- [x] Refactor inventory/page.tsx a paginacion server-side
+- [x] Refactor sales/page.tsx a paginacion server-side + paginacion UI
+- [x] Tipar DashboardResponse y corregir useDashboard
+- [x] Test build 0 errores
+
+### SPRINT 12 — Fixes Audit #2 #4 #5 #6 [COMPLETADO]
+- [x] Fix #2: AbortController en global-search.tsx para cancelar requests obsoletos
+- [x] Fix #4: htmlFor + id en todos los formularios (login, register, product-form, sale-form)
+- [x] Fix #5: ARIA attributes en dropdowns (top-header user menu, notification-bell, global-search)
+- [x] Fix #6: AbortController + mountedRef en products/[id]/page.tsx
+- [x] Test build 0 errores
+
+### SPRINT 13 — Fixes Audit Restantes [COMPLETADO]
+- [x] Fix #7: Sanitizar mensajes de error en 15+ APIs (evitar leakage de err.message)
+- [x] Fix #10: Estados de error con retry en products, inventory, sales pages
+- [x] Fix #14: Centralizar constantes duplicadas en lib/constants.ts
+- [x] Fix #17: Eliminar local fmt shadowing en products/[id]/page.tsx
+- [x] Fix #18: CSV import limites (5MB, 1000 filas) con constantes
+- [x] Fix #19: Settings page error state con retry
+- [x] Fix #20: Pagination aria-labels + aria-current="page"
+- [x] Fix #21: Sidebar isActive memoizado con useCallback
+- [x] Fix #26: Mobile cards role="button" + tabIndex + keyboard handler
+- [x] Nuevo: lib/api-utils.ts helper para errores de API
+- [x] Nuevo: DashboardResponse tipado en types/index.ts
+- [x] Test build 0 errores
+
 ### ESTADO FINAL
 - Build: 0 errores, 0 warnings
 - Tests: 19/19 pasan
-- Rutas: 35
+- Rutas: 38 (+3 APIs summary)
 - Middleware: activo (80 kB)
 - Login: funcional
 - Accesibilidad basica: aria-labels en busquedas
 - TypeScript: 0 any, 0 var en todo el proyecto
+- Pagination: server-side en products, inventory, sales
 
 ## Reglas del Workflow
 1. Solo cambiar UI/UX, NO logica/auth/validaciones existentes

@@ -184,6 +184,9 @@ export function NotificationBell() {
           if (!open) fetchNotifications();
         }}
         className="relative flex items-center justify-center w-9 h-9 rounded-xl border border-border/50 bg-card hover:bg-muted/50 transition-all duration-200 group"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-controls="notification-panel"
         aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ""}`}
       >
         <Bell className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -204,7 +207,11 @@ export function NotificationBell() {
       {/* Dropdown panel */}
       {open && (
         <div
+          id="notification-panel"
           ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Panel de notificaciones"
           className="absolute right-0 top-full mt-2 w-[380px] max-h-[480px] rounded-2xl border border-border bg-card shadow-2xl shadow-black/20 z-50 animate-in fade-in-0 slide-in-from-top-2 zoom-in-95 duration-200 flex flex-col overflow-hidden"
         >
           {/* Header */}

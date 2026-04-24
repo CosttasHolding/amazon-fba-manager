@@ -138,6 +138,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>("profile");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [exporting, setExporting] = useState("");
@@ -165,6 +166,8 @@ export default function SettingsPage() {
   }, []);
 
   const fetchSettings = async () => {
+    setLoadError(false);
+    setLoading(true);
     try {
       const res = await fetch("/api/settings");
       if (res.ok) {
@@ -187,8 +190,11 @@ export default function SettingsPage() {
           currency: data.currency || "USD",
           tax_rate: String(data.tax_rate ?? "0.00"),
         });
+      } else {
+        setLoadError(true);
       }
     } catch {
+      setLoadError(true);
       toast.error("Error al cargar configuración");
     } finally {
       setLoading(false);
@@ -274,9 +280,29 @@ export default function SettingsPage() {
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">
-            Cargando configuración …
+            Cargando configuraci\u00F3n ...
           </p>
         </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center">
+          <Settings className="h-8 w-8 text-destructive" />
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-semibold text-foreground mb-1">Error al cargar configuraci\u00F3n</p>
+          <p className="text-sm text-muted-foreground mb-4">No se pudieron obtener los ajustes. Intenta de nuevo.</p>
+        </div>
+        <button
+          onClick={() => fetchSettings()}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }

@@ -136,7 +136,7 @@ export default function EditSupplierPage() {
           <div>
             <div className={sectionLabel}>
               <Factory className="h-3 w-3" />
-              Informaci\u00F3n del proveedor
+              Información del proveedor
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
@@ -145,7 +145,7 @@ export default function EditSupplierPage() {
                 {errors.name && <p className="text-xs text-destructive mt-0.5">{errors.name.message}</p>}
               </div>
               <div>
-                <Label className={labelClass}>Pa\u00EDs</Label>
+                <Label className={labelClass}>País</Label>
                 <Input
                   {...register("country")}
                   placeholder="Ej: China, M\u00E9xico..."

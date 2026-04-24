@@ -26,27 +26,7 @@ import { Save, Loader2, Package, DollarSign, Users, Info, Weight } from "lucide-
 import { toast } from "sonner";
 import { FeeCalculatorInline } from "@/components/fee-calculator-inline";
 import { calcFBAFee, calcRefFee } from "@/lib/calculations";
-
-const CATEGORIES = [
-  "Electronics", "Toys", "Home", "Kitchen", "Health", "Beauty", "Sports", "Books", "Other",
-];
-
-const STATUSES = [
-  { value: "active", label: "Activo" },
-  { value: "paused", label: "Pausado" },
-  { value: "discontinued", label: "Descontinuado" },
-];
-
-const MARKETPLACES = [
-  { value: "US", label: "US" },
-  { value: "MX", label: "MX" },
-  { value: "CA", label: "CA" },
-  { value: "UK", label: "UK" },
-  { value: "DE", label: "DE" },
-  { value: "FR", label: "FR" },
-  { value: "IT", label: "IT" },
-  { value: "ES", label: "ES" },
-];
+import { MARKETPLACES, PRODUCT_CATEGORIES, PRODUCT_STATUSES } from "@/lib/constants";
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -296,7 +276,7 @@ export default function EditProductPage() {
                 <Select value={categoryVal || "Other"} onValueChange={(v) => setValue("category", v as ProductFormData["category"])}>
                   <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {PRODUCT_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -314,7 +294,7 @@ export default function EditProductPage() {
                 <Select value={statusVal} onValueChange={(v) => setValue("status", v as ProductFormData["status"])}>
                   <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                    {PRODUCT_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

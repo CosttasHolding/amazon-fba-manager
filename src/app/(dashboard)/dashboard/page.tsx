@@ -1,7 +1,7 @@
 "use client";
 
 import { fmt, fmtPct } from "@/lib/utils";
-import { DashboardMetrics } from "@/types";
+import { DashboardMetrics, DashboardResponse, TopProduct, StockAlert, ChartData } from "@/types";
 import {
   Package,
   TrendingUp,
@@ -41,34 +41,6 @@ import { useDashboard } from "@/hooks/use-data";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
-
-interface TopProduct {
-  id: string;
-  name: string;
-  sku: string;
-  sale_price: number;
-  net_profit: number;
-  roi: number;
-  status: string;
-  stock_available: number;
-  sales_velocity_30d: number;
-}
-
-interface StockAlert {
-  id: string;
-  type: string;
-  product_name: string;
-  sku: string;
-  current_stock: number;
-  threshold: number;
-}
-
-interface ChartData {
-  salesChartData: { date: string; revenue: number; units: number }[];
-  salesChartDataWeekly: { date: string; revenue: number; units: number }[];
-  categoryChartData: { name: string; value: number; count: number }[];
-  profitChartData: { name: string; profit: number; roi: number; sku: string }[];
-}
 
 function RoiBadge({ roi }: { roi: number }) {
   if (roi >= 50) {

@@ -66,7 +66,7 @@ export async function GET(
 
     if (error) {
       console.error("Error fetching product suppliers:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
     return NextResponse.json(data || []);
@@ -149,7 +149,8 @@ export async function POST(
         .single();
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error("[POST /api/products/[id]/suppliers] updateError:", error);
+        return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
       }
       return NextResponse.json(data);
     }
@@ -169,7 +170,8 @@ export async function POST(
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("[POST /api/products/[id]/suppliers] insertError:", error);
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
     return NextResponse.json(data, { status: 201 });
@@ -217,7 +219,8 @@ export async function DELETE(
       .eq("supplier_id", supplierId);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("[DELETE /api/products/[id]/suppliers]", error);
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

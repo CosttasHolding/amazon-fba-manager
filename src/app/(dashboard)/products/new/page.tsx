@@ -21,27 +21,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { FeeCalculatorInline } from "@/components/fee-calculator-inline";
 import { calcFBAFee, calcRefFee } from "@/lib/calculations";
-
-const CATEGORIES = [
-  "Electronics", "Toys", "Home", "Kitchen", "Health", "Beauty", "Sports", "Books", "Other",
-] as const;
-
-const STATUSES = [
-  { value: "active", label: "Activo" },
-  { value: "paused", label: "Pausado" },
-  { value: "discontinued", label: "Descontinuado" },
-] as const;
-
-const MARKETPLACES = [
-  { value: "US", label: "US" },
-  { value: "MX", label: "MX" },
-  { value: "CA", label: "CA" },
-  { value: "UK", label: "UK" },
-  { value: "DE", label: "DE" },
-  { value: "FR", label: "FR" },
-  { value: "IT", label: "IT" },
-  { value: "ES", label: "ES" },
-] as const;
+import { MARKETPLACES, PRODUCT_CATEGORIES, PRODUCT_STATUSES } from "@/lib/constants";
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -237,7 +217,7 @@ export default function NewProductPage() {
               <Select value={category || "Other"} onValueChange={(v) => setValue("category", v as ProductFormData["category"])}>
                 <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((cat) => (
+                  {PRODUCT_CATEGORIES.map((cat) => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
                 </SelectContent>
@@ -259,7 +239,7 @@ export default function NewProductPage() {
               <Select value={status} onValueChange={(v) => setValue("status", v as ProductFormData["status"])}>
                 <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {STATUSES.map((s) => (
+                  {PRODUCT_STATUSES.map((s) => (
                     <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                   ))}
                 </SelectContent>

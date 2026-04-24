@@ -82,11 +82,12 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div className="space-y-1.5">
-            <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
+            <label htmlFor="email" className="text-sm text-white/80 font-medium flex items-center gap-1.5">
               <Mail className="h-3.5 w-3.5 text-white/40" />
               Email
             </label>
             <Input
+              id="email"
               type="email"
               placeholder="tu@email.com"
               value={email}
@@ -97,11 +98,12 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
+            <label htmlFor="password" className="text-sm text-white/80 font-medium flex items-center gap-1.5">
               <Lock className="h-3.5 w-3.5 text-white/40" />
               Contrase\u00F1a
             </label>
             <Input
+              id="password"
               type="password"
               placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
               value={password}

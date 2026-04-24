@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -41,15 +41,20 @@ export function GlobalSearch() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  const abortRef = useRef<AbortController | null>(null);
+
   const fetchResults = useCallback(async (q: string) => {
     if (!q.trim()) { setResults([]); return; }
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true);
     try {
       const [productsRes, suppliersRes, ordersRes, researchRes] = await Promise.all([
-        fetch(`/api/products?search=${encodeURIComponent(q)}`).then((r) => (r.ok ? r.json() : [])),
-        fetch(`/api/suppliers?search=${encodeURIComponent(q)}`).then((r) => (r.ok ? r.json() : [])),
-        fetch(`/api/orders?search=${encodeURIComponent(q)}`).then((r) => (r.ok ? r.json() : [])),
-        fetch(`/api/research`).then((r) => (r.ok ? r.json() : [])),
+        fetch(`/api/products?search=${encodeURIComponent(q)}`, { signal: controller.signal }).then((r) => (r.ok ? r.json() : [])),
+        fetch(`/api/suppliers?search=${encodeURIComponent(q)}`, { signal: controller.signal }).then((r) => (r.ok ? r.json() : [])),
+        fetch(`/api/orders?search=${encodeURIComponent(q)}`, { signal: controller.signal }).then((r) => (r.ok ? r.json() : [])),
+        fetch(`/api/research`, { signal: controller.signal }).then((r) => (r.ok ? r.json() : [])),
       ]);
 
       const items: SearchResult[] = [];
@@ -98,6 +103,9 @@ export function GlobalSearch() {
     return (
       <button
         onClick={() => setOpen(true)}
+        aria-expanded={false}
+        aria-haspopup="dialog"
+        aria-controls="global-search-dialog"
         className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/30 border border-border/50 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
       >
         <Search className="h-3.5 w-3.5" />
@@ -108,8 +116,14 @@ export function GlobalSearch() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-background/80 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-popover shadow-2xl overflow-hidden animate-scale-in">
+    <div
+      id="global-search-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Busqueda global"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-background/80 backdrop-blur-sm p-4"
+    >
+      <div className="w-full max-w-lg rounded-2xl border border-border bg-card shadow-2xl overflow-hidden animate-scale-in">
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
@@ -117,6 +131,7 @@ export function GlobalSearch() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar productos, proveedores, pedidos..."
+            aria-label="Buscar"
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
           />
           {loading && <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />}

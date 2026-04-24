@@ -177,9 +177,9 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label className={labelClass}>Producto *</Label>
+            <Label htmlFor="product" className={labelClass}>Producto *</Label>
             <Select value={selectedProduct} onValueChange={handleProductChange}>
-              <SelectTrigger className={inputClass}>
+              <SelectTrigger id="product" className={inputClass}>
                 <SelectValue placeholder={loadingProducts ? "Cargando..." : "Seleccionar producto"} />
               </SelectTrigger>
               <SelectContent>
@@ -194,14 +194,14 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className={labelClass}>Fecha de venta *</Label>
-              <Input type="date" value={saleDate}
+              <Label htmlFor="saleDate" className={labelClass}>Fecha de venta *</Label>
+              <Input id="saleDate" type="date" value={saleDate}
                 onChange={(e) => setSaleDate(e.target.value)}
                 className={inputClass} />
             </div>
             <div>
-              <Label className={labelClass}>Unidades vendidas *</Label>
-              <Input type="number" min="1" value={unitsSold}
+              <Label htmlFor="unitsSold" className={labelClass}>Unidades vendidas *</Label>
+              <Input id="unitsSold" type="number" min="1" value={unitsSold}
                 onChange={(e) => handleUnitsChange(e.target.value)}
                 placeholder="0" className={inputClass} />
             </div>
@@ -209,8 +209,8 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className={labelClass}>Revenue total ($)</Label>
-              <Input type="number" step="0.01" value={revenue}
+              <Label htmlFor="revenue" className={labelClass}>Revenue total ($)</Label>
+              <Input id="revenue" type="number" step="0.01" value={revenue}
                 onChange={(e) => setRevenue(e.target.value)}
                 placeholder="0.00" className={inputClass} />
               {selectedProductData && unitsNum > 0 && (
@@ -220,16 +220,16 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
               )}
             </div>
             <div>
-              <Label className={labelClass}>Amazon Fees ($)</Label>
-              <Input type="number" step="0.01" value={amazonFees}
+              <Label htmlFor="amazonFees" className={labelClass}>Amazon Fees ($)</Label>
+              <Input id="amazonFees" type="number" step="0.01" value={amazonFees}
                 onChange={(e) => setAmazonFees(e.target.value)}
                 placeholder="0.00" className={inputClass} />
             </div>
           </div>
 
           <div>
-            <Label className={labelClass}>Order ID (opcional)</Label>
-            <Input value={orderId}
+            <Label htmlFor="orderId" className={labelClass}>Order ID (opcional)</Label>
+            <Input id="orderId" value={orderId}
               onChange={(e) => setOrderId(e.target.value)}
               placeholder="XXX-XXXXXXX-XXXXXXX" className={inputClass} />
           </div>

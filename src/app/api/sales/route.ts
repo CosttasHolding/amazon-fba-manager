@@ -11,6 +11,20 @@ const salePostSchema = z.object({
   order_id: z.string().max(255).nullable().optional(),
 });
 
+function parseSort(sort: string | null): { column: string; ascending: boolean } {
+  switch (sort) {
+    case "date_asc": return { column: "sale_date", ascending: true };
+    case "date_desc": return { column: "sale_date", ascending: false };
+    case "revenue_asc": return { column: "revenue", ascending: true };
+    case "revenue_desc": return { column: "revenue", ascending: false };
+    case "profit_asc": return { column: "revenue", ascending: true };
+    case "profit_desc": return { column: "revenue", ascending: false };
+    case "units_asc": return { column: "units_sold", ascending: true };
+    case "units_desc": return { column: "units_sold", ascending: false };
+    default: return { column: "sale_date", ascending: false };
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
@@ -23,14 +37,29 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1") || 1);
     const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") || "50") || 50));
+    const dateFrom = searchParams.get("dateFrom");
+    const dateTo = searchParams.get("dateTo");
+    const revenueMin = searchParams.get("revenueMin");
+    const revenueMax = searchParams.get("revenueMax");
+    const profitMin = searchParams.get("profitMin");
+    const profitMax = searchParams.get("profitMax");
+    const sort = searchParams.get("sort");
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    const { data, error, count } = await supabase
+    let query = supabase
       .from("sales")
       .select("*, products(name, sku, unit_cost, total_cost, sale_price, fba_fee, referral_fee)", { count: "exact" })
-      .eq("user_id", user.id)
-      .order("sale_date", { ascending: false })
+      .eq("user_id", user.id);
+
+    if (dateFrom) query = query.gte("sale_date", dateFrom);
+    if (dateTo) query = query.lte("sale_date", dateTo);
+    if (revenueMin !== null && revenueMin !== "") query = query.gte("revenue", parseFloat(revenueMin));
+    if (revenueMax !== null && revenueMax !== "") query = query.lte("revenue", parseFloat(revenueMax));
+
+    const { column, ascending } = parseSort(sort);
+    const { data, error, count } = await query
+      .order(column, { ascending })
       .range(from, to);
 
     if (error) throw error;
@@ -51,10 +80,21 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({ data: enriched, count, page, limit });
+    // Apply profit filter in memory since it's computed
+    let filtered = enriched;
+    if (profitMin !== null && profitMin !== "") {
+      const min = parseFloat(profitMin);
+      filtered = filtered.filter((s) => (s.profit || 0) >= min);
+    }
+    if (profitMax !== null && profitMax !== "") {
+      const max = parseFloat(profitMax);
+      filtered = filtered.filter((s) => (s.profit || 0) <= max);
+    }
+
+    return NextResponse.json({ data: filtered, count, page, limit });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[GET /api/sales]", err);
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }
 
@@ -115,6 +155,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ data }, { status: 201 });
   } catch (err) {
+    console.error("[POST /api/sales]", err);
     const message = err instanceof Error ? err.message : "Error desconocido";
     return NextResponse.json({ error: message }, { status: 400 });
   }

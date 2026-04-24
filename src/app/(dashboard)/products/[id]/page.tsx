@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -94,7 +94,7 @@ interface ProductSupplier {
   };
 }
 
-const fmt = (v: number) => "$" + (v || 0).toFixed(2);
+const fmtMoney = (v: number) => "$" + (v || 0).toFixed(2);
 
 function RatingStars({ rating }: { rating: number }) {
   if (!rating) return <span className="text-xs text-muted-foreground">N/A</span>;
@@ -137,26 +137,39 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
 
+  const abortRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
+
   useEffect(() => {
+    mountedRef.current = true;
     if (params.id) {
       fetchProduct();
       fetchSuppliers();
     }
+    return () => {
+      mountedRef.current = false;
+      if (abortRef.current) abortRef.current.abort();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const fetchProduct = async () => {
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
-      const res = await fetch("/api/products/" + params.id);
+      const res = await fetch("/api/products/" + params.id, { signal: controller.signal });
       if (!res.ok) throw new Error("Error al cargar producto");
       const data = await res.json();
       const p = data.data ? data.data : data;
-      setProduct(p);
+      if (mountedRef.current) setProduct(p);
     } catch {
-      toast.error("Error al cargar el producto");
-      router.push("/products");
+      if (mountedRef.current) {
+        toast.error("Error al cargar el producto");
+        router.push("/products");
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 
@@ -165,7 +178,7 @@ export default function ProductDetailPage() {
       const res = await fetch("/api/products/" + params.id + "/suppliers");
       if (res.ok) {
         const data = await res.json();
-        setSuppliers(Array.isArray(data) ? data : data.data || []);
+        if (mountedRef.current) setSuppliers(Array.isArray(data) ? data : data.data || []);
       }
     } catch (error) {
       console.error("Error loading suppliers:", error);
@@ -306,14 +319,14 @@ export default function ProductDetailPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label="Precio Venta"
-          value={fmt(sellPrice)}
+          value={fmtMoney(sellPrice)}
           icon={DollarSign}
           accentColor="green"
           animationDelay={0}
         />
         <KpiCard
           label="Costo Compra"
-          value={fmt(buyCost)}
+          value={fmtMoney(buyCost)}
           icon={ShoppingCart}
           accentColor="cyan"
           animationDelay={75}
@@ -373,7 +386,7 @@ export default function ProductDetailPage() {
               profitValue >= 0 ? "text-emerald-400" : "text-red-400"
             )}
           >
-            {fmt(profitValue)}
+            {fmtMoney(profitValue)}
           </span>
         </div>
       </div>
@@ -391,13 +404,13 @@ export default function ProductDetailPage() {
               <div key={item.label} className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">{item.label}</span>
                 <span className="text-sm font-medium text-foreground tabular-nums">
-                  {fmt(item.value)}
+                  {fmtMoney(item.value)}
                 </span>
               </div>
             ))}
             <div className="border-t border-border pt-3 flex justify-between items-center">
               <span className="text-sm font-semibold text-foreground">Costo total</span>
-              <span className="text-sm font-bold text-primary tabular-nums">{fmt(totalCost)}</span>
+              <span className="text-sm font-bold text-primary tabular-nums">{fmtMoney(totalCost)}</span>
             </div>
           </div>
         </div>
@@ -531,7 +544,7 @@ export default function ProductDetailPage() {
                         <RatingStars rating={ps.suppliers.rating} />
                       </td>
                       <td className={tableCellClass + " text-right font-medium text-foreground tabular-nums"}>
-                        {fmt(ps.unit_cost)}
+                        {fmtMoney(ps.unit_cost)}
                       </td>
                       <td className={tableCellClass + " text-right text-muted-foreground tabular-nums"}>
                         {ps.moq || "N/A"}
@@ -574,7 +587,7 @@ export default function ProductDetailPage() {
                     <div>
                       <span className="text-muted-foreground">Costo</span>
                       <p className="font-medium text-foreground tabular-nums">
-                        {fmt(ps.unit_cost)}
+                        {fmtMoney(ps.unit_cost)}
                       </p>
                     </div>
                     <div>

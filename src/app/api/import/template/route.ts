@@ -94,8 +94,7 @@ export async function GET() {
       },
     });
   } catch (err) {
-    console.error("Template error:", err);
-    const message = err instanceof Error ? err.message : "Error al generar template";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[GET /api/import/template]", err);
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

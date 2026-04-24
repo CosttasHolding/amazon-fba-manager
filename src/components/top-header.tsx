@@ -72,6 +72,9 @@ export function TopHeader({ userEmail, userName }: TopHeaderProps) {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
+            aria-expanded={showUserMenu}
+            aria-haspopup="menu"
+            aria-controls="user-menu"
             className="flex items-center gap-2.5 pl-3 border-l border-border/50 hover:opacity-80 transition-opacity"
           >
             <div className="text-right hidden xl:block">
@@ -90,7 +93,12 @@ export function TopHeader({ userEmail, userName }: TopHeaderProps) {
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border bg-card shadow-xl shadow-black/20 py-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-150">
+            <div
+              id="user-menu"
+              role="menu"
+              aria-label="Menu de usuario"
+              className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border bg-card shadow-xl shadow-black/20 py-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-150"
+            >
               <div className="px-4 py-3 border-b border-border">
                 <p className="text-sm font-medium text-foreground truncate">
                   {userName || "Usuario"}
