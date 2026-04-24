@@ -4,40 +4,40 @@
 
 @layer base {
   :root {
-    /* ===== LIGHT THEME — Azul y Blanco ===== */
-    --background: 214 70% 94%;
-    --foreground: 222 60% 15%;
+    /* ===== LIGHT THEME — Profesional SaaS Blanco y Azul ===== */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 222 60% 15%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 60% 15%;
-    --primary: 221 90% 50%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 214 80% 90%;
-    --secondary-foreground: 221 90% 45%;
-    --muted: 214 70% 88%;
-    --muted-foreground: 215 35% 35%;
-    --accent: 214 80% 88%;
-    --accent-foreground: 221 90% 45%;
-    --destructive: 0 84% 55%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 60% 82%;
-    --input: 214 70% 92%;
-    --ring: 221 90% 50%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
     --radius: 0.75rem;
-    --chart-1: 221 90% 50%;
+    --chart-1: 221 83% 53%;
     --chart-2: 160 84% 39%;
     --chart-3: 38 92% 50%;
     --chart-4: 270 50% 60%;
-    --chart-5: 0 84% 55%;
-    --sidebar: 217 80% 92%;
-    --sidebar-foreground: 222 60% 15%;
-    --sidebar-primary: 221 90% 50%;
+    --chart-5: 0 84% 60%;
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 221 83% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 214 80% 90%;
-    --sidebar-accent-foreground: 221 90% 50%;
-    --sidebar-border: 214 60% 85%;
-    --sidebar-ring: 221 90% 50%;
+    --sidebar-accent: 217 91% 95%;
+    --sidebar-accent-foreground: 221 83% 53%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 221 83% 53%;
   }
 
   .dark {
@@ -84,23 +84,41 @@
     @apply antialiased bg-background text-foreground;
   }
 
-  /* Light mode table headers */
+  /* Light mode enhancements */
+  html:not(.dark) {
+    /* Table headers: azul marino oscuro con texto blanco */
+    --table-header-bg: 222 47% 11%;
+    --table-header-text: 0 0% 100%;
+  }
+
   html:not(.dark) thead tr {
-    background-color: hsl(222 47% 11%);
-    color: hsl(0 0% 100%);
+    background-color: hsl(var(--table-header-bg));
+    color: hsl(var(--table-header-text));
   }
 
   html:not(.dark) thead tr th {
-    color: hsl(0 0% 100%);
+    color: hsl(var(--table-header-text));
     border-bottom: none;
+    font-weight: 600;
+    letter-spacing: 0.05em;
   }
 
   html:not(.dark) tbody tr {
     background-color: hsl(0 0% 100%);
+    transition: background-color 0.15s ease;
   }
 
   html:not(.dark) tbody tr:nth-child(even) {
     background-color: hsl(210 40% 98%);
+  }
+
+  html:not(.dark) tbody tr:hover {
+    background-color: hsl(210 40% 96%);
+  }
+
+  /* Cards shadow in light mode */
+  html:not(.dark) .bg-card {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
   }
 }
 

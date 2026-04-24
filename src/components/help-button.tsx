@@ -17,10 +17,11 @@ export function HelpButton({ className }: HelpButtonProps) {
       <button
         onClick={() => setOpen(true)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 flex items-center justify-center w-12 h-12 rounded-full lg:bottom-8 lg:right-8",
-          "bg-primary text-primary-foreground shadow-lg shadow-primary/25",
-          "hover:bg-primary/90 hover:scale-105 active:scale-95",
-          "transition-all duration-200 group",
+          "fixed z-50 flex items-center justify-center w-11 h-11 rounded-full",
+          "bottom-20 right-4 md:bottom-8 md:right-8",
+          "bg-primary text-primary-foreground shadow-xl shadow-primary/30",
+          "hover:bg-primary/90 hover:scale-110 active:scale-95",
+          "transition-all duration-300 group",
           className
         )}
         aria-label="Abrir centro de ayuda"
@@ -29,7 +30,7 @@ export function HelpButton({ className }: HelpButtonProps) {
         <HelpCircle className="h-5 w-5" />
         
         {/* Tooltip */}
-        <span className="absolute right-14 bg-card border border-border text-foreground text-xs px-2.5 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+        <span className="absolute right-12 bg-card border border-border text-foreground text-xs px-2.5 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
           Centro de Ayuda
         </span>
       </button>
