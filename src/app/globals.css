@@ -4,40 +4,40 @@
 
 @layer base {
   :root {
-    /* ===== LIGHT THEME — Azul y Blanco ===== */
+    /* ===== LIGHT THEME — Azul y Blanco Corporativo ===== */
     --background: 210 40% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 217 91% 50%;
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 214 32% 91%;
+    --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 11%;
-    --muted: 214 32% 91%;
+    --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
-    --accent: 214 32% 91%;
+    --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
     --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 217 91% 50%;
+    --ring: 221 83% 53%;
     --radius: 0.75rem;
-    --chart-1: 217 91% 50%;
+    --chart-1: 221 83% 53%;
     --chart-2: 160 84% 39%;
     --chart-3: 38 92% 50%;
     --chart-4: 270 50% 60%;
     --chart-5: 0 84% 55%;
-    --sidebar: 210 40% 98%;
+    --sidebar: 0 0% 100%;
     --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 217 91% 50%;
+    --sidebar-primary: 221 83% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 214 32% 91%;
-    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-accent: 217 91% 95%;
+    --sidebar-accent-foreground: 221 83% 53%;
     --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 217 91% 50%;
+    --sidebar-ring: 221 83% 53%;
   }
 
   .dark {
