@@ -228,7 +228,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         label: "Estado",
-        description: "Activo, Pausado, Sin Stock, Descontinuado.",
+        description: "Activo, Pausado, Sin Stock.",
       },
       {
         label: "Categoría",
@@ -267,7 +267,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { label: "Filtros Avanzados", description: "Panel expandible con múltiples filtros y ordenamiento.", },
     ],
     glossary: [
-      { term: "Status", definition: "Activo = visible en listings, Pausado = temporalmente detenido, Sin Stock = sin inventario, Descontinuado = eliminado permanentemente." },
+      { term: "Status", definition: "Activo = visible en listings, Pausado = temporalmente detenido, Sin Stock = sin inventario disponible." },
     ],
     tips: [
       "Haz clic en cualquier fila para ver el detalle completo del producto.",
@@ -293,7 +293,7 @@ export const HELP_SECTIONS: HelpSection[] = [
           { name: "SKU", description: "Código interno de seguimiento", required: false },
           { name: "Categoría", description: "Categoría Amazon para cálculo de referral fee", required: true },
           { name: "Marketplace", description: "Amazon.com / .ca / .mx / .uk / .de", required: true },
-          { name: "Estado", description: "Activo / Pausado / Sin Stock / Descontinuado", required: true },
+          { name: "Estado", description: "Activo / Pausado / Sin Stock", required: true },
           { name: "Peso (kg)", description: "Peso en kilogramos para cálculo FBA fee", required: true },
         ],
       },
@@ -417,7 +417,6 @@ export const HELP_SECTIONS: HelpSection[] = [
     actions: [
       { label: "Nuevo Proveedor", description: "Modal para registrar proveedor" },
       { label: "Exportar Excel", description: "Exporta proveedores filtrados" },
-      { label: "Comparar", description: "Navega a /suppliers/compare para comparación" },
     ],
     tips: [
       "Mantén al menos 2 proveedores por producto para mitigar riesgos de producción.",
@@ -643,6 +642,10 @@ export const HELP_SECTIONS: HelpSection[] = [
           { name: "Estado", description: "Badge de estado" },
         ],
       },
+    ],
+    actions: [
+      { label: "Exportar Excel", description: "Exporta el inventario actual a Excel" },
+      { label: "Actualizar", description: "Refresca los datos de inventario desde el servidor" },
     ],
     glossary: [
       { term: "Stockout", definition: "Fecha calculada en que se agotará el stock. Fórmula: Fecha Actual + (Stock Disponible / Velocidad de Ventas Diaria)." },
@@ -1148,10 +1151,21 @@ export const ROUTE_TO_SECTION: Record<string, string> = {
 
 export function getSectionIdFromPath(path: string): string {
   // Manejar rutas dinámicas
-  const cleaned = path
-    .replace(/\/[a-f0-9-]+$/i, "/[id]") // UUIDs
-    .replace(/\/new$/, "/new")
-    .replace(/\/edit$/, "/[id]/edit");
+  let cleaned = path;
+
+  // Rutas que terminan en /edit: /products/abc/edit → /products/[id]/edit
+  if (cleaned.endsWith("/edit")) {
+    cleaned = cleaned.replace(/\/[^/]+\/edit$/, "/[id]/edit");
+    return ROUTE_TO_SECTION[cleaned] || "dashboard";
+  }
+
+  // Rutas que terminan en /new: dejar como está
+  if (cleaned.endsWith("/new")) {
+    return ROUTE_TO_SECTION[cleaned] || "dashboard";
+  }
+
+  // Rutas con ID al final: /products/abc → /products/[id]
+  cleaned = cleaned.replace(/\/[^/]+$/, "/[id]");
 
   return ROUTE_TO_SECTION[cleaned] || "dashboard";
 }
