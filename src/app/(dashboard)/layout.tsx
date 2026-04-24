@@ -93,6 +93,7 @@ export default async function DashboardLayout({
       </main>
 
       <Toaster richColors position="top-right" />
+      <HelpButton />
     </div>
   );
 }
