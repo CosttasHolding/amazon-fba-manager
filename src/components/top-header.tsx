@@ -6,7 +6,6 @@ import { LogOut, Settings, User } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { GlobalSearch } from "@/components/global-search";
 import { NotificationBell } from "@/components/notification-bell";
-import { HelpButton } from "@/components/help-button";
 import { createClient } from "@/lib/supabase/client";
 
 interface TopHeaderProps {
@@ -63,9 +62,6 @@ export function TopHeader({ userEmail, userName }: TopHeaderProps) {
 
         {/* Theme toggle */}
         <ThemeToggle compact />
-
-        {/* Help */}
-        <HelpButton />
 
         {/* User dropdown */}
         <div className="relative" ref={menuRef}>

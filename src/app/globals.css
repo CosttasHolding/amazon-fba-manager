@@ -4,40 +4,40 @@
 
 @layer base {
   :root {
-    /* ===== LIGHT THEME — Profesional SaaS Blanco y Azul ===== */
-    --background: 0 0% 100%;
+    /* ===== LIGHT THEME — SaaS Moderno Claro ===== */
+    --background: 210 20% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%;
+    --primary: 217 91% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
+    --secondary: 214 32% 91%;
     --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
+    --muted: 214 32% 91%;
     --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
+    --accent: 214 32% 91%;
     --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --ring: 217 91% 50%;
     --radius: 0.75rem;
-    --chart-1: 221 83% 53%;
+    --chart-1: 217 91% 50%;
     --chart-2: 160 84% 39%;
     --chart-3: 38 92% 50%;
     --chart-4: 270 50% 60%;
-    --chart-5: 0 84% 60%;
+    --chart-5: 0 84% 55%;
     --sidebar: 0 0% 100%;
     --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary: 217 91% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 91% 95%;
-    --sidebar-accent-foreground: 221 83% 53%;
+    --sidebar-accent: 214 32% 91%;
+    --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-ring: 217 91% 50%;
   }
 
   .dark {
@@ -84,41 +84,9 @@
     @apply antialiased bg-background text-foreground;
   }
 
-  /* Light mode enhancements */
-  html:not(.dark) {
-    /* Table headers: azul marino oscuro con texto blanco */
-    --table-header-bg: 222 47% 11%;
-    --table-header-text: 0 0% 100%;
-  }
-
-  html:not(.dark) thead tr {
-    background-color: hsl(var(--table-header-bg));
-    color: hsl(var(--table-header-text));
-  }
-
-  html:not(.dark) thead tr th {
-    color: hsl(var(--table-header-text));
-    border-bottom: none;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-  }
-
-  html:not(.dark) tbody tr {
-    background-color: hsl(0 0% 100%);
-    transition: background-color 0.15s ease;
-  }
-
-  html:not(.dark) tbody tr:nth-child(even) {
-    background-color: hsl(210 40% 98%);
-  }
-
-  html:not(.dark) tbody tr:hover {
-    background-color: hsl(210 40% 96%);
-  }
-
-  /* Cards shadow in light mode */
+  /* Light mode card shadow for depth */
   html:not(.dark) .bg-card {
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
   }
 }
 
