@@ -155,8 +155,8 @@ export default function OrderDetailPage() {
             <InfoRow label="Producto" value={order.products?.name || "—"} />
             <InfoRow label="SKU" value={order.products?.sku || "—"} />
             <InfoRow label="Cantidad" value={String(order.quantity)} />
-            <InfoRow label="Costo Unitario" value={`$${order.unit_cost.toFixed(4)}`} />
-            <InfoRow label="Total Producto" value={`$${order.total_cost.toFixed(2)}`} />
+            <InfoRow label="Costo Unitario" value={`$${(order.unit_cost ?? 0).toFixed(4)}`} />
+            <InfoRow label="Total Producto" value={`$${(order.total_cost ?? 0).toFixed(2)}`} />
             <InfoRow label="Moneda" value={order.currency} />
             <InfoRow label="Tipo de Cambio" value={String(order.exchange_rate)} />
           </div>
@@ -193,7 +193,7 @@ export default function OrderDetailPage() {
           <div className="p-5 space-y-3">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">Producto</span>
-              <span className="font-display text-foreground">${order.total_cost.toFixed(2)}</span>
+              <span className="font-display text-foreground">${(order.total_cost ?? 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">Envío</span>

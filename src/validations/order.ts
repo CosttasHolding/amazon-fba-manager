@@ -6,6 +6,7 @@ export const orderSchema = z.object({
   po_number: z.string().max(50).nullable().optional(),
   quantity: z.coerce.number().int().positive("Cantidad requerida"),
   unit_cost: z.coerce.number().positive("Costo requerido"),
+  total_cost: z.coerce.number().positive("Total requerido"),
   currency: z.string().max(3).default("USD"),
   exchange_rate: z.coerce.number().positive().default(1),
   shipping_method: z.enum(["air", "sea", "express"]).nullable().optional(),
