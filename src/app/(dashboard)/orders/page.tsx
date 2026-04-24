@@ -105,7 +105,7 @@ export default function OrdersPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/orders");
-      if (res.ok) { const data = await res.json(); setOrders(data); }
+      if (res.ok) { const data = await res.json(); setOrders(data.data || []); }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -218,7 +218,7 @@ export default function OrdersPage() {
                         <td className="p-4 text-right font-display font-semibold text-sm text-foreground">${order.total_cost?.toFixed(2)}</td>
                         <td className="p-4 text-center">
                           <span className={cn("inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium border",
-                            statusCfg?.color?.replace("bg-", "bg-").replace("500", "500/10") || "bg-slate-500/10",
+                            statusCfg?.color?.replace("bg-", "bg-")?.replace("500", "500/10") || "bg-slate-500/10",
                             statusCfg?.border?.replace("500", "500/20") || "border-slate-500/20",
                             statusCfg?.color?.replace("bg-", "text-") || "text-slate-400"
                           )}>

@@ -139,8 +139,8 @@ export default function ReturnsPage() {
         fetch("/api/reimbursements"),
         fetch("/api/products?page=1&perPage=200"),
       ]);
-      if (rRes.ok) setReturns(await rRes.json());
-      if (reRes.ok) setReimbursements(await reRes.json());
+      if (rRes.ok) { const rData = await rRes.json(); setReturns(rData.data || []); }
+      if (reRes.ok) { const reData = await reRes.json(); setReimbursements(reData.data || []); }
       if (pRes.ok) {
         const pData = await pRes.json();
         const list = Array.isArray(pData) ? pData : pData.data || [];

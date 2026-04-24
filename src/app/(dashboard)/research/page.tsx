@@ -104,7 +104,7 @@ export default function ResearchPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/research");
-      if (res.ok) { const data = await res.json(); setItems(data); }
+      if (res.ok) { const data = await res.json(); setItems(data.data || []); }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -344,7 +344,7 @@ export default function ResearchPage() {
                       <td className="p-4 text-right font-display text-sm text-foreground">{item.estimated_selling_price ? `$${item.estimated_selling_price}` : "—"}</td>
                       <td className="p-4 text-right font-display text-sm text-emerald-400">{item.estimated_roi ? `${item.estimated_roi}%` : "—"}</td>
                       <td className="p-4 text-center">
-                        <span className={cn("px-2 py-1 rounded-full text-[10px] font-medium border", STATUS_CONFIG[item.status]?.bg.replace("/5", "/10"), STATUS_CONFIG[item.status]?.color, STATUS_CONFIG[item.status]?.border)}>
+                        <span className={cn("px-2 py-1 rounded-full text-[10px] font-medium border", STATUS_CONFIG[item.status]?.bg?.replace("/5", "/10") ?? "", STATUS_CONFIG[item.status]?.color ?? "", STATUS_CONFIG[item.status]?.border ?? "")}>
                           {STATUS_CONFIG[item.status]?.label}
                         </span>
                       </td>
