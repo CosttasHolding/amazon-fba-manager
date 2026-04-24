@@ -16,8 +16,6 @@ import { calcFBAFee } from "@/lib/calculations";
 import {
   Calculator,
   DollarSign,
-  TrendingUp,
-  Percent,
   Target,
   Package,
   Truck,

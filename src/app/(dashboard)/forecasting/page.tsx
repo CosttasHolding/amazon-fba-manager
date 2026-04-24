@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { toast } from "sonner";
-import { TrendingUp, AlertTriangle, Package, Clock, Truck } from "lucide-react";
+import { TrendingUp, AlertTriangle, Package, Clock } from "lucide-react";
 
 interface Forecast {
   product_id: string;

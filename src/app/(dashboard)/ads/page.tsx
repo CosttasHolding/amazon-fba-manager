@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Target, Plus, Loader2, TrendingUp } from "lucide-react";
+import { Target, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Campaign {
