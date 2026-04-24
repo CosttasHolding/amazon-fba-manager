@@ -72,7 +72,6 @@ export default function ProductsPage() {
     perPage: ITEMS_PER_PAGE,
     search,
     status: filterValues.status,
-    stockStatus: filterValues.stockStatus,
     category: filterValues.category,
     marketplace: filterValues.marketplace,
     priceMin: filterValues.priceMin,

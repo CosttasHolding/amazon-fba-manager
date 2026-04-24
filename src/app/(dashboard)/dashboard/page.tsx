@@ -1,7 +1,7 @@
 "use client";
 
 import { fmt, fmtPct } from "@/lib/utils";
-import { DashboardMetrics, DashboardResponse, TopProduct, StockAlert, ChartData } from "@/types";
+import { DashboardMetrics, TopProduct, StockAlert, ChartData } from "@/types";
 import {
   Package,
   TrendingUp,
@@ -22,7 +22,6 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
-import { StatusBadge } from "@/components/ui/status-badge";
 import dynamic from "next/dynamic";
 import { PageSkeleton, ChartSkeleton } from "@/components/ui/page-skeleton";
 

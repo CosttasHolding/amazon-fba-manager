@@ -152,51 +152,6 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5 text-white/40" />
-              Email
-            </label>
-            <Input
-              type="email"
-              placeholder="tu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
-              <Lock className="h-3.5 w-3.5 text-white/40" />
-              Contraseña
-            </label>
-            <Input
-              type="password"
-              placeholder="Mínimo 8 caracteres"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-sm text-white/80 font-medium flex items-center gap-1.5">
-              <Lock className="h-3.5 w-3.5 text-white/40" />
-              Confirmar contraseña
-            </label>
-            <Input
-              type="password"
-              placeholder="Repite la contraseña"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="bg-white/[0.08] border-white/[0.15] text-white placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
-            />
-          </div>
-
           <button
             type="submit"
             disabled={loading}

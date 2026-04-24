@@ -67,6 +67,8 @@ const FILTER_CONFIG: FilterConfig[] = [
   },
 ];
 
+const ITEMS_PER_PAGE = DEFAULT_PAGE_SIZE;
+
 function StockProjection({ p }: { p: ProductWithInventory }) {
   const days = p.days_of_stock;
   if (days === null || days === undefined) return <span className="text-xs text-muted-foreground">—</span>;
@@ -93,7 +95,6 @@ export default function InventoryPage() {
     availableMax: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = DEFAULT_PAGE_SIZE;
 
   const queryParams = useMemo(() => ({
     page: currentPage,
