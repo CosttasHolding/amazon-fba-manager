@@ -2,7 +2,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Inventario",
-  description: "Control de stock de tus productos Amazon FBA: disponible, en tr\u00E1nsito y warehouse.",
+  description: "Control de stock de tus productos Amazon FBA: disponible, en tránsito y warehouse.",
 };
 
 export default function InventoryLayout({

@@ -123,12 +123,12 @@ export default function RegisterPage() {
           <div className="space-y-1.5">
             <label htmlFor="password" className="text-sm text-white/80 font-medium flex items-center gap-1.5">
               <Lock className="h-3.5 w-3.5 text-white/40" />
-              Contrase\u00F1a
+              Contraseña
             </label>
             <Input
               id="password"
               type="password"
-              placeholder="M\u00EDnimo 8 caracteres"
+              placeholder="Mínimo 8 caracteres"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -139,12 +139,12 @@ export default function RegisterPage() {
           <div className="space-y-1.5">
             <label htmlFor="confirmPassword" className="text-sm text-white/80 font-medium flex items-center gap-1.5">
               <Lock className="h-3.5 w-3.5 text-white/40" />
-              Confirmar contrase\u00F1a
+              Confirmar contraseña
             </label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Repite la contrase\u00F1a"
+              placeholder="Repite la contraseña"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required

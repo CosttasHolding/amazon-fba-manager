@@ -252,7 +252,7 @@ export default function EditProductPage() {
           <div>
             <div className={sectionLabel}>
               <Package className="h-3 w-3" />
-              Informaci\u00F3n b\u00E1sica
+              Información básica
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
@@ -270,7 +270,7 @@ export default function EditProductPage() {
                 {errors.sku && <p className="text-xs text-destructive mt-0.5">{errors.sku.message}</p>}
               </div>
               <div>
-                <Label className={labelClass}>Categor\u00EDa</Label>
+                <Label className={labelClass}>Categoría</Label>
                 <Select value={categoryVal || "Other"} onValueChange={(v) => setValue("category", v as ProductFormData["category"])}>
                   <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -329,7 +329,7 @@ export default function EditProductPage() {
                 <Input type="number" step="0.01" {...register("referralFee", { valueAsNumber: true })} className={inputClass} />
               </div>
               <div>
-                <Label className={labelClass}>Env\u00EDo ($)</Label>
+                <Label className={labelClass}>Envío ($)</Label>
                 <Input type="number" step="0.01" {...register("shippingCost", { valueAsNumber: true })} className={inputClass} />
               </div>
               <div>
@@ -393,7 +393,7 @@ export default function EditProductPage() {
                     placeholder="100" className={inputClass} />
                 </div>
                 <div>
-                  <Label className={labelClass}>Lead time (d\u00EDas)</Label>
+                  <Label className={labelClass}>Lead time (días)</Label>
                   <Input type="number" value={supplierData.lead_time_days}
                     onChange={(e) => setSupplierData((p) => ({ ...p, lead_time_days: e.target.value }))}
                     placeholder="30" className={inputClass} />

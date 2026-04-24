@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parse = calcSchema.safeParse(body);
     if (!parse.success) {
-      return NextResponse.json({ error: "Datos inv\u00E1lidos", details: parse.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json({ error: "Datos inválidos", details: parse.error.flatten().fieldErrors }, { status: 400 });
     }
 
     const { unitCost, salePrice, weightKg } = parse.data;

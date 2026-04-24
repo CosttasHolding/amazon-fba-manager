@@ -14,7 +14,7 @@ export const expenseSchema = z.object({
     "travel",
     "other",
   ]),
-  description: z.string().min(1, "La descripci\u00F3n es obligatoria").max(500, "M\u00E1ximo 500 caracteres"),
+  description: z.string().min(1, "La descripción es obligatoria").max(500, "Máximo 500 caracteres"),
   amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
   expense_date: z.string().min(1, "La fecha es obligatoria"),
   vendor: z.string().max(200).optional().or(z.literal("")),

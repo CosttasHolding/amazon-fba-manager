@@ -155,7 +155,7 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
                   value={form.watch("rating")?.toString() || ""}
                   onValueChange={(v) => form.setValue("rating", v ? parseInt(v) : null)}
                 >
-                  <SelectTrigger className={inputClass}><SelectValue placeholder={"\u2014"} /></SelectTrigger>
+                  <SelectTrigger className={inputClass}><SelectValue placeholder={"—"} /></SelectTrigger>
                   <SelectContent>
                     {STAR_OPTIONS.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>

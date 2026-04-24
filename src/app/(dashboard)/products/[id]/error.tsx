@@ -30,7 +30,7 @@ export default function ProductDetailError({
               Error al cargar producto
             </h2>
             <p className="text-sm text-muted-foreground">
-              No se pudo cargar la informaci\u00F3n del producto.
+              No se pudo cargar la información del producto.
               Puede que el producto no exista o haya un problema temporal.
             </p>
           </div>

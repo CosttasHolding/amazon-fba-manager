@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const returnSchema = z.object({
-  product_id: z.string().uuid("Seleccion\u00E1 un producto"),
+  product_id: z.string().uuid("Seleccioná un producto"),
   quantity: z.coerce.number().int().min(1, "La cantidad debe ser mayor a 0"),
   return_reason: z.enum([
     "defective",

@@ -238,7 +238,7 @@ export default function InventoryPage() {
         <EmptyState
           icon={Package}
           title={Object.values(filterValues).some(Boolean) ? "Sin resultados" : "No hay datos de inventario"}
-          subtitle={Object.values(filterValues).some(Boolean) ? "Intenta con otros filtros" : "Agrega productos para ver su stock aqu\u00ED"}
+          subtitle={Object.values(filterValues).some(Boolean) ? "Intenta con otros filtros" : "Agrega productos para ver su stock aquí"}
         />
       )}
 

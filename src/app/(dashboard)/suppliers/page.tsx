@@ -304,7 +304,7 @@ export default function SuppliersPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           aria-label="Buscar proveedores"
-          placeholder="Buscar proveedor, contacto, pa\u00EDs..."
+          placeholder="Buscar proveedor, contacto, país..."
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -318,7 +318,7 @@ export default function SuppliersPage() {
         <EmptyState
           icon={Factory}
           title={suppliers.length === 0 ? "No hay proveedores" : "Sin resultados"}
-          subtitle={suppliers.length === 0 ? "Agrega tu primer proveedor de Alibaba" : "Intenta cambiar los filtros de b\u00FAsqueda"}
+          subtitle={suppliers.length === 0 ? "Agrega tu primer proveedor de Alibaba" : "Intenta cambiar los filtros de búsqueda"}
           action={suppliers.length === 0 ? { label: "Agregar Proveedor", onClick: () => setShowNewModal(true) } : undefined}
         />
       )}

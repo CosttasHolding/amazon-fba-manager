@@ -25,10 +25,10 @@ export default function DashboardError({
 
         {/* Text */}
         <h2 className="text-xl font-bold text-foreground mb-2">
-          Algo sali\u00F3 mal
+          Algo salió mal
         </h2>
         <p className="text-sm text-muted-foreground mb-2">
-          Ocurri\u00F3 un error inesperado al cargar esta p\u00E1gina.
+          Ocurrió un error inesperado al cargar esta página.
         </p>
 
         {/* Error detail */}

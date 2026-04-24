@@ -40,8 +40,8 @@ interface EnrichedSale extends Sale {
 }
 
 const SORT_OPTIONS = [
-  { value: "date_desc", label: "Fecha: m\u00E1s reciente" },
-  { value: "date_asc", label: "Fecha: m\u00E1s antigua" },
+  { value: "date_desc", label: "Fecha: más reciente" },
+  { value: "date_asc", label: "Fecha: más antigua" },
   { value: "revenue_desc", label: "Revenue: mayor a menor" },
   { value: "revenue_asc", label: "Revenue: menor a mayor" },
   { value: "profit_desc", label: "Profit: mayor a menor" },
@@ -167,10 +167,10 @@ export default function SalesPage() {
       const skuIdx = headers.indexOf("sku");
       const unitsIdx = headers.indexOf("units");
       if (dateIdx < 0 || skuIdx < 0 || unitsIdx < 0) {
-        toast.error("CSV inv\u00E1lido. Columnas requeridas: date, sku, units");
+        toast.error("CSV inválido. Columnas requeridas: date, sku, units");
         return;
       }
-      toast.success(`Preview: ${lines.length - 1} filas detectadas. Importaci\u00F3n manual pr\u00F3ximamente.`);
+      toast.success(`Preview: ${lines.length - 1} filas detectadas. Importación manual próximamente.`);
     };
     reader.readAsText(file);
     e.target.value = "";
@@ -291,7 +291,7 @@ export default function SalesPage() {
         <div className="rounded-2xl border border-border bg-card p-12 text-center">
           <ShoppingCart className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground/70 mb-1">No hay ventas registradas</h3>
-          <p className="text-sm text-muted-foreground mb-4">Las ventas aparecer\u00E1n aqu\u00ED cuando se registren</p>
+          <p className="text-sm text-muted-foreground mb-4">Las ventas aparecerán aquí cuando se registren</p>
           <button
             onClick={() => setShowModal(true)}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"

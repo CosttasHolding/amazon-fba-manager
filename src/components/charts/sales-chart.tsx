@@ -89,7 +89,7 @@ export function SalesChart({ dataDaily, dataWeekly }: SalesChartProps) {
               : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
           )}
         >
-          30 d\u00EDas
+          30 días
         </button>
         <button
           onClick={() => setView("12w")}

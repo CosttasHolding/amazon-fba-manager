@@ -35,7 +35,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const body = await req.json();
     const result = orderSchema.partial().safeParse(body);
     if (!result.success) {
-      return NextResponse.json({ error: "Datos inv\u00E1lidos", details: result.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json({ error: "Datos inválidos", details: result.error.flatten().fieldErrors }, { status: 400 });
     }
     const { data, error } = await supabase.from("purchase_orders").update(result.data).eq("id", id).eq("user_id", user.id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

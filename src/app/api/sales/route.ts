@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parse = salePostSchema.safeParse(body);
     if (!parse.success) {
-      return NextResponse.json({ error: "Datos inv\u00E1lidos", details: parse.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json({ error: "Datos inválidos", details: parse.error.flatten().fieldErrors }, { status: 400 });
     }
 
     const { product_id: productId, sale_date: saleDate, units_sold: unitsSold, revenue, amazon_fees: amazonFees, order_id: orderId } = parse.data;

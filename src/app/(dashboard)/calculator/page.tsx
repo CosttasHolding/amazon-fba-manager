@@ -33,7 +33,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
-  { value: "electronics", label: "Electr\u00F3nica", refPct: 15 },
+  { value: "electronics", label: "Electrónica", refPct: 15 },
   { value: "home", label: "Hogar y Cocina", refPct: 15 },
   { value: "beauty", label: "Belleza", refPct: 8 },
   { value: "toys", label: "Juguetes", refPct: 15 },

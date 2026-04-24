@@ -64,7 +64,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (!result.success) {
       return NextResponse.json(
-        { error: "Datos inv\u00E1lidos", details: result.error.flatten().fieldErrors },
+        { error: "Datos inválidos", details: result.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
@@ -127,7 +127,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
-    return NextResponse.json({ message: "Cotizaci\u00F3n eliminada" });
+    return NextResponse.json({ message: "Cotización eliminada" });
   } catch (error) {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }

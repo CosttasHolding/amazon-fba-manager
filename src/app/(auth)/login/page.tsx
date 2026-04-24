@@ -37,7 +37,7 @@ export default function LoginPage() {
       // Navigate to dashboard with a full reload to ensure server picks up cookies
       window.location.href = "/dashboard";
     } catch {
-      setError("Error al iniciar sesi\u00F3n");
+      setError("Error al iniciar sesión");
       setLoading(false);
     }
   };
@@ -64,14 +64,14 @@ export default function LoginPage() {
           CosttasHolding Manager
         </h1>
         <p className="text-sm text-white/70 drop-shadow-md">
-          Gesti\u00F3n profesional de productos Amazon FBA
+          Gestión profesional de productos Amazon FBA
         </p>
       </div>
 
       <div className="relative z-10 w-full max-w-[400px] bg-[#0a0e1a]/30 backdrop-blur-2xl rounded-2xl border border-white/[0.12] p-7 shadow-2xl shadow-black/30 animate-fade-in">
         <div className="text-center mb-6">
           <h2 className="text-lg font-semibold text-white drop-shadow-md">
-            Iniciar Sesi\u00F3n
+            Iniciar Sesión
           </h2>
           <p className="text-sm text-white/60 mt-1">
             Ingresa tus credenciales para continuar
@@ -98,7 +98,7 @@ export default function LoginPage() {
           <div className="space-y-1.5">
             <label htmlFor="password" className="text-sm text-white/80 font-medium flex items-center gap-1.5">
               <Lock className="h-3.5 w-3.5 text-white/40" />
-              Contrase\u00F1a
+              Contraseña
             </label>
             <Input
               id="password"
@@ -133,7 +133,7 @@ export default function LoginPage() {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-white/50">
-            {"\u00BF"}No tienes cuenta?{" "}
+            {"¿"}No tienes cuenta?{" "}
             <Link
               href="/register"
               className="text-primary hover:text-primary/80 font-medium transition-colors"

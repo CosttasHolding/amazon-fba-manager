@@ -66,8 +66,8 @@ export default async function DashboardLayout({
           <Link
             href="/settings"
             className="w-9 h-9 rounded-xl flex items-center justify-center bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
-            title="Configuraci\u00F3n"
-            aria-label="Configuraci\u00F3n"
+            title="Configuración"
+            aria-label="Configuración"
           >
             <Settings className="w-4 h-4" />
           </Link>

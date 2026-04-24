@@ -247,7 +247,7 @@ export async function GET(req: NextRequest) {
     const categoryMap: Record<string, { profit: number; count: number }> = {};
 
     for (const p of activeProducts) {
-      const cat = p.category || 'Sin categor\u00EDa';
+      const cat = p.category || 'Sin categoría';
       if (!categoryMap[cat]) {
         categoryMap[cat] = { profit: 0, count: 0 };
       }

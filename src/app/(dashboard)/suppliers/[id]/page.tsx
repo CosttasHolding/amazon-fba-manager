@@ -81,8 +81,8 @@ interface QuoteItem {
   products?: { name: string; sku: string } | null;
 }
 
-const fmt = (v: number | null) => (v ? `$${v.toFixed(2)}` : "\u2014");
-const fmt4 = (v: number | null) => (v ? `$${v.toFixed(4)}` : "\u2014");
+const fmt = (v: number | null) => (v ? `$${v.toFixed(2)}` : "—");
+const fmt4 = (v: number | null) => (v ? `$${v.toFixed(4)}` : "—");
 
 const renderStars = (rating: number | null) => {
   if (!rating) return <span className="text-sm text-muted-foreground">Sin rating</span>;
@@ -244,7 +244,7 @@ export default function SupplierDetailPage() {
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        toast.success("Cotizaci\u00F3n guardada");
+        toast.success("Cotización guardada");
         setShowQuoteModal(false);
         setQuoteForm({ product_id: "", quantity: "", unit_price: "", shipping_method: "", shipping_cost: "", valid_until: "", notes: "" });
         fetchQuotes();
@@ -252,7 +252,7 @@ export default function SupplierDetailPage() {
         throw new Error("Error al guardar");
       }
     } catch {
-      toast.error("Error al guardar cotizaci\u00F3n");
+      toast.error("Error al guardar cotización");
     } finally {
       setSavingQuote(false);
     }
@@ -262,11 +262,11 @@ export default function SupplierDetailPage() {
     try {
       const res = await fetch(`/api/suppliers/${params.id}/quotes?quoteId=${quoteId}`, { method: "DELETE" });
       if (res.ok) {
-        toast.success("Cotizaci\u00F3n eliminada");
+        toast.success("Cotización eliminada");
         fetchQuotes();
       }
     } catch {
-      toast.error("Error al eliminar cotizaci\u00F3n");
+      toast.error("Error al eliminar cotización");
     }
   };
 
@@ -478,7 +478,7 @@ export default function SupplierDetailPage() {
                         <td className={tableCellClass}>
                           <span className="text-xs text-muted-foreground">
                             {q.shipping_method ? `${q.shipping_method} ` : ""}
-                            {q.shipping_cost ? fmt(q.shipping_cost) : "\u2014"}
+                            {q.shipping_cost ? fmt(q.shipping_cost) : "—"}
                           </span>
                         </td>
                         <td className={tableCellClass}>
@@ -511,7 +511,7 @@ export default function SupplierDetailPage() {
                       <div><span className="text-muted-foreground">Cantidad</span><p className="font-medium text-foreground">{q.quantity} uds</p></div>
                       <div><span className="text-muted-foreground">Precio unit.</span><p className="font-medium text-foreground">{fmt4(q.unit_price)}</p></div>
                       <div><span className="text-muted-foreground">Total</span><p className="font-medium text-foreground">{fmt(q.total_price)}</p></div>
-                      <div><span className="text-muted-foreground">Envío</span><p className="font-medium text-foreground">{q.shipping_method || "\u2014"}</p></div>
+                      <div><span className="text-muted-foreground">Envío</span><p className="font-medium text-foreground">{q.shipping_method || "—"}</p></div>
                     </div>
                   </div>
                 ))}
@@ -553,7 +553,7 @@ export default function SupplierDetailPage() {
                         </td>
                         <td className={`${tableCellClass} text-muted-foreground font-mono text-xs`}>{item.products.sku}</td>
                         <td className={`${tableCellClass} text-right font-medium text-foreground tabular-nums`}>{fmt(item.unit_cost)}</td>
-                        <td className={`${tableCellClass} text-right text-muted-foreground tabular-nums`}>{item.moq || "\u2014"}</td>
+                        <td className={`${tableCellClass} text-right text-muted-foreground tabular-nums`}>{item.moq || "—"}</td>
                         <td className={tableCellClass}><StatusBadge status={item.products.status} /></td>
                         <td className={`${tableCellClass} text-center`}>
                           {item.is_primary && <Star className="h-4 w-4 text-yellow-500 mx-auto fill-yellow-500" />}
@@ -579,7 +579,7 @@ export default function SupplierDetailPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs mt-2">
                       <div><span className="text-muted-foreground">Costo</span><p className="font-medium text-foreground tabular-nums">{fmt(item.unit_cost)}</p></div>
-                      <div><span className="text-muted-foreground">MOQ</span><p className="font-medium text-foreground">{item.moq || "\u2014"}</p></div>
+                      <div><span className="text-muted-foreground">MOQ</span><p className="font-medium text-foreground">{item.moq || "—"}</p></div>
                     </div>
                   </div>
                 ))}

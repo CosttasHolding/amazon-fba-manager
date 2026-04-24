@@ -28,7 +28,7 @@ import { Supplier } from "@/types";
 const COUNTRY_SUGGESTIONS = [
   "China", "India", "Vietnam", "Taiwan", "Corea del Sur",
   "Tailandia", "Bangladesh", "Indonesia", "Estados Unidos",
-  "M\u00E9xico", "Colombia", "Argentina", "Brasil", "Otro",
+  "México", "Colombia", "Argentina", "Brasil", "Otro",
 ];
 
 const STAR_OPTIONS = [
@@ -148,7 +148,7 @@ export default function EditSupplierPage() {
                 <Label className={labelClass}>País</Label>
                 <Input
                   {...register("country")}
-                  placeholder="Ej: China, M\u00E9xico..."
+                  placeholder="Ej: China, México..."
                   list="country-suggestions-edit"
                   className={inputClass}
                 />
@@ -218,7 +218,7 @@ export default function EditSupplierPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <Label className={labelClass}>T\u00E9rminos de pago</Label>
+                <Label className={labelClass}>Términos de pago</Label>
                 <Input {...register("payment_terms")} placeholder="30/70, T/T..." className={inputClass} />
               </div>
               <div>
@@ -227,7 +227,7 @@ export default function EditSupplierPage() {
                 {errors.min_order_qty && <p className="text-xs text-destructive mt-0.5">{errors.min_order_qty.message}</p>}
               </div>
               <div>
-                <Label className={labelClass}>Lead time (d\u00EDas)</Label>
+                <Label className={labelClass}>Lead time (días)</Label>
                 <Input type="number" {...register("lead_time_days", { valueAsNumber: true })} placeholder="30" className={inputClass} />
                 {errors.lead_time_days && <p className="text-xs text-destructive mt-0.5">{errors.lead_time_days.message}</p>}
               </div>

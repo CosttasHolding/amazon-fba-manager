@@ -52,17 +52,17 @@ interface ReimbursementItem {
 
 const RETURN_REASONS: Record<string, string> = {
   defective: "Defectuoso",
-  damaged_by_carrier: "Da\u00F1ado por carrier",
-  customer_damaged: "Da\u00F1ado por cliente",
-  different_from_description: "Diferente a descripci\u00F3n",
+  damaged_by_carrier: "Dañado por carrier",
+  customer_damaged: "Dañado por cliente",
+  different_from_description: "Diferente a descripción",
   expired_item: "Vencido",
   fraud: "Fraude",
   missing_parts: "Faltan partes",
   no_longer_wanted: "Ya no lo quiere",
   not_as_described: "No como se describe",
-  ordered_wrong_item: "Orden\u00F3 mal",
+  ordered_wrong_item: "Ordenó mal",
   quality_not_acceptable: "Calidad baja",
-  arrived_late: "Lleg\u00F3 tarde",
+  arrived_late: "Llegó tarde",
   undeliverable: "No entregable",
   unauthorized_purchase: "Compra no autorizada",
   other: "Otro",
@@ -71,7 +71,7 @@ const RETURN_REASONS: Record<string, string> = {
 const RETURN_STATUS: Record<string, string> = {
   requested: "Solicitado",
   received_at_customer: "En cliente",
-  in_transit: "En tr\u00E1nsito",
+  in_transit: "En tránsito",
   received_at_fc: "En FC",
   inspected: "Inspeccionado",
   refunded: "Reembolsado",
@@ -81,10 +81,10 @@ const RETURN_STATUS: Record<string, string> = {
 
 const REIMB_TYPES: Record<string, string> = {
   lost_inbound: "Perdido inbound",
-  damaged_inbound: "Da\u00F1ado inbound",
+  damaged_inbound: "Dañado inbound",
   lost_warehouse: "Perdido warehouse",
-  damaged_warehouse: "Da\u00F1ado warehouse",
-  customer_return: "Devoluci\u00F3n cliente",
+  damaged_warehouse: "Dañado warehouse",
+  customer_return: "Devolución cliente",
   removal_order: "Removal order",
   other: "Otro",
 };
@@ -181,7 +181,7 @@ export default function ReturnsPage() {
         status: "requested",
         return_date: new Date().toISOString().split("T")[0],
       });
-      toast.success("Devoluci\u00F3n registrada");
+      toast.success("Devolución registrada");
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Error al registrar";
@@ -295,7 +295,7 @@ export default function ReturnsPage() {
             onClick={() => setShowForm(!showForm)}
           >
             <Plus className="h-4 w-4 mr-1.5" />
-            {showForm ? "Cancelar" : "Registrar Devoluci\u00F3n"}
+            {showForm ? "Cancelar" : "Registrar Devolución"}
           </Button>
 
           {showForm && (
@@ -464,7 +464,7 @@ export default function ReturnsPage() {
                     className="hover:bg-muted/30 transition-colors"
                   >
                     <td className="px-4 py-3 text-foreground">
-                      {r.products?.name || "\u2014"}
+                      {r.products?.name || "—"}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">
                       {RETURN_REASONS[r.return_reason || "other"] ||
@@ -525,7 +525,7 @@ export default function ReturnsPage() {
                     className="hover:bg-muted/30 transition-colors"
                   >
                     <td className="px-4 py-3 text-foreground">
-                      {r.products?.name || "\u2014"}
+                      {r.products?.name || "—"}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">
                       {REIMB_TYPES[r.reimbursement_type] ||

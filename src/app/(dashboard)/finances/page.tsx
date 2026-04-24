@@ -402,7 +402,7 @@ export default function FinancesPage() {
                       <StatusBadge status={e.category} />
                     </td>
                     <td className="px-4 py-3 text-foreground">{e.description}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{e.vendor || "\u2014"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{e.vendor || "—"}</td>
                     <td className="px-4 py-3 text-right font-display text-red-600 dark:text-rose-400">{fmt(e.amount)}</td>
                   </tr>
                 );

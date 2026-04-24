@@ -237,7 +237,7 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
             <div className={"rounded-xl border p-4 " + (estimatedProfit >= 0 ? "border-emerald-500/20 bg-emerald-500/5" : "border-red-500/20 bg-red-500/5")}>
               <div className="flex items-center gap-2 mb-2">
                 <Calculator className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground uppercase">Estimaci\u00F3n</span>
+                <span className="text-xs font-medium text-muted-foreground uppercase">Estimación</span>
               </div>
               <div className="grid grid-cols-3 gap-2 text-xs">
                 <div>

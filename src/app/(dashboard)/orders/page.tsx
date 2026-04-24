@@ -50,9 +50,9 @@ const STATUS_FLOW = [
   { key: "draft", label: "Borrador", color: "bg-slate-500", border: "border-slate-500", text: "text-slate-400" },
   { key: "sent", label: "Enviado", color: "bg-blue-500", border: "border-blue-500", text: "text-blue-400" },
   { key: "confirmed", label: "Confirmado", color: "bg-blue-600", border: "border-blue-600", text: "text-blue-500" },
-  { key: "in_production", label: "Producci\u00F3n", color: "bg-amber-500", border: "border-amber-500", text: "text-amber-400" },
+  { key: "in_production", label: "Producción", color: "bg-amber-500", border: "border-amber-500", text: "text-amber-400" },
   { key: "shipped", label: "Embarcado", color: "bg-orange-500", border: "border-orange-500", text: "text-orange-400" },
-  { key: "in_transit", label: "En Tr\u00E1nsito", color: "bg-orange-600", border: "border-orange-600", text: "text-orange-500" },
+  { key: "in_transit", label: "En Tránsito", color: "bg-orange-600", border: "border-orange-600", text: "text-orange-500" },
   { key: "customs", label: "Aduana", color: "bg-red-500", border: "border-red-500", text: "text-red-400" },
   { key: "delivered", label: "Entregado", color: "bg-emerald-500", border: "border-emerald-500", text: "text-emerald-400" },
   { key: "cancelled", label: "Cancelado", color: "bg-slate-600", border: "border-slate-600", text: "text-slate-400" },
@@ -140,7 +140,7 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6 animate-fade-up">
-      <PageHeader badge="PEDIDOS" title="\u00D3rdenes de Compra" subtitle={`${orders.length} \u00F3rdenes registradas`}>
+      <PageHeader badge="PEDIDOS" title="Órdenes de Compra" subtitle={`${orders.length} órdenes registradas`}>
         <Button onClick={() => setShowModal(true)}>
           <Plus className="h-4 w-4 mr-1.5" /> Nueva Orden
         </Button>
@@ -148,17 +148,17 @@ export default function OrdersPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label="\u00D3rdenes Activas" value={String(activeOrders.length)} icon={ClipboardList} accentColor="cyan" animationDelay={0} />
+        <KpiCard label="Órdenes Activas" value={String(activeOrders.length)} icon={ClipboardList} accentColor="cyan" animationDelay={0} />
         <KpiCard label="Valor Total" value={`$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}`} icon={DollarSign} accentColor="green" animationDelay={75} />
-        <KpiCard label="En Tr\u00E1nsito" value={String(orders.filter((o) => o.status === "in_transit").length)} icon={Truck} accentColor="amber" animationDelay={150} />
-        <KpiCard label="Pr\u00F3xima Llegada" value={nextArrival ? new Date(nextArrival.estimated_arrival!).toLocaleDateString("es-ES") : "\u2014"} icon={Calendar} accentColor="purple" animationDelay={225} />
+        <KpiCard label="En Tránsito" value={String(orders.filter((o) => o.status === "in_transit").length)} icon={Truck} accentColor="amber" animationDelay={150} />
+        <KpiCard label="Próxima Llegada" value={nextArrival ? new Date(nextArrival.estimated_arrival!).toLocaleDateString("es-ES") : "—"} icon={Calendar} accentColor="purple" animationDelay={225} />
       </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input aria-label="Buscar \u00F3rdenes" placeholder="Buscar PO, proveedor, producto..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 bg-muted/50 border-border" />
+          <Input aria-label="Buscar órdenes" placeholder="Buscar PO, proveedor, producto..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 bg-muted/50 border-border" />
         </div>
         <div className="flex items-center gap-1.5">
           <Filter className="h-3.5 w-3.5 text-muted-foreground" />
@@ -177,11 +177,11 @@ export default function OrdersPage() {
       </div>
 
       {/* Orders List */}
-      <DataTableWrapper title={`${filtered.length} \u00F3rdenes`} icon={ClipboardList}>
+      <DataTableWrapper title={`${filtered.length} órdenes`} icon={ClipboardList}>
         {filtered.length === 0 ? (
           <EmptyState
             icon={ClipboardList}
-            title="No hay \u00F3rdenes registradas"
+            title="No hay órdenes registradas"
             subtitle="Crea tu primera orden de compra para empezar a rastrear"
             action={{ label: "Nueva Orden", onClick: () => setShowModal(true) }}
           />
@@ -211,7 +211,7 @@ export default function OrdersPage() {
                           <p className="text-xs text-muted-foreground">{order.suppliers?.name || "Sin proveedor"}</p>
                         </td>
                         <td className="p-4">
-                          <p className="text-sm text-foreground">{order.products?.name || "\u2014"}</p>
+                          <p className="text-sm text-foreground">{order.products?.name || "—"}</p>
                           {order.products?.sku && <p className="text-xs text-muted-foreground font-mono">{order.products.sku}</p>}
                         </td>
                         <td className="p-4 text-right font-display text-sm text-foreground">{order.quantity}</td>
@@ -230,7 +230,7 @@ export default function OrdersPage() {
                           <TimelineProgress status={order.status} />
                         </td>
                         <td className="p-4 text-right hidden md:table-cell text-sm text-muted-foreground">
-                          {order.estimated_arrival ? new Date(order.estimated_arrival).toLocaleDateString("es-ES") : "\u2014"}
+                          {order.estimated_arrival ? new Date(order.estimated_arrival).toLocaleDateString("es-ES") : "—"}
                         </td>
                       </tr>
                     );
@@ -263,7 +263,7 @@ export default function OrdersPage() {
                         {statusCfg?.label}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground mb-1">{order.products?.name || "\u2014"} <span className="text-xs text-muted-foreground font-mono">{order.products?.sku}</span></p>
+                    <p className="text-sm text-foreground mb-1">{order.products?.name || "—"} <span className="text-xs text-muted-foreground font-mono">{order.products?.sku}</span></p>
                     <div className="grid grid-cols-3 gap-2 text-center mt-3">
                       <div>
                         <p className="text-[10px] text-muted-foreground">Cantidad</p>
@@ -275,7 +275,7 @@ export default function OrdersPage() {
                       </div>
                       <div>
                         <p className="text-[10px] text-muted-foreground">Llegada</p>
-                        <p className="font-bold text-sm text-muted-foreground tabular-nums">{order.estimated_arrival ? new Date(order.estimated_arrival).toLocaleDateString("es-ES") : "\u2014"}</p>
+                        <p className="font-bold text-sm text-muted-foreground tabular-nums">{order.estimated_arrival ? new Date(order.estimated_arrival).toLocaleDateString("es-ES") : "—"}</p>
                       </div>
                     </div>
                     <div className="mt-3">

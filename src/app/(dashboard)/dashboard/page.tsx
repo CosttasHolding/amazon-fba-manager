@@ -150,7 +150,7 @@ export default function DashboardPage() {
       {
         metric: "Alertas Stock",
         value: String(alertCount),
-        detail: `${metrics?.low_stock_count || 0} bajo, ${metrics?.out_of_stock_count || 0} cr\u00EDtico`,
+        detail: `${metrics?.low_stock_count || 0} bajo, ${metrics?.out_of_stock_count || 0} crítico`,
       },
     ];
     exportToExcelPro(exportData, "dashboard-resumen");
@@ -242,7 +242,7 @@ export default function DashboardPage() {
         <KpiCard
           label="Alertas Stock"
           value={String(alertCount)}
-          subtitle={`${metrics?.low_stock_count || 0} bajo, ${metrics?.out_of_stock_count || 0} cr\u00EDtico`}
+          subtitle={`${metrics?.low_stock_count || 0} bajo, ${metrics?.out_of_stock_count || 0} crítico`}
           icon={AlertTriangle}
           accentColor="amber"
           animationDelay={300}
@@ -431,7 +431,7 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="p-4 text-right hidden sm:table-cell">
-                        <span className="text-sm text-muted-foreground">{alert.threshold ?? "\u2014"}</span>
+                        <span className="text-sm text-muted-foreground">{alert.threshold ?? "—"}</span>
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center gap-1">

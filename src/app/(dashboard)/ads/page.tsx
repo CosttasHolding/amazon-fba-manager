@@ -79,7 +79,7 @@ export default function AdsPage() {
         setLoading(false);
       })
       .catch(() => {
-        toast.error("Error cargando campa\u00F1as");
+        toast.error("Error cargando campañas");
         setLoading(false);
       });
   }, []);
@@ -97,7 +97,7 @@ export default function AdsPage() {
       setCampaigns((p) => [newCamp, ...p]);
       setShowForm(false);
       reset();
-      toast.success("Campa\u00F1a creada");
+      toast.success("Campaña creada");
     } catch {
       toast.error("Error al crear");
     } finally {
@@ -114,13 +114,13 @@ export default function AdsPage() {
       <PageHeader
         badge="ADS"
         title="Amazon PPC"
-        subtitle="Gesti\u00F3n de campa\u00F1as publicitarias"
+        subtitle="Gestión de campañas publicitarias"
         breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Amazon PPC" }]}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-border bg-card p-5">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Campa\u00F1as</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Campañas</p>
           <p className="text-2xl font-display font-bold text-foreground">{campaigns.length}</p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-5">
@@ -138,7 +138,7 @@ export default function AdsPage() {
       <div className="rounded-2xl border border-border bg-card p-5">
         <Button variant="outline" size="sm" onClick={() => setShowForm(!showForm)}>
           <Plus className="h-4 w-4 mr-1.5" />
-          {showForm ? "Cancelar" : "Nueva Campa\u00F1a"}
+          {showForm ? "Cancelar" : "Nueva Campaña"}
         </Button>
 
         {showForm && (
@@ -196,7 +196,7 @@ export default function AdsPage() {
         )}
       </div>
 
-      <DataTableWrapper title="Campa\u00F1as" icon={Target}>
+      <DataTableWrapper title="Campañas" icon={Target}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -207,7 +207,7 @@ export default function AdsPage() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Tipo</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Status</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">
-                  Budget/d\u00EDa
+                  Budget/día
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">
                   Marketplace
@@ -238,7 +238,7 @@ export default function AdsPage() {
               {campaigns.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground text-sm">
-                    Sin campa\u00F1as registradas
+                    Sin campañas registradas
                   </td>
                 </tr>
               )}

@@ -109,7 +109,7 @@ export async function PUT(
     const parse = productUpdateSchema.safeParse(body);
     if (!parse.success) {
       return NextResponse.json(
-        { error: "Datos inv\u00E1lidos", details: parse.error.flatten().fieldErrors },
+        { error: "Datos inválidos", details: parse.error.flatten().fieldErrors },
         { status: 400 }
       );
     }

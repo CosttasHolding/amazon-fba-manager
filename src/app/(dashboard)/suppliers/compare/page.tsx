@@ -119,7 +119,7 @@ export default function CompareSuppliersPage() {
   };
 
   const renderStars = (rating: number | null) => {
-    if (!rating) return <span className="text-xs text-muted-foreground">\u2014</span>;
+    if (!rating) return <span className="text-xs text-muted-foreground">—</span>;
     return (
       <div className="flex items-center gap-0.5">
         {[1, 2, 3, 4, 5].map((i) => (
@@ -181,7 +181,7 @@ export default function CompareSuppliersPage() {
                     {selectedIds.includes(s.id) && <CheckCircle2 className="h-4 w-4 text-cyan-400" />}
                     {s.name}
                   </span>
-                  <span className="text-xs text-muted-foreground">{s.country || "\u2014"}</span>
+                  <span className="text-xs text-muted-foreground">{s.country || "—"}</span>
                 </button>
               ))}
             </div>
@@ -307,7 +307,7 @@ export default function CompareSuppliersPage() {
                     </td>
                     {comparisonData.map((d) => (
                       <td key={d.supplier.id} className="p-4 text-center text-sm text-foreground">
-                        {d.moq ?? "\u2014"} uds
+                        {d.moq ?? "—"} uds
                       </td>
                     ))}
                   </tr>
@@ -317,7 +317,7 @@ export default function CompareSuppliersPage() {
                     </td>
                     {comparisonData.map((d) => (
                       <td key={d.supplier.id} className="p-4 text-center text-sm text-foreground">
-                        {d.lead ?? "\u2014"} d
+                        {d.lead ?? "—"} d
                       </td>
                     ))}
                   </tr>

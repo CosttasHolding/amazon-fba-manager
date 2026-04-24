@@ -352,7 +352,7 @@ export default function ProductsPage() {
                       </div>
                     </td>
                     <td className={`${tableCellClass} text-muted-foreground`}>
-                      {product.category || "\u2014"}
+                      {product.category || "—"}
                     </td>
                     <td className={`${tableCellClass} text-right`}>
                       <p className="text-sm font-medium text-foreground">{fmt(product.sale_price)}</p>

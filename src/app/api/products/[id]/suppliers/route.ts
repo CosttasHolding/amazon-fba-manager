@@ -102,7 +102,7 @@ export async function POST(
     const body = await request.json();
     const parse = productSupplierSchema.safeParse(body);
     if (!parse.success) {
-      return NextResponse.json({ error: "Datos inv\u00E1lidos", details: parse.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json({ error: "Datos inválidos", details: parse.error.flatten().fieldErrors }, { status: 400 });
     }
     const { supplier_id, unit_cost, moq, lead_time_days, is_primary, notes } = parse.data;
 

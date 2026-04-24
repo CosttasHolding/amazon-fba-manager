@@ -14,30 +14,30 @@ const sections = [
     icon: Package,
     title: "Productos",
     description: "Catálogo completo de todos tus productos con costos, fees y rentabilidad.",
-    example: "Ejemplo: Creas un producto \"Botella t\u00E9rmica 500ml\" con costo unitario $8, precio de venta $24.99, FBA fee $5.20. El sistema calcula autom\u00E1ticamente tu beneficio neto y ROI.",
+    example: "Ejemplo: Creas un producto \"Botella térmica 500ml\" con costo unitario $8, precio de venta $24.99, FBA fee $5.20. El sistema calcula automáticamente tu beneficio neto y ROI.",
   },
   {
     icon: Warehouse,
     title: "Inventario",
-    description: "Control de stock disponible, en tr\u00E1nsito y movimientos.",
+    description: "Control de stock disponible, en tránsito y movimientos.",
     example: "Ejemplo: Registras una entrada de 200 unidades. El stock disponible pasa de 50 a 250. Si baja de 20, aparece en alertas.",
   },
   {
     icon: TrendingUp,
     title: "Ventas",
     description: "Registro de todas las ventas con revenue, fees y beneficio real.",
-    example: "Ejemplo: Vendes 15 unidades el 15/04/2025 por $374.85. Amazon cobr\u00F3 $56.23 en fees. Tu beneficio real fue $168.40 despu\u00E9s de restar costos.",
+    example: "Ejemplo: Vendes 15 unidades el 15/04/2025 por $374.85. Amazon cobró $56.23 en fees. Tu beneficio real fue $168.40 después de restar costos.",
   },
   {
     icon: Truck,
     title: "Proveedores",
     description: "Gestiona tus proveedores, contactos y cotizaciones.",
-    example: "Ejemplo: Guardas el proveedor \"Shenzhen Cups Co\" con contacto en WhatsApp, lead time de 25 d\u00EDas y comparas cotizaciones de distintos proveedores.",
+    example: "Ejemplo: Guardas el proveedor \"Shenzhen Cups Co\" con contacto en WhatsApp, lead time de 25 días y comparas cotizaciones de distintos proveedores.",
   },
   {
     icon: BookOpen,
-    title: "\u00D3rdenes de Compra",
-    description: "Crea y haz seguimiento de \u00F3rdenes a proveedores.",
+    title: "Órdenes de Compra",
+    description: "Crea y haz seguimiento de órdenes a proveedores.",
     example: "Ejemplo: Orden #PO-001 por 500 unidades a $4.50 cada una. Pasas de \"draft\" a \"sent\", luego \"in_production\", \"shipped\" y finalmente \"delivered\".",
   },
   {
@@ -48,45 +48,45 @@ const sections = [
   },
   {
     icon: Ship,
-    title: "Env\u00EDos FBA",
-    description: "Seguimiento de env\u00EDos desde tu proveedor hasta Amazon.",
-    example: "Ejemplo: Creas un env\u00EDo \"FBA-2025-04\" con 3 cajas, 500 unidades, carrier DHL, tracking #123456789. Cambias estado de \"working\" a \"shipped\" a \"delivered\".",
+    title: "Envíos FBA",
+    description: "Seguimiento de envíos desde tu proveedor hasta Amazon.",
+    example: "Ejemplo: Creas un envío \"FBA-2025-04\" con 3 cajas, 500 unidades, carrier DHL, tracking #123456789. Cambias estado de \"working\" a \"shipped\" a \"delivered\".",
   },
   {
     icon: RotateCcw,
     title: "Devoluciones",
     description: "Registra y analiza devoluciones y reembolsos.",
-    example: "Ejemplo: Un cliente devuelve 2 unidades por \"defective\". Registras la devoluci\u00F3n, el estado pasa a \"inspected\" y decides si es \"sellable\" o \"unsellable\".",
+    example: "Ejemplo: Un cliente devuelve 2 unidades por \"defective\". Registras la devolución, el estado pasa a \"inspected\" y decides si es \"sellable\" o \"unsellable\".",
   },
   {
     icon: DollarSign,
     title: "Finanzas",
     description: "Control de gastos, flujo de caja y pagos de Amazon.",
-    example: "Ejemplo: Registras un gasto de software de $49/mes. Tambi\u00E9n ves los pagos de Amazon por per\u00EDodo y tu flujo de caja mensual.",
+    example: "Ejemplo: Registras un gasto de software de $49/mes. También ves los pagos de Amazon por período y tu flujo de caja mensual.",
   },
   {
     icon: Search,
     title: "Forecasting",
     description: "Sugerencias inteligentes de reorden basadas en velocidad de venta.",
-    example: "Ejemplo: Si vendes 10 unidades d\u00EDa de un producto, con lead time de 30 d\u00EDas y stock de 50, el sistema sugiere reordenar 350 unidades para no quedarte sin stock.",
+    example: "Ejemplo: Si vendes 10 unidades día de un producto, con lead time de 30 días y stock de 50, el sistema sugiere reordenar 350 unidades para no quedarte sin stock.",
   },
   {
     icon: Megaphone,
     title: "Publicidad (PPC)",
-    description: "Seguimiento de campa\u00F1as publicitarias en Amazon.",
-    example: "Ejemplo: Campa\u00F1a \"Auto-Botellas\" con presupuesto diario $25. Registras gasto acumulado $450, ventas atribuidas $1,200. ACOS = 37.5%.",
+    description: "Seguimiento de campañas publicitarias en Amazon.",
+    example: "Ejemplo: Campaña \"Auto-Botellas\" con presupuesto diario $25. Registras gasto acumulado $450, ventas atribuidas $1,200. ACOS = 37.5%.",
   },
   {
     icon: Plug,
     title: "SP-API",
-    description: "Conexi\u00F3n con Selling Partner API de Amazon para sincronizaci\u00F3n autom\u00E1tica.",
-    example: "Aqu\u00ED configurar\u00E1s credenciales LWA y SP-API para sincronizar autom\u00E1ticamente ventas, inventario y pagos desde Amazon sin importar manualmente.",
+    description: "Conexión con Selling Partner API de Amazon para sincronización automática.",
+    example: "Aquí configurarás credenciales LWA y SP-API para sincronizar automáticamente ventas, inventario y pagos desde Amazon sin importar manualmente.",
   },
   {
     icon: Settings,
-    title: "Configuraci\u00F3n",
+    title: "Configuración",
     description: "Ajustes de tu perfil, moneda, marketplace y fees por defecto.",
-    example: "Ejemplo: Configuras que tu marketplace por defecto es MX, moneda MXN, FBA fee estimado $45.00 y ROI objetivo 50%. Estos valores se usan en formularios autom\u00E1ticamente.",
+    example: "Ejemplo: Configuras que tu marketplace por defecto es MX, moneda MXN, FBA fee estimado $45.00 y ROI objetivo 50%. Estos valores se usan en formularios automáticamente.",
   },
 ];
 
@@ -119,10 +119,10 @@ export function HelpButton() {
                 </div>
                 <div>
                   <h2 className="text-sm font-bold text-foreground font-display">
-                    Gu\u00EDa de Secciones
+                    Guía de Secciones
                   </h2>
                   <p className="text-[10px] text-muted-foreground">
-                    Qu\u00E9 hace cada parte de la app y c\u00F3mo usarla
+                    Qué hace cada parte de la app y cómo usarla
                   </p>
                 </div>
               </div>
@@ -168,7 +168,7 @@ export function HelpButton() {
             {/* Footer */}
             <div className="px-6 py-3 border-t border-border bg-muted/30 rounded-b-2xl">
               <p className="text-[10px] text-muted-foreground text-center">
-                Tip: Pasa el mouse sobre iconos y botones para ver tooltips con m\u00E1s informaci\u00F3n.
+                Tip: Pasa el mouse sobre iconos y botones para ver tooltips con más información.
               </p>
             </div>
           </div>

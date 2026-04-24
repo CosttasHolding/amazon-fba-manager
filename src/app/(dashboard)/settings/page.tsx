@@ -280,7 +280,7 @@ export default function SettingsPage() {
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">
-            Cargando configuraci\u00F3n ...
+            Cargando configuración ...
           </p>
         </div>
       </div>
@@ -294,7 +294,7 @@ export default function SettingsPage() {
           <Settings className="h-8 w-8 text-destructive" />
         </div>
         <div className="text-center">
-          <p className="text-lg font-semibold text-foreground mb-1">Error al cargar configuraci\u00F3n</p>
+          <p className="text-lg font-semibold text-foreground mb-1">Error al cargar configuración</p>
           <p className="text-sm text-muted-foreground mb-4">No se pudieron obtener los ajustes. Intenta de nuevo.</p>
         </div>
         <button

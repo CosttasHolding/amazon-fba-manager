@@ -182,7 +182,7 @@ export function OrderFormModal({ open, onOpenChange, onSuccess }: OrderFormModal
           </div>
 
           <div>
-            <Label className={labelClass}>N\u00FAmero PO</Label>
+            <Label className={labelClass}>Número PO</Label>
             <Input value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="PO-001" className={inputClass} />
           </div>
 
@@ -210,12 +210,12 @@ export function OrderFormModal({ open, onOpenChange, onSuccess }: OrderFormModal
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className={labelClass}>M\u00E9todo env\u00EDo</Label>
+              <Label className={labelClass}>Método envío</Label>
               <Select value={shippingMethod} onValueChange={setShippingMethod}>
                 <SelectTrigger className={inputClass}><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="air">Aire</SelectItem>
-                  <SelectItem value="sea">Mar\u00EDtimo</SelectItem>
+                  <SelectItem value="sea">Marítimo</SelectItem>
                   <SelectItem value="express">Express</SelectItem>
                 </SelectContent>
               </Select>
