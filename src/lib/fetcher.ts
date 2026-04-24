@@ -6,6 +6,5 @@ export async function fetcher<T = unknown>(url: string): Promise<T> {
     (error as Error & { status?: number }).status = res.status;
     throw error;
   }
-  const json = await res.json();
-  return json.data !== undefined ? json.data : json;
+  return res.json();
 }

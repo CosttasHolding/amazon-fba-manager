@@ -15,8 +15,9 @@ const SWR_CONFIG = {
 
 export function useProducts() {
   const { data, error, isLoading, mutate } = useSWR("/api/products", fetcher, SWR_CONFIG);
+  const paginated = data as PaginatedResponse<ProductWithInventory> | undefined;
   return {
-    products: (data || []) as ProductWithInventory[],
+    products: (paginated?.data || []) as ProductWithInventory[],
     isLoading,
     isError: !!error,
     error,
@@ -26,8 +27,9 @@ export function useProducts() {
 
 export function useInventory() {
   const { data, error, isLoading, mutate } = useSWR("/api/inventory", fetcher, SWR_CONFIG);
+  const paginated = data as PaginatedResponse<ProductWithInventory> | undefined;
   return {
-    inventory: (data || []) as ProductWithInventory[],
+    inventory: (paginated?.data || []) as ProductWithInventory[],
     isLoading,
     isError: !!error,
     error,
