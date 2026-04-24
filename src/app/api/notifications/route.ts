@@ -140,7 +140,6 @@ export async function GET(req: NextRequest) {
       total_count: filtered.length,
     });
   } catch (err: unknown) {
-    console.error("[GET /api/notifications]", err);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

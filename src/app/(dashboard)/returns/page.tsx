@@ -153,7 +153,6 @@ export default function ReturnsPage() {
         );
       }
     } catch (error) {
-      console.error("Error:", error);
     } finally {
       setLoading(false);
     }

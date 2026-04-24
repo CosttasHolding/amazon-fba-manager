@@ -182,7 +182,6 @@ export default function SupplierDetailPage() {
         router.push("/suppliers");
       }
     } catch (error) {
-      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
@@ -196,7 +195,6 @@ export default function SupplierDetailPage() {
         setProducts(data);
       }
     } catch (error) {
-      console.error("Error fetching products:", error);
     }
   };
 
@@ -208,7 +206,6 @@ export default function SupplierDetailPage() {
         setQuotes(data);
       }
     } catch (error) {
-      console.error("Error fetching quotes:", error);
     }
   };
 

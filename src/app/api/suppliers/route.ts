@@ -45,13 +45,11 @@ export async function GET(request: NextRequest) {
     const { data, error, count } = await query;
 
     if (error) {
-      console.error("Error fetching suppliers:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ data: data || [], count, page, limit });
   } catch (error) {
-    console.error("Suppliers GET error:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }
@@ -100,13 +98,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Error creating supplier:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    console.error("Suppliers POST error:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }

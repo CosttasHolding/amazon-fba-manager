@@ -93,7 +93,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ data: filtered, count, page, limit });
   } catch (err) {
-    console.error("[GET /api/sales]", err);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }
@@ -155,7 +154,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ data }, { status: 201 });
   } catch (err) {
-    console.error("[POST /api/sales]", err);
     const message = err instanceof Error ? err.message : "Error desconocido";
     return NextResponse.json({ error: message }, { status: 400 });
   }

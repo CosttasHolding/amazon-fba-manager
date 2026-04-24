@@ -116,7 +116,6 @@ export default function FinancesPage() {
           setPayouts(Array.isArray(payData) ? payData : payData.data || []);
         }
       } catch (error) {
-        console.error("Error cargando finanzas:", error);
         toast.error("Error al cargar datos financieros");
       } finally {
         setLoading(false);

@@ -67,7 +67,6 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
         setProducts(list);
       }
     } catch (error) {
-      console.error("Error loading products:", error);
     } finally {
       setLoadingProducts(false);
     }

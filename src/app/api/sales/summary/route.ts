@@ -42,7 +42,6 @@ export async function GET(req: NextRequest) {
       totalProfit: Math.round(totalProfit * 100) / 100,
     });
   } catch (err) {
-    console.error("[GET /api/sales/summary]", err);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

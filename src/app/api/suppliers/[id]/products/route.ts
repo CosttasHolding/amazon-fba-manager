@@ -38,13 +38,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .eq("user_id", user.id);
 
     if (error) {
-      console.error("Error fetching supplier products:", error);
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Supplier products GET error:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }

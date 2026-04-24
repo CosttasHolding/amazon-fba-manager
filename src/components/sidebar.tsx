@@ -68,7 +68,6 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
       router.push("/login");
       router.refresh();
     } catch (error) {
-      console.error("Error al cerrar sesion:", error);
     } finally {
       setLoggingOut(false);
     }

@@ -32,7 +32,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Supplier GET error:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }
@@ -91,7 +90,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Supplier PUT error:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }
@@ -116,13 +114,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .eq("user_id", user.id);
 
     if (error) {
-      console.error("Error deleting supplier:", error);
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
     return NextResponse.json({ message: "Proveedor eliminado" });
   } catch (error) {
-    console.error("Supplier DELETE error:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }

@@ -76,7 +76,6 @@ export function OrderFormModal({ open, onOpenChange, onSuccess }: OrderFormModal
         setProducts(raw.data || raw || []);
       }
     } catch (error) {
-      console.error("Error loading options:", error);
     } finally {
       setLoadingOptions(false);
     }

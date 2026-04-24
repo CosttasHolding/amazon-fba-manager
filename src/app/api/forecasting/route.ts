@@ -47,7 +47,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(suggestions);
   } catch (err) {
-    console.error("[GET /api/forecasting]", err);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

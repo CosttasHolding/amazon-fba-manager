@@ -93,7 +93,6 @@ export function NotificationBell() {
         setData(json);
       }
     } catch (err) {
-      console.error("Error fetching notifications:", err);
     } finally {
       setLoading(false);
     }

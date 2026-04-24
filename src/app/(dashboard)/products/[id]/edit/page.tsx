@@ -133,7 +133,6 @@ export default function EditProductPage() {
         setSuppliers(raw.data || raw || []);
       }
     } catch (error) {
-      console.error("Error loading suppliers:", error);
     }
   }, []);
 
@@ -155,7 +154,6 @@ export default function EditProductPage() {
         }
       }
     } catch (error) {
-      console.error("Error loading linked suppliers:", error);
     }
   }, [params.id]);
 

@@ -60,7 +60,6 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (err) {
-    console.error("[GET /api/inventory]", err);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

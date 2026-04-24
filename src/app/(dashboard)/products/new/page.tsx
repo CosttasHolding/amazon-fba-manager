@@ -107,7 +107,6 @@ export default function NewProductPage() {
           if (data.default_storage_cost) setValue("storageFeeMonthly", Number(data.default_storage_cost));
         }
       } catch (error) {
-        console.error("Error loading defaults:", error);
       } finally {
         setLoadingDefaults(false);
       }
@@ -121,7 +120,6 @@ export default function NewProductPage() {
           setSuppliers(data.data || data || []);
         }
       } catch (error) {
-        console.error("Error loading suppliers:", error);
       }
     };
 
@@ -160,7 +158,6 @@ export default function NewProductPage() {
             }),
           });
         } catch (error) {
-          console.error("Error linking supplier:", error);
         }
       }
 

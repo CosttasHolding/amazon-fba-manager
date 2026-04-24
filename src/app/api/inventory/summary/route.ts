@@ -29,7 +29,6 @@ export async function GET(req: NextRequest) {
       overstockCount,
     });
   } catch (err) {
-    console.error("[GET /api/inventory/summary]", err);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

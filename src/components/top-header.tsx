@@ -46,7 +46,6 @@ export function TopHeader({ userEmail, userName }: TopHeaderProps) {
       router.push("/login");
       router.refresh();
     } catch (error) {
-      console.error("Error al cerrar sesión:", error);
     } finally {
       setLoggingOut(false);
     }

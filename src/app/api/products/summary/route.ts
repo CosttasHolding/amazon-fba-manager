@@ -35,7 +35,6 @@ export async function GET(req: NextRequest) {
       categories: categories.sort(),
     });
   } catch (err) {
-    console.error('[GET /api/products/summary]', err);
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

@@ -126,7 +126,6 @@ export default function ShipmentsPage() {
         setShipments(json.data || json || []);
       }
     } catch (error) {
-      console.error("Error cargando shipments:", error);
     } finally {
       setLoading(false);
     }

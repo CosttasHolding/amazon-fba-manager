@@ -98,7 +98,6 @@ export default function SuppliersPage() {
         setSuppliers(json.data || json || []);
       }
     } catch (error) {
-      console.error("Error fetching suppliers:", error);
     } finally {
       setLoading(false);
     }

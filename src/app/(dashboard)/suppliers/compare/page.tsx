@@ -60,7 +60,6 @@ export default function CompareSuppliersPage() {
         setSuppliers(enriched);
       }
     } catch (error) {
-      console.error("Error:", error);
     } finally {
       setLoading(false);
     }

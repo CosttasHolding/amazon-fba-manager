@@ -94,7 +94,6 @@ export async function GET() {
       },
     });
   } catch (err) {
-    console.error("[GET /api/import/template]", err);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

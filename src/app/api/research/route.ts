@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
 
     const { data, error, count } = await supabase.from("product_research").select("*", { count: "exact" }).eq("user_id", user.id).order("created_at", { ascending: false }).range(from, to);
     if (error) {
-      console.error("[GET /api/research]", error);
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
     return NextResponse.json({ data: data || [], count, page, limit });
@@ -39,7 +38,6 @@ export async function POST(req: NextRequest) {
     const clean = { ...result.data, user_id: user.id };
     const { data, error } = await supabase.from("product_research").insert(clean).select().single();
     if (error) {
-      console.error("[POST /api/research]", error);
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
     return NextResponse.json(data, { status: 201 });
@@ -64,7 +62,6 @@ export async function PUT(req: NextRequest) {
 
     const { data, error } = await supabase.from("product_research").update(result.data).eq("id", id).eq("user_id", user.id).select().single();
     if (error) {
-      console.error("[PUT /api/research]", error);
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
     return NextResponse.json(data);
@@ -85,7 +82,6 @@ export async function DELETE(req: NextRequest) {
 
     const { error } = await supabase.from("product_research").delete().eq("id", id).eq("user_id", user.id);
     if (error) {
-      console.error("[DELETE /api/research]", error);
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
     return NextResponse.json({ message: "Eliminado" });

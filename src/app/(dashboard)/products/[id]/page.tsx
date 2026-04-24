@@ -181,7 +181,6 @@ export default function ProductDetailPage() {
         if (mountedRef.current) setSuppliers(Array.isArray(data) ? data : data.data || []);
       }
     } catch (error) {
-      console.error("Error loading suppliers:", error);
     }
   };
 

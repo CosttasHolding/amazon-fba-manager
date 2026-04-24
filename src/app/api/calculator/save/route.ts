@@ -69,13 +69,11 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Error saving calculation:", error);
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    console.error("Save calculation error:", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
@@ -96,13 +94,11 @@ export async function GET(req: NextRequest) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching calculations:", error);
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
     return NextResponse.json(data || []);
   } catch (error) {
-    console.error("GET calculations error:", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

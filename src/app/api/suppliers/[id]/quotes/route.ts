@@ -40,13 +40,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching quotes:", error);
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
     return NextResponse.json(data || []);
   } catch (error) {
-    console.error("Quotes GET error:", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
@@ -92,13 +90,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .single();
 
     if (error) {
-      console.error("Error creating quote:", error);
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    console.error("Quotes POST error:", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
@@ -128,13 +124,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .eq("user_id", user.id);
 
     if (error) {
-      console.error("Error deleting quote:", error);
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
     return NextResponse.json({ message: "Cotizaci\u00F3n eliminada" });
   } catch (error) {
-    console.error("Quotes DELETE error:", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

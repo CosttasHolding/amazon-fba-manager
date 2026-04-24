@@ -264,7 +264,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: 'Modo no valido' }, { status: 400 });
   } catch (err) {
-    console.error("[POST /api/import]", err);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }
