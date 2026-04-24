@@ -94,7 +94,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [showModal, setShowModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
@@ -120,7 +120,7 @@ export default function OrdersPage() {
         (o.products?.name?.toLowerCase().includes(q) ?? false)
       );
     }
-    if (filterStatus) result = result.filter((o) => o.status === filterStatus);
+    if (filterStatus !== "all") result = result.filter((o) => o.status === filterStatus);
     return result;
   }, [orders, search, filterStatus]);
 
@@ -167,7 +167,7 @@ export default function OrdersPage() {
               <SelectValue placeholder="Todos los estados" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos los estados</SelectItem>
+              <SelectItem value="all">Todos los estados</SelectItem>
               {STATUS_FLOW.map((s) => (
                 <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
               ))}
