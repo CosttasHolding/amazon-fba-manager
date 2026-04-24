@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 // ScrollArea component not available, using div with overflow
 import { cn } from "@/lib/utils";
 import { HELP_SECTIONS, HELP_GLOSSARY, getSectionIdFromPath, type HelpSection } from "@/lib/help-content";
-import { BookOpen, X, ChevronRight, Lightbulb, Calculator, Table, Filter, MousePointer, HelpCircle } from "lucide-react";
+import { BookOpen, ChevronRight, Lightbulb, Calculator, Table, Filter, MousePointer, HelpCircle } from "lucide-react";
 
 interface HelpModalProps {
   open: boolean;
