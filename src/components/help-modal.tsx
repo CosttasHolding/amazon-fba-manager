@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 // ScrollArea component not available, using div with overflow
 import { cn } from "@/lib/utils";
 import { HELP_SECTIONS, HELP_GLOSSARY, getSectionIdFromPath, type HelpSection } from "@/lib/help-content";
-import { BookOpen, ChevronRight, Lightbulb, Calculator, Table, Filter, MousePointer, HelpCircle } from "lucide-react";
+import { BookOpen, ChevronRight, Lightbulb, Calculator, Table, Filter, MousePointer } from "lucide-react";
 
 interface HelpModalProps {
   open: boolean;
@@ -94,7 +94,6 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     )}
                   >
-                    <HelpCircle className="h-3.5 w-3.5" />
                     Glosario Técnico
                   </button>
                 </div>
@@ -242,8 +241,7 @@ function SectionContent({ section }: { section: HelpSection }) {
       {/* Glossary */}
       {section.glossary && section.glossary.length > 0 && (
         <div className="space-y-3">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground uppercase tracking-wider">
-            <HelpCircle className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
             Términos Específicos
           </h3>
           <div className="space-y-2">
