@@ -131,22 +131,22 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         label: "Revenue Mensual",
         description: "Ingresos totales del mes en curso generados por ventas de todos los productos activos.",
-        formula: "Σ (Unidades Vendidas × Precio Venta) por producto",
+        formula: "Suma de (Unidades Vendidas × Precio Venta) por producto",
       },
       {
         label: "ROI Ponderado",
         description: "Retorno de inversión promedio ponderado por volumen de ventas de todos los productos activos.",
-        formula: "Σ (ROI producto × Unidades vendidas) / Σ Unidades vendidas",
+        formula: "Suma de (ROI producto × Unidades vendidas) / Suma de Unidades vendidas",
       },
       {
         label: "Unidades (mes)",
         description: "Total de unidades vendidas en el mes actual.",
-        formula: "Σ Unidades vendidas últimos 30 días",
+        formula: "Suma de Unidades vendidas últimos 30 días",
       },
       {
         label: "Margen Neto",
         description: "Margen promedio ponderado de todos los productos. Indica qué porcentaje del precio de venta es ganancia.",
-        formula: "Σ (Margen producto × Revenue) / Revenue Total",
+        formula: "Suma de (Margen producto × Revenue) / Revenue Total",
       },
       {
         label: "Alertas Stock",
@@ -155,7 +155,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         label: "Valor Inventario",
         description: "Valor total del inventario actual basado en costo de compra.",
-        formula: "Σ (Stock Actual × Costo Unitario)",
+        formula: "Suma de (Stock Actual × Costo Unitario)",
       },
     ],
     tables: [
@@ -214,7 +214,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         label: "Ganancia Total",
         description: "Suma de ganancias netas de todos los productos.",
-        formula: "Σ (Unidades × (Precio Venta - Costo Total))",
+        formula: "Suma de (Unidades × (Precio Venta - Costo Total))",
       },
       {
         label: "Precio Promedio",
