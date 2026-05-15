@@ -44,13 +44,8 @@ export default function LoginPage() {
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center overflow-auto p-4">
-      <Image
-        src="/banner.png"
-        alt=""
-        fill
-        className="object-cover object-center z-0"
-      />
-      <div className="fixed inset-0 bg-black/20 z-[1]" />
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-[#0a1628] to-slate-900 z-0" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent z-[1]" />
 
       <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
         <Image
@@ -58,6 +53,7 @@ export default function LoginPage() {
           alt="CosttasHolding"
           width={64}
           height={48}
+          priority
           className="rounded-2xl object-contain mb-3"
         />
         <h1 className="text-2xl font-bold text-white drop-shadow-lg">

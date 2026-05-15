@@ -17,7 +17,9 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("http://localhost:3000"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "https://amazon-fba-manager-virid.vercel.app"
+  ),
   title: {
     default: "CosttasHolding Manager",
     template: "%s | CosttasHolding Manager",
@@ -55,7 +57,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body
-        className={`${jetbrainsMono.variable} ${plusJakartaSans.variable} font-body grain-overlay`}
+        className={`${jetbrainsMono.variable} ${plusJakartaSans.variable} font-body`}
       >
         <ThemeProvider
           attribute="class"

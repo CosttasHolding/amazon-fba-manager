@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import "../animations.css";
+import "../ui-overrides.css";
 import { LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Toaster } from "@/components/ui/sonner";
 import { Sidebar } from "@/components/sidebar";
 import { TopHeader } from "@/components/top-header";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
@@ -91,7 +92,6 @@ export default async function DashboardLayout({
         </div>
       </main>
 
-      <Toaster richColors position="top-right" />
       <HelpButton />
     </div>
   );
