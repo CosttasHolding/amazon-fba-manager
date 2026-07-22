@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { createApiHandler, buildPagination, paginatedResponse } from "@/lib/api-handler";
 import { commentSchema, commentQuerySchema } from "@/validations/comment";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { SpApiClient, SpApiAuthError, refreshAccessToken } from "@/lib/sp-api";

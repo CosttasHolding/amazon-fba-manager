@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { parseNotificationMessage, type WebhookNotificationType } from "@/lib/sp-api/notifications";

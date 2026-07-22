@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { createApiHandler, buildPagination, paginatedResponse } from "@/lib/api-handler";
 import { z } from "zod";
