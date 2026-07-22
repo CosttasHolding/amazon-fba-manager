@@ -1,6 +1,7 @@
 ﻿"use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getOrgId } from "./get-org-id";
 import { z } from "zod";
 
 const createSaleSchema = z.object({
@@ -27,6 +28,8 @@ export async function createSale(data: {
     throw new Error("No autorizado");
   }
 
+  const orgId = await getOrgId();
+
   const parse = createSaleSchema.safeParse(data);
   if (!parse.success) {
     throw new Error("Datos inválidos");
@@ -42,7 +45,7 @@ export async function createSale(data: {
     .from("products")
     .select("id")
     .eq("id", product_id)
-    .eq("user_id", user.id)
+    .eq("org_id", orgId)
     .single();
 
   if (productError && productError.code !== "PGRST116") {
@@ -58,6 +61,7 @@ export async function createSale(data: {
     .insert({
       product_id,
       user_id: user.id,
+      org_id: orgId,
       sale_date,
       units_sold,
       revenue,

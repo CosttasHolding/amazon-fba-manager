@@ -1,6 +1,7 @@
 ﻿"use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getOrgId } from "./get-org-id";
 import { supplierSchema } from "@/validations/supplier";
 import { z } from "zod";
 
@@ -14,6 +15,8 @@ export async function createSupplier(data: SupplierInput) {
     throw new Error("No autorizado");
   }
 
+  const orgId = await getOrgId();
+
   const result = supplierSchema.safeParse(data);
   if (!result.success) {
     throw new Error("Datos inválidos");
@@ -22,6 +25,7 @@ export async function createSupplier(data: SupplierInput) {
   const cleanData = {
     ...result.data,
     user_id: user.id,
+    org_id: orgId,
     alibaba_url: result.data.alibaba_url || null,
     contact_name: result.data.contact_name || null,
     contact_email: result.data.contact_email || null,

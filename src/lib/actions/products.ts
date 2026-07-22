@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getOrgId } from "./get-org-id";
 import { productSchema } from "@/validations/product";
 import { z } from "zod";
 
@@ -14,11 +15,14 @@ export async function createProduct(data: ProductInput) {
     throw new Error("No autorizado");
   }
 
+  const orgId = await getOrgId();
+
   const validated = productSchema.parse(data);
 
   const dbData = {
     user_id: user.id,
-    sku: validated.sku,
+    org_id: orgId,
+    sku: validated.sku || null,
     asin: validated.asin || null,
     name: validated.name,
     category: validated.category || null,

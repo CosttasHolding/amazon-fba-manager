@@ -1,6 +1,7 @@
 ﻿"use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getOrgId } from "./get-org-id";
 import { orderSchema } from "@/validations/order";
 import { z } from "zod";
 
@@ -12,12 +13,14 @@ export async function createOrder(data: z.infer<typeof orderSchema>) {
     throw new Error("No autorizado");
   }
 
+  const orgId = await getOrgId();
+
   const result = orderSchema.safeParse(data);
   if (!result.success) {
     throw new Error("Datos inválidos");
   }
 
-  const clean = { ...result.data, user_id: user.id };
+  const clean = { ...result.data, user_id: user.id, org_id: orgId };
 
   const { data: order, error } = await supabase
     .from("purchase_orders")

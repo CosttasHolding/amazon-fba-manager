@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getOrgId } from "./get-org-id";
 import { z } from "zod";
 
 const formSchema = z.object({
@@ -28,12 +29,15 @@ export async function createMember(data: {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("No autorizado");
 
+  const orgId = await getOrgId();
+
   const parse = formSchema.safeParse(data);
   if (!parse.success) throw new Error("Datos inválidos");
 
   const { data: inserted, error } = await supabase.from("members").insert({
     ...parse.data,
     user_id: user.id,
+    org_id: orgId,
   }).select().single();
 
   if (error) throw error;
