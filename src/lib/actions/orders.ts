@@ -20,7 +20,8 @@ export async function createOrder(data: z.infer<typeof orderSchema>) {
     throw new Error("Datos inválidos");
   }
 
-  const clean = { ...result.data, user_id: user.id, org_id: orgId };
+  const { total_cost, ...rest } = result.data;
+  const clean = { ...rest, user_id: user.id, org_id: orgId };
 
   const { data: order, error } = await supabase
     .from("purchase_orders")
