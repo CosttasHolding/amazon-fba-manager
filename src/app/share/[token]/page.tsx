@@ -1,4 +1,6 @@
-﻿import { createClient } from "@/lib/supabase/server";
+﻿export const dynamic = "force-dynamic";
+
+import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Package, TrendingUp, DollarSign, AlertTriangle, Activity } from "lucide-react";
 import { ReactNode } from "react";
