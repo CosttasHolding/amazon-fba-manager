@@ -1,0 +1,236 @@
+import { createClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const productSupplierSchema = z.object({
+  supplier_id: z.string().uuid(),
+  unit_cost: z.coerce.number().min(0).default(0),
+  moq: z.coerce.number().int().min(0).nullable().optional(),
+  lead_time_days: z.coerce.number().int().min(0).nullable().optional(),
+  is_primary: z.coerce.boolean().default(false),
+  notes: z.string().max(2000).nullable().optional(),
+});
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const orgId = user.user_metadata?.org_id as string;
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+
+    const { data: product } = await supabase
+      .from("products")
+      .select("id")
+      .eq("id", params.id)
+      .eq("org_id", orgId)
+      .single();
+
+    if (!product) {
+      return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
+    }
+
+    const { data, error } = await supabase
+      .from("product_suppliers")
+      .select(`
+        id,
+        unit_cost,
+        moq,
+        lead_time_days,
+        is_primary,
+        notes,
+        created_at,
+        suppliers (
+          id,
+          name,
+          contact_name,
+          contact_email,
+          contact_whatsapp,
+          country,
+          alibaba_url,
+          rating,
+          payment_terms,
+          min_order_qty,
+          lead_time_days,
+          status
+        )
+      `)
+      .eq("product_id", params.id)
+      .order("is_primary", { ascending: false });
+
+    if (error) {
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    }
+
+    return NextResponse.json(data || []);
+  } catch (error) {
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+  }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const orgId = user.user_metadata?.org_id as string;
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+
+    const { data: product } = await supabase
+      .from("products")
+      .select("id")
+      .eq("id", params.id)
+      .eq("org_id", orgId)
+      .single();
+
+    if (!product) {
+      return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const parse = productSupplierSchema.safeParse(body);
+    if (!parse.success) {
+      return NextResponse.json({ error: "Datos inválidos", details: parse.error.flatten().fieldErrors }, { status: 400 });
+    }
+    const { supplier_id, unit_cost, moq, lead_time_days, is_primary, notes } = parse.data;
+
+    const { data: supplier } = await supabase
+      .from("suppliers")
+      .select("id")
+      .eq("id", supplier_id)
+      .eq("org_id", orgId)
+      .single();
+
+    if (!supplier) {
+      return NextResponse.json({ error: "Proveedor no encontrado" }, { status: 404 });
+    }
+
+    if (is_primary) {
+      await supabase
+        .from("product_suppliers")
+        .update({ is_primary: false })
+        .eq("product_id", params.id)
+        .eq("org_id", orgId);
+    }
+
+    const { data: existing } = await supabase
+      .from("product_suppliers")
+      .select("id")
+      .eq("product_id", params.id)
+      .eq("supplier_id", supplier_id)
+      .single();
+
+    if (existing) {
+      const { data, error } = await supabase
+        .from("product_suppliers")
+        .update({
+          unit_cost: unit_cost || 0,
+          moq: moq || null,
+          lead_time_days: lead_time_days || null,
+          is_primary: is_primary || false,
+          notes: notes || null,
+        })
+        .eq("id", existing.id)
+        .select()
+        .single();
+
+      if (error) {
+        return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+      }
+      return NextResponse.json(data);
+    }
+
+    const { data, error } = await supabase
+      .from("product_suppliers")
+      .insert({
+        product_id: params.id,
+        supplier_id,
+        user_id: user.id,
+        org_id: orgId,
+        unit_cost: unit_cost || 0,
+        moq: moq || null,
+        lead_time_days: lead_time_days || null,
+        is_primary: is_primary || false,
+        notes: notes || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    }
+
+    return NextResponse.json(data, { status: 201 });
+  } catch (error) {
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const orgId = user.user_metadata?.org_id as string;
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+
+    const { data: product } = await supabase
+      .from("products")
+      .select("id")
+      .eq("id", params.id)
+      .eq("org_id", orgId)
+      .single();
+
+    if (!product) {
+      return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const supplierId = searchParams.get("supplier_id");
+
+    if (!supplierId) {
+      return NextResponse.json({ error: "supplier_id es requerido" }, { status: 400 });
+    }
+
+    const { error } = await supabase
+      .from("product_suppliers")
+      .delete()
+      .eq("product_id", params.id)
+      .eq("supplier_id", supplierId);
+
+    if (error) {
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "CosttasHolding Manager",
+  "short_name": "FBA Manager",
+  "description": "Gestión profesional de productos Amazon FBA",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0a0c14",
+  "theme_color": "#00e5ff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo_solo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo_solo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

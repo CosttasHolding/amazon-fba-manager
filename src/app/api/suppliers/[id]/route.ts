@@ -1,0 +1,137 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { getOrgId } from "@/lib/api-handler";
+import { supplierSchema } from "@/validations/supplier";
+
+interface RouteParams {
+  params: { id: string };
+}
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = params;
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const orgId = await getOrgId(supabase, user.id, request);
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+
+    const { data, error } = await supabase
+      .from("suppliers")
+      .select("*")
+      .eq("id", id)
+      .eq("org_id", orgId)
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json(
+        { error: "Proveedor no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Error interno del servidor" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = params;
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const orgId = await getOrgId(supabase, user.id, request);
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+
+    const body = await request.json();
+    const result = supplierSchema.partial().safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: "Datos inválidos", details: result.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const cleanData = {
+      ...result.data,
+      alibaba_url: result.data.alibaba_url || null,
+      contact_name: result.data.contact_name || null,
+      contact_email: result.data.contact_email || null,
+      contact_whatsapp: result.data.contact_whatsapp || null,
+      country: result.data.country || null,
+      rating: result.data.rating ?? null,
+      payment_terms: result.data.payment_terms || null,
+      min_order_qty: result.data.min_order_qty ?? null,
+      lead_time_days: result.data.lead_time_days ?? null,
+      notes: result.data.notes || null,
+    };
+
+    const { data, error } = await supabase
+      .from("suppliers")
+      .update(cleanData)
+      .eq("id", id)
+      .eq("org_id", orgId)
+      .select()
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json(
+        { error: "Proveedor no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Error interno del servidor" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = params;
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const orgId = await getOrgId(supabase, user.id, request);
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+
+    const { error } = await supabase
+      .from("suppliers")
+      .delete()
+      .eq("id", id)
+      .eq("org_id", orgId);
+
+    if (error) {
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: "Proveedor eliminado" });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Error interno del servidor" },
+      { status: 500 }
+    );
+  }
+}

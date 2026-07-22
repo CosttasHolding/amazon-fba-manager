@@ -1,0 +1,40 @@
+node_modules
+.next
+.env.local
+.env
+dist
+build
+*.log
+.DS_Store
+
+.vercel
+
+# Lighthouse reports
+lighthouse-*.json
+
+# Credentials and secrets
+*.apps.googleusercontent.com.json
+client_secret_*.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Binarios / instaladores
+*.exe
+*.dll
+*.msi
+*.dmg
+*.app
+
+# Lock files de sistema
+*.lock
+!package-lock.json
+
+# Build info
+tsconfig.tsbuildinfo
+
+# Supabase temp
+supabase/.temp/

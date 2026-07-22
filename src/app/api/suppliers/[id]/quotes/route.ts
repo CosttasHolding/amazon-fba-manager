@@ -1,0 +1,144 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+
+const quoteSchema = z.object({
+  supplier_id: z.string().uuid(),
+  product_id: z.string().uuid().nullable().optional(),
+  quantity: z.coerce.number().int().positive("La cantidad debe ser mayor a 0"),
+  unit_price: z.coerce.number().positive("El precio debe ser mayor a 0"),
+  currency: z.string().max(3).default("USD"),
+  valid_until: z.string().nullable().optional(),
+  shipping_method: z.enum(["air", "sea", "express"]).nullable().optional(),
+  shipping_cost: z.coerce.number().min(0).nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  status: z.enum(["pending", "accepted", "rejected", "expired"]).default("pending"),
+});
+
+interface RouteParams {
+  params: { id: string };
+}
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = params;
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const orgId = user.user_metadata?.org_id as string;
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+
+    const { data, error } = await supabase
+      .from("supplier_quotes")
+      .select(`
+        *,
+        products:product_id(name, sku)
+      `)
+      .eq("supplier_id", id)
+      .eq("org_id", orgId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    }
+
+    return NextResponse.json(data || []);
+  } catch (error) {
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = params;
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const orgId = user.user_metadata?.org_id as string;
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+
+    const body = await request.json();
+    const result = quoteSchema.safeParse({ ...body, supplier_id: id });
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: "Datos inválidos", details: result.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const cleanData = {
+      supplier_id: id,
+      user_id: user.id,
+      org_id: orgId,
+      product_id: result.data.product_id || null,
+      quantity: result.data.quantity,
+      unit_price: result.data.unit_price,
+      currency: result.data.currency,
+      valid_until: result.data.valid_until || null,
+      shipping_method: result.data.shipping_method || null,
+      shipping_cost: result.data.shipping_cost || null,
+      notes: result.data.notes || null,
+      status: result.data.status,
+    };
+
+    const { data, error } = await supabase
+      .from("supplier_quotes")
+      .insert(cleanData)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    }
+
+    return NextResponse.json(data, { status: 201 });
+  } catch (error) {
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = params;
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const orgId = user.user_metadata?.org_id as string;
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+
+    const { searchParams } = new URL(request.url);
+    const quoteId = searchParams.get("quoteId");
+
+    if (!quoteId) {
+      return NextResponse.json({ error: "quoteId requerido" }, { status: 400 });
+    }
+
+    const { error } = await supabase
+      .from("supplier_quotes")
+      .delete()
+      .eq("id", quoteId)
+      .eq("supplier_id", id)
+      .eq("org_id", orgId);
+
+    if (error) {
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: "Cotización eliminada" });
+  } catch (error) {
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  }
+}

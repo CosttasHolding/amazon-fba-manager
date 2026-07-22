@@ -1,0 +1,50 @@
+-- Migracion 018: Documentacion de Database Webhooks de Supabase
+-- Estos webhooks se configuran desde el Dashboard de Supabase (Database > Webhooks)
+-- NO se pueden crear por SQL puro, este archivo sirve como referencia versionada.
+
+-- ============================================================
+-- WEBHOOK 1: Nueva Purchase Order
+-- ============================================================
+-- Tabla: purchase_orders (orders)
+-- Evento: INSERT
+-- Payload esperado:
+-- {
+--   "event": "INSERT",
+--   "table": "purchase_orders",
+--   "record": { ... },
+--   "old_record": null
+-- }
+
+-- ============================================================
+-- WEBHOOK 2: Nuevo Reimbursement
+-- ============================================================
+-- Tabla: reimbursements
+-- Evento: INSERT
+-- Payload esperado:
+-- {
+--   "event": "INSERT",
+--   "table": "reimbursements",
+--   "record": { ... },
+--   "old_record": null
+-- }
+
+-- ============================================================
+-- WEBHOOK 3: Nuevo Return
+-- ============================================================
+-- Tabla: returns
+-- Evento: INSERT
+-- Payload esperado:
+-- {
+--   "event": "INSERT",
+--   "table": "returns",
+--   "record": { ... },
+--   "old_record": null
+-- }
+
+-- ============================================================
+-- NOTAS DE CONFIGURACION
+-- ============================================================
+-- 1. Ir a Supabase Dashboard -> Database -> Webhooks
+-- 2. Crear un webhook por cada tabla listada arriba
+-- 3. Configurar URL destino cuando se integre un servicio externo
+-- ============================================================

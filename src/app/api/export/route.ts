@@ -1,0 +1,41 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { getOrgId } from "@/lib/api-handler";
+import * as XLSX from "xlsx";
+import { apiErrorResponse } from "@/lib/api-utils";
+
+export async function GET(req: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const orgId = await getOrgId(supabase, user.id, req);
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+
+    const { searchParams } = new URL(req.url);
+    const type = searchParams.get("type") || "products";
+
+    const { data, error } = await supabase
+      .from(type === "inventory" ? "products_with_inventory" : "products")
+      .select("*")
+      .eq("org_id", orgId)
+      .limit(10000);
+
+    if (error) throw error;
+
+    const ws = XLSX.utils.json_to_sheet(data || []);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Data");
+    const buf = XLSX.write(wb, { bookType: "xlsx", type: "buffer" });
+
+    return new NextResponse(buf, {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename=FBA_${type}_${new Date().toISOString().split("T")[0]}.xlsx`,
+      },
+    });
+  } catch (err) {
+    return apiErrorResponse(err, 500, "GET /api/export");
+  }
+}

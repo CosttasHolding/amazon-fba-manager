@@ -1,0 +1,3 @@
+export const calcRefFee=(price:number)=>price*0.15
+export const calcFBAFee=(kg:number)=>{const lb=kg*2.20462;return lb<1?3.22:lb<2?4.75:lb<3?5.40:5.40+(lb-3)*0.4}
+export const calcMetrics=(unitCost:number,shippingCost:number,prepCost:number,taxes:number,salePrice:number,referralFee:number,fbaFee:number,storageFee:number,otherFees:number)=>{const totalCost=unitCost+shippingCost+prepCost+taxes;const totalFees=referralFee+fbaFee+storageFee+otherFees;const netProfit=salePrice-totalCost-totalFees;const roi=totalCost>0?(netProfit/totalCost)*100:0;const margin=salePrice>0?(netProfit/salePrice)*100:0;return{totalCost,totalFees,netProfit,roi,margin}}
