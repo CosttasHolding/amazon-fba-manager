@@ -215,3 +215,84 @@ export async function getReportDocument(
   const res = await fetch(doc.url);
   return res.text();
 }
+
+/* ─── Catalog Item ─── */
+
+export async function getCatalogItem(
+  client: SpApiClient,
+  asin: string,
+  marketplaceId: string = "ATVPDKIKX0DER"
+): Promise<{
+  title: string | null;
+  brand: string | null;
+  category: string | null;
+  weight: number | null;
+  dimensions: { length: number; width: number; height: number; unit: string } | null;
+  image_url: string | null;
+  description: string | null;
+} | null> {
+  try {
+    const params = new URLSearchParams({
+      marketplaceIds: marketplaceId,
+      includedData: "summaries,attributes,images,productTypes",
+    });
+    const data = await client.get<{
+      responses?: Array<{
+        summaries?: Array<{
+          title?: string;
+          brand?: string;
+          productType?: string;
+        }>;
+        images?: Array<{
+          images?: Array<{ link?: string }>;
+        }>;
+        attributes?: Array<{
+          attribute_name: string;
+          value?: string[];
+        }>;
+      }>;
+    }>(`/catalog/2022-04-01/items/${asin}?${params.toString()}`);
+
+    const item = data?.responses?.[0]?.summaries?.[0];
+    if (!item) return null;
+
+    const images = data?.responses?.[0]?.images?.[0]?.images;
+    const imageUrl = images?.[0]?.link ?? null;
+
+    const attributes = data?.responses?.[0]?.attributes;
+    let weight: number | null = null;
+    let dimensions: { length: number; width: number; height: number; unit: string } | null = null;
+
+    if (attributes) {
+      const weightAttr = attributes.find(
+        (a) => a.attribute_name === "item_weight" || a.attribute_name === "weight"
+      );
+      if (weightAttr?.value?.[0]) {
+        const w = parseFloat(weightAttr.value[0]);
+        if (!isNaN(w)) weight = w;
+      }
+
+      const dimAttr = attributes.find(
+        (a) => a.attribute_name === "item_dimensions" || a.attribute_name === "product_dimensions"
+      );
+      if (dimAttr?.value?.[0]) {
+        const parts = dimAttr.value[0].split("x").map((s) => parseFloat(s.trim()));
+        if (parts.length === 3 && parts.every((n) => !isNaN(n))) {
+          dimensions = { length: parts[0], width: parts[1], height: parts[2], unit: "inches" };
+        }
+      }
+    }
+
+    return {
+      title: item.title ?? null,
+      brand: item.brand ?? null,
+      category: item.productType ?? null,
+      weight,
+      dimensions,
+      image_url: imageUrl,
+      description: null,
+    };
+  } catch {
+    return null;
+  }
+}
