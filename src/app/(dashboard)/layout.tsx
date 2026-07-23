@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 /* logo uses native img to avoid CSP issues */
 import { createClient } from "@/lib/supabase/server";
+import { getOrgId } from "@/lib/actions/get-org-id";
 import "../animations.css";
 import "../ui-overrides.css";
 import { LogOut, Settings } from "lucide-react";
@@ -27,6 +28,8 @@ export default async function DashboardLayout({
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
+
+  try { await getOrgId(); } catch { /* auto-created on first CRUD */ }
 
   const handleLogout = async () => {
     "use server";
