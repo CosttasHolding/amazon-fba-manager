@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { createClient } from "@/lib/supabase/server";
+import { getOrgId } from "@/lib/api-handler";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -27,7 +28,7 @@ export async function GET(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const orgId = user.user_metadata?.org_id as string;
+    const orgId = await getOrgId(supabase, user.id, request);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
     const { data: product } = await supabase
@@ -93,7 +94,7 @@ export async function POST(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const orgId = user.user_metadata?.org_id as string;
+    const orgId = await getOrgId(supabase, user.id, request);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
     const { data: product } = await supabase
@@ -200,7 +201,7 @@ export async function DELETE(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const orgId = user.user_metadata?.org_id as string;
+    const orgId = await getOrgId(supabase, user.id, request);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
     const { data: product } = await supabase
