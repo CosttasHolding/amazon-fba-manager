@@ -235,7 +235,29 @@ export default function SettingsPage() {
     fetchSettings();
   }, [fetchSettings]);
 
-  const handleSaveProfile = () => saveSettings(profile);
+  const handleSaveProfile = async () => {
+    await saveSettings(profile);
+    // Also update org name if company changed
+    if (profile.company) {
+      try {
+        const supabase = await import("@/lib/supabase/client").then(m => m.createClient());
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: settings } = await supabase
+            .from("user_settings")
+            .select("current_org_id")
+            .eq("user_id", user.id)
+            .single();
+          if (settings?.current_org_id) {
+            await supabase
+              .from("organizations")
+              .update({ name: profile.company })
+              .eq("id", settings.current_org_id);
+          }
+        }
+      } catch { /* silent */ }
+    }
+  };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

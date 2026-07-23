@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useOrg } from "@/hooks/use-org";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,9 +19,27 @@ export function OrgSwitcher() {
   const { org, membership, organizations, switchOrg, refreshOrg } = useOrg();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [companyName, setCompanyName] = useState("");
   const [newName, setNewName] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const { locale } = useLocale();
+
+  // Fetch company name from user_settings
+  useEffect(() => {
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("user_settings")
+        .select("company")
+        .eq("user_id", user.id)
+        .single();
+      if (data?.company) setCompanyName(data.company);
+    })();
+  }, []);
+
+  const displayName = companyName || org?.name || "Mi organización";
 
   const handleCreate = async () => {
     if (newName.trim().length < 2) return;
@@ -55,7 +74,7 @@ export function OrgSwitcher() {
         </div>
         <div className="min-w-0">
           <p className="text-xs font-semibold text-foreground truncate">
-            {org?.name || "Mi organización"}
+            {displayName}
           </p>
           <p className="text-[10px] text-muted-foreground capitalize">
             {membership?.role || ""}
@@ -79,7 +98,7 @@ export function OrgSwitcher() {
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-foreground truncate">
-                {org?.name || "Sin organización"}
+                {displayName}
               </p>
               <p className="text-[10px] text-muted-foreground capitalize">
                 {membership?.role || ""}
