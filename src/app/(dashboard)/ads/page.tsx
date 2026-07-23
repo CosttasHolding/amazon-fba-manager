@@ -13,6 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -52,7 +58,7 @@ export default function AdsPage() {
   const { locale } = useLocale();
   const [loading, setLoading] = useState(true);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = DEFAULT_PAGE_SIZE;
   const [saving, setSaving] = useState(false);
@@ -102,7 +108,7 @@ export default function AdsPage() {
       if (!res.ok) throw new Error("Error");
       const newCamp = await res.json();
       setCampaigns((p) => [newCamp, ...p]);
-      setShowForm(false);
+      setShowModal(false);
       reset();
       toast.success(t("ads.created", locale));
     } catch {
@@ -147,67 +153,11 @@ export default function AdsPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <Button variant="outline" size="default" onClick={() => setShowForm(!showForm)}>
+      <div className="flex justify-end">
+        <Button onClick={() => setShowModal(true)}>
           <Plus className="h-4 w-4 me-1.5" />
-          {showForm ? t("ads.cancel", locale) : t("ads.new_campaign", locale)}
+          {t("ads.new_campaign", locale)}
         </Button>
-
-        {showForm && (
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="grid grid-cols-1 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-border"
-          >
-            <div className="sm:col-span-2">
-              <Label htmlFor="campaign-name" className="text-xs text-muted-foreground">{t("ads.field_name", locale)}</Label>
-              <Input
-                id="campaign-name"
-                {...register("campaign_name")}
-                placeholder={t("ads.placeholder_name", locale)}
-                className="h-9 bg-background border-border text-sm"
-              />
-              {errors.campaign_name && (
-                <p className="text-xs text-destructive mt-1">{errors.campaign_name.message}</p>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="campaign-type" className="text-xs text-muted-foreground">{t("ads.field_type", locale)}</Label>
-              <Select
-                value={watchedType}
-                onValueChange={(v) => setValue("campaign_type", v as CampaignFormData["campaign_type"])}
-              >
-                <SelectTrigger id="campaign-type" className="h-9 bg-background border-border text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(CAMPAIGN_TYPES).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>
-                      {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="campaign-daily-budget" className="text-xs text-muted-foreground">{t("ads.field_budget", locale)}</Label>
-              <Input
-                id="campaign-daily-budget"
-                type="number"
-                step="0.01"
-                {...register("daily_budget", { valueAsNumber: true })}
-                className="h-9 bg-background border-border text-sm"
-              />
-              {errors.daily_budget && (
-                <p className="text-xs text-destructive mt-1">{errors.daily_budget.message}</p>
-              )}
-            </div>
-            <div className="sm:col-span-4">
-              <Button type="submit" disabled={saving} size="default">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("ads.create", locale)}
-              </Button>
-            </div>
-          </form>
-        )}
       </div>
 
       <DataTableWrapper title={t("ads.campaigns_title", locale)} icon={Target}>
@@ -271,6 +221,78 @@ export default function AdsPage() {
           </div>
         )}
       </DataTableWrapper>
+
+      {/* Campaign Modal */}
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" />
+              {t("ads.new_campaign", locale)}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <Label htmlFor="modal-campaign-name" className="text-xs text-muted-foreground">{t("ads.field_name", locale)}</Label>
+              <Input
+                id="modal-campaign-name"
+                {...register("campaign_name")}
+                placeholder={t("ads.placeholder_name", locale)}
+                className="h-9 bg-background border-border text-sm mt-1.5"
+              />
+              {errors.campaign_name && (
+                <p className="text-xs text-destructive mt-1">{errors.campaign_name.message}</p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="modal-campaign-type" className="text-xs text-muted-foreground">{t("ads.field_type", locale)}</Label>
+                <Select
+                  value={watchedType}
+                  onValueChange={(v) => setValue("campaign_type", v as CampaignFormData["campaign_type"])}
+                >
+                  <SelectTrigger id="modal-campaign-type" className="h-9 bg-background border-border text-sm mt-1.5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(CAMPAIGN_TYPES).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="modal-campaign-budget" className="text-xs text-muted-foreground">{t("ads.field_budget", locale)}</Label>
+                <Input
+                  id="modal-campaign-budget"
+                  type="number"
+                  step="0.01"
+                  {...register("daily_budget", { valueAsNumber: true })}
+                  className="h-9 bg-background border-border text-sm mt-1.5"
+                />
+                {errors.daily_budget && (
+                  <p className="text-xs text-destructive mt-1">{errors.daily_budget.message}</p>
+                )}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowModal(false)}
+              >
+                {t("common.cancel", locale)}
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin me-1.5" /> : <Plus className="h-4 w-4 me-1.5" />}
+                {t("ads.create", locale)}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
