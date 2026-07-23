@@ -13,20 +13,15 @@ import { useLocale } from "@/lib/i18n/locale-context";
 interface TopHeaderProps {
   userEmail?: string;
   userName?: string;
+  avatarUrl?: string | null;
 }
 
-export function TopHeader({ userEmail, userName }: TopHeaderProps) {
+export function TopHeader({ userEmail, userName, avatarUrl }: TopHeaderProps) {
   const router = useRouter();
   const { locale } = useLocale();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { logout, loggingOut } = useAuth();
-
-  const getInitial = () => {
-    if (userName) return userName.charAt(0).toUpperCase();
-    if (userEmail) return userEmail.charAt(0).toUpperCase();
-    return "U";
-  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -70,11 +65,11 @@ export function TopHeader({ userEmail, userName }: TopHeaderProps) {
                 {userEmail || ""}
               </p>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <span className="text-xs font-bold text-primary font-display">
-                {getInitial()}
-              </span>
-            </div>
+            <img
+              src={avatarUrl || "/logo_solo.png"}
+              alt={userName || "User"}
+              className="w-8 h-8 rounded-lg object-cover border border-primary/20"
+            />
           </button>
 
           {showUserMenu && (

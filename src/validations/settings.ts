@@ -14,6 +14,7 @@ export const settingsUpdateSchema = z
     currency: z.string().max(10).optional(),
     tax_rate: z.coerce.number().min(0).max(100).optional(),
     language: z.enum(["es", "en", "ar"]).optional(),
+    avatar_url: z.string().url().max(2048).nullable().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "No hay campos para actualizar",

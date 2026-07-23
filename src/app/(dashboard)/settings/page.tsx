@@ -92,6 +92,7 @@ interface UserSettings {
   target_roi: number;
   currency: string;
   tax_rate: number;
+  avatar_url: string | null;
 }
 
 function Section({
@@ -157,6 +158,8 @@ export default function SettingsPage() {
     company: "",
     country: "",
   });
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [fba, setFba] = useState({
     marketplace: "US",
     default_fba_fee: "3.00",
@@ -183,6 +186,7 @@ export default function SettingsPage() {
           company: data.company || "",
           country: data.country || "",
         });
+        setAvatarUrl(data.avatar_url || null);
         setFba({
           marketplace: data.marketplace || "US",
           default_fba_fee: String(data.default_fba_fee ?? "3.00"),
@@ -233,6 +237,25 @@ export default function SettingsPage() {
   }, [fetchSettings]);
 
   const handleSaveProfile = () => saveSettings(profile);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/settings/avatar", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setAvatarUrl(data.avatar_url);
+      toast.success("Imagen actualizada");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al subir imagen");
+    } finally {
+      setUploading(false);
+    }
+  };
   const handleSaveFba = () =>
     saveSettings({
       marketplace: fba.marketplace,
@@ -346,6 +369,35 @@ export default function SettingsPage() {
       {/* Profile Tab */}
       {activeTab === "profile" && (
         <div className="space-y-6 animate-fade-in">
+          <Section icon={User} title="Foto de perfil">
+            <div className="flex items-center gap-5">
+              <div className="relative group">
+                <img
+                  src={avatarUrl || "/logo_solo.png"}
+                  alt="Avatar"
+                  className="w-20 h-20 rounded-2xl object-cover border border-border"
+                />
+                <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                    disabled={uploading}
+                  />
+                  {uploading ? (
+                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  ) : (
+                    <Upload className="w-5 h-5 text-white" />
+                  )}
+                </label>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Formatos: PNG, JPG, WebP. Maximo 2MB.</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">Hover sobre la imagen para cambiar.</p>
+              </div>
+            </div>
+          </Section>
           <Section icon={User} title={t("settings.section_personal_info", locale)}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <Field label={t("settings.full_name", locale)} icon={User} fieldId="settings-full-name">

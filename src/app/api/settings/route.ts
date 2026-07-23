@@ -4,19 +4,17 @@ import { NextResponse } from "next/server";
 import { createApiHandler } from "@/lib/api-handler";
 import { settingsUpdateSchema } from "@/validations/settings";
 
-export const GET = createApiHandler(async ({ supabase, user, orgId }) => {
-  if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
-
+export const GET = createApiHandler(async ({ supabase, user }) => {
   const { data, error } = await supabase
     .from("user_settings")
     .select("*")
-    .eq("org_id", orgId)
+    .eq("user_id", user.id)
     .single();
 
   if (error && error.code === "PGRST116") {
     const { data: newSettings, error: insertError } = await supabase
       .from("user_settings")
-      .insert({ user_id: user.id, org_id: orgId })
+      .insert({ user_id: user.id })
       .select()
       .single();
 
@@ -33,9 +31,7 @@ export const GET = createApiHandler(async ({ supabase, user, orgId }) => {
   return NextResponse.json(data);
 });
 
-export const PUT = createApiHandler(async ({ supabase, user, orgId, req }) => {
-  if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
-
+export const PUT = createApiHandler(async ({ supabase, user, req }) => {
   const body = await req.json();
   const parsed = settingsUpdateSchema.safeParse(body);
 
@@ -51,13 +47,13 @@ export const PUT = createApiHandler(async ({ supabase, user, orgId, req }) => {
   const { data: existing } = await supabase
     .from("user_settings")
     .select("id")
-    .eq("org_id", orgId)
+    .eq("user_id", user.id)
     .single();
 
   if (!existing) {
     const { data, error } = await supabase
       .from("user_settings")
-      .insert({ user_id: user.id, org_id: orgId, ...updateData })
+      .insert({ user_id: user.id, ...updateData })
       .select()
       .single();
 
@@ -70,7 +66,7 @@ export const PUT = createApiHandler(async ({ supabase, user, orgId, req }) => {
   const { data, error } = await supabase
     .from("user_settings")
     .update(updateData)
-    .eq("org_id", orgId)
+    .eq("user_id", user.id)
     .select()
     .single();
 

@@ -14,9 +14,10 @@ import { OrgSwitcher } from "@/components/org-switcher";
 interface SidebarProps {
   userEmail?: string;
   userName?: string;
+  avatarUrl?: string | null;
 }
 
-export function Sidebar({ userEmail, userName }: SidebarProps) {
+export function Sidebar({ userEmail, userName, avatarUrl }: SidebarProps) {
   const pathname = usePathname();
   const { logout, loggingOut } = useAuth();
   const { locale } = useLocale();
@@ -25,12 +26,6 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   }, [pathname]);
-
-  const getInitial = () => {
-    if (userName) return userName.charAt(0).toUpperCase();
-    if (userEmail) return userEmail.charAt(0).toUpperCase();
-    return "U";
-  };
 
   return (
     <nav aria-label={t("accessibility.toggle_sidebar", locale)} className="hidden lg:flex w-64 flex-col fixed h-screen bg-card border-e border-border z-40">
@@ -90,9 +85,11 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
 
       <div className="px-3 pb-4 pt-2 border-t border-border space-y-1">
         <div className="flex items-center gap-3 px-3 py-2.5">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <span className="text-xs font-bold text-primary font-display">{getInitial()}</span>
-          </div>
+          <img
+            src={avatarUrl || "/logo_solo.png"}
+            alt={userName || "User"}
+            className="w-8 h-8 rounded-lg object-cover border border-primary/20"
+          />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate font-body">
               {userName || t("header.user", locale)}

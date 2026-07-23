@@ -40,11 +40,18 @@ export default async function DashboardLayout({
 
   const userName = user.user_metadata?.full_name || user.user_metadata?.name;
 
+  const { data: settings } = await supabase
+    .from("user_settings")
+    .select("avatar_url")
+    .eq("user_id", user.id)
+    .single();
+  const avatarUrl = settings?.avatar_url || null;
+
   return (
     <OrgLayout>
     <div className="min-h-screen bg-background">
       <SkipToContent />
-      <Sidebar userEmail={user.email} userName={userName} />
+      <Sidebar userEmail={user.email} userName={userName} avatarUrl={avatarUrl} />
       <MobileBottomNav />
 
       <header role="banner" className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-card/90 backdrop-blur-xl border-b border-border">
@@ -89,7 +96,7 @@ export default async function DashboardLayout({
       </header>
 
       <main id="main-content" role="main" aria-label="Contenido principal" className="lg:ms-64 min-h-screen pb-24 lg:pb-0">
-        <TopHeader userEmail={user.email} userName={userName} />
+        <TopHeader userEmail={user.email} userName={userName} avatarUrl={avatarUrl} />
         <div className="p-4 sm:p-6 lg:p-8">
           <ErrorBoundaryWrapper>{children}</ErrorBoundaryWrapper>
         </div>
