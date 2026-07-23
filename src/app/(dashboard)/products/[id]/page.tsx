@@ -318,6 +318,16 @@ export default function ProductDetailPage() {
         </div>
       </PageHeader>
 
+      {product.image_url && (
+        <div className="rounded-2xl border border-border bg-card p-4 flex items-center justify-center min-h-[200px] max-h-[400px] overflow-hidden">
+          <img
+            src={product.image_url}
+            alt={product.name}
+            className="max-h-[360px] w-auto object-contain rounded-xl"
+          />
+        </div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label={t("products.sale_price", locale)}
