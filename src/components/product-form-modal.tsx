@@ -17,13 +17,14 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createProduct } from "@/lib/actions/products";
-import { Loader2, Package, DollarSign, Tag, FileText } from "lucide-react";
+import { Loader2, Package, DollarSign, Tag, FileText, Link2, CheckCircle2 } from "lucide-react";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { FormErrorMessage } from "@/components/ui/announcer";
 import { inputClass, labelClass, sectionLabel } from "@/lib/form-constants";
+import { useUrlScrape } from "@/hooks/use-url-scrape";
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -69,6 +70,37 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
     },
   });
 
+  const { setValue } = form;
+  const urlScrape = useUrlScrape();
+
+  useEffect(() => {
+    if (urlScrape.scrapedData && urlScrape.platform === "amazon") {
+      const data = urlScrape.scrapedData;
+      if (data.platform === "amazon") {
+        if (data.name) setValue("name", data.name);
+        if (data.asin) setValue("asin", data.asin);
+        if (data.price && data.price > 0) setValue("salePrice", data.price);
+        if (data.weight_kg && data.weight_kg > 0) setValue("weightKg", data.weight_kg);
+        if (data.category) {
+          const catMap: Record<string, string> = {
+            "electronics": "Electronics",
+            "toys": "Toys",
+            "home": "Home",
+            "kitchen": "Kitchen",
+            "health": "Health",
+            "beauty": "Beauty",
+            "sports": "Sports",
+            "books": "Books",
+          };
+          const mapped = catMap[data.category.toLowerCase()] ?? data.category;
+          if (["Electronics","Toys","Home","Kitchen","Health","Beauty","Sports","Books","Other"].includes(mapped)) {
+            setValue("category", mapped as "Electronics" | "Toys" | "Home" | "Kitchen" | "Health" | "Beauty" | "Sports" | "Books" | "Other");
+          }
+        }
+      }
+    }
+  }, [urlScrape.scrapedData, urlScrape.platform, setValue]);
+
   const onSubmit = async (data: ProductFormData) => {
     setSaving(true);
     try {
@@ -97,6 +129,36 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="max-h-[75vh] overflow-y-auto pe-1 space-y-4">
+          <div className="mb-4 p-3 rounded-lg border border-dashed border-border bg-muted/30">
+            <label className={sectionLabel}>
+              <Link2 className="w-3.5 h-3.5" />
+              URL del producto (Amazon)
+            </label>
+            <div className="relative">
+              <Input
+                placeholder="https://amazon.com/dp/B08N5WRWNW..."
+                value={urlScrape.url}
+                onChange={(e) => urlScrape.setUrl(e.target.value)}
+                className={inputClass + " pr-20"}
+              />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                {urlScrape.isScraping && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                {!urlScrape.isScraping && urlScrape.platform === "amazon" && urlScrape.scrapedData && (
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                )}
+              </div>
+            </div>
+            {urlScrape.isScraping && (
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Extrayendo datos...
+              </p>
+            )}
+            {urlScrape.error && (
+              <p className="text-xs text-destructive mt-1">{urlScrape.error}</p>
+            )}
+          </div>
+
           <div>
             <div className={sectionLabel}>
               <Tag className="h-3 w-3" />
