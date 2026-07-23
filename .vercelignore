@@ -18,7 +18,6 @@ lighthouse-*.json
 client_secret_*.json
 *.exe
 *.dll
-*.png
 *.docx
 tsconfig.tsbuildinfo
 package-lock.json
