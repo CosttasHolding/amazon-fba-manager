@@ -46,6 +46,26 @@ export function OrgSwitcher() {
     }
   };
 
+  // If only 1 org, show static name (no dropdown)
+  if (organizations.length <= 1) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2.5">
+        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Building2 className="w-3.5 h-3.5 text-primary" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-foreground truncate">
+            {org?.name || "Mi organización"}
+          </p>
+          <p className="text-[10px] text-muted-foreground capitalize">
+            {membership?.role || ""}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Multiple orgs: show switcher
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

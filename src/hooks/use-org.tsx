@@ -43,6 +43,25 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         .eq("status", "active");
 
       if (!orgMembers || orgMembers.length === 0) {
+        // Auto-create org for new users
+        const slug = user.email?.split("@")[0] || "mi-organizacion";
+        const { data: newOrg } = await supabase
+          .from("organizations")
+          .insert({ name: slug, slug, owner_id: user.id })
+          .select()
+          .single();
+
+        if (newOrg) {
+          await supabase
+            .from("org_members")
+            .insert({ org_id: newOrg.id, user_id: user.id, role: "owner", status: "active" });
+          await supabase
+            .from("user_settings")
+            .upsert({ user_id: user.id, current_org_id: newOrg.id }, { onConflict: "user_id" });
+          setOrg(newOrg as Organization);
+          setMembership({ id: "", org_id: newOrg.id, user_id: user.id, role: "owner", status: "active", joined_at: new Date().toISOString() });
+          setOrganizations([newOrg as Organization]);
+        }
         setIsLoading(false);
         return;
       }
