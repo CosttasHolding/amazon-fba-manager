@@ -40,8 +40,10 @@ import {
   Bell,
   BellRing,
   ArrowRight,
+  RefreshCw,
 } from "lucide-react";
 import { PushToggle } from "@/components/push-toggle";
+import { useExchangeRates } from "@/hooks/use-exchange-rates";
 import { toast } from "sonner";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { t, getLanguageName } from "@/lib/i18n/translations";
@@ -71,12 +73,8 @@ const MARKETPLACES = [
 
 const CURRENCIES = [
   { value: "USD", label: "USD ($)" },
-  { value: "EUR", label: "EUR (€)" },
-  { value: "GBP", label: "GBP (£)" },
-  { value: "CAD", label: "CAD (C$)" },
-  { value: "MXN", label: "MXN ($)" },
-  { value: "JPY", label: "JPY (¥)" },
-  { value: "AUD", label: "AUD (A$)" },
+  { value: "CNY", label: "CNY (¥)" },
+  { value: "ARS", label: "ARS ($)" },
 ];
 
 interface UserSettings {
@@ -152,6 +150,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [exporting, setExporting] = useState("");
+  const { rates, loading: ratesLoading, fetchRates } = useExchangeRates();
 
   const [profile, setProfile] = useState({
     full_name: "",
@@ -651,6 +650,44 @@ export default function SettingsPage() {
                   </p>
                 </div>
               ))}
+            </div>
+          </Section>
+          <Section icon={DollarSign} title="Tipos de cambio en tiempo real">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-muted-foreground/70">
+                {rates?.lastUpdated
+                  ? `Actualizado: ${rates.lastUpdated.toLocaleTimeString("es-AR")}`
+                  : "Cargando cotizaciones..."}
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={fetchRates}
+                disabled={ratesLoading}
+                className="h-7 px-2 text-xs"
+              >
+                <RefreshCw className={`h-3 w-3 me-1 ${ratesLoading ? "animate-spin" : ""}`} />
+                Actualizar
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {rates && [
+                { from: "USD", to: "CNY", rate: rates.USD_CNY, flag1: "🇺🇸", flag2: "🇨🇳" },
+                { from: "USD", to: "ARS", rate: rates.USD_ARS, flag1: "🇺🇸", flag2: "🇦🇷" },
+                { from: "CNY", to: "ARS", rate: rates.CNY_ARS, flag1: "🇨🇳", flag2: "🇦🇷" },
+              ].map((r) => (
+                <div key={r.from + r.to} className="p-3 rounded-xl bg-muted/30 border border-border text-center">
+                  <p className="text-xs text-muted-foreground mb-1">{r.flag1} {r.from} → {r.flag2} {r.to}</p>
+                  <p className="text-lg font-bold text-foreground tabular-nums">
+                    {r.rate.toFixed(r.from === "CNY" && r.to === "ARS" ? 2 : 4)}
+                  </p>
+                </div>
+              ))}
+              {!rates && (
+                <div className="col-span-3 text-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mx-auto" />
+                </div>
+              )}
             </div>
           </Section>
           <div className="flex justify-end">

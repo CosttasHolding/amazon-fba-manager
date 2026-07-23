@@ -638,7 +638,7 @@ export const HELP_SECTIONS: HelpSection[] = [
           { name: "Cantidad", description: "Unidades pedidas" },
           { name: "Costo Unitario", description: "Precio por unidad acordado" },
           { name: "Total Producto", description: "Cantidad × Costo Unitario" },
-          { name: "Moneda", description: "USD / EUR / CNY" },
+          { name: "Moneda", description: "USD / CNY / ARS" },
           { name: "Tipo de Cambio", description: "Tipo de cambio aplicado" },
         ],
       },
@@ -857,7 +857,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         label: "Cálculos",
         fields: [
           { name: "ROI Objetivo", description: "ROI mínimo deseado (%)", required: false },
-          { name: "Moneda", description: "USD / EUR / GBP", required: false },
+          { name: "Moneda", description: "USD / CNY / ARS", required: false },
           { name: "Tax Rate", description: "Tasa impositiva (%)", required: false },
         ],
       },

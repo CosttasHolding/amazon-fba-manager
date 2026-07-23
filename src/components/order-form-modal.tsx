@@ -189,8 +189,8 @@ export function OrderFormModal({ open, onOpenChange, onSuccess }: OrderFormModal
                 <SelectTrigger id="order-currency" className={inputClass}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
                   <SelectItem value="CNY">CNY</SelectItem>
+                  <SelectItem value="ARS">ARS</SelectItem>
                 </SelectContent>
               </Select>
             </div>
