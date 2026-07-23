@@ -1,10 +1,11 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Moon, Sun, Eye } from "lucide-react";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
+import { createClient } from "@/lib/supabase/client";
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
     const { theme, setTheme } = useTheme();
@@ -12,23 +13,49 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
     const [highContrast, setHighContrast] = useState(false);
     const { locale } = useLocale();
 
+    // Load from DB on mount
     useEffect(() => {
         setMounted(true);
-        const saved = localStorage.getItem("fba-high-contrast") === "true";
-        setHighContrast(saved);
-        if (saved) document.documentElement.classList.add("high-contrast");
+        (async () => {
+            try {
+                const supabase = createClient();
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+                const { data } = await supabase
+                    .from("user_settings")
+                    .select("high_contrast")
+                    .eq("user_id", user.id)
+                    .single();
+                if (data?.high_contrast) {
+                    setHighContrast(true);
+                    document.documentElement.classList.add("high-contrast");
+                }
+            } catch {}
+        })();
     }, []);
 
-    const toggleHighContrast = () => {
+    const toggleHighContrast = useCallback(async () => {
         const next = !highContrast;
         setHighContrast(next);
-        localStorage.setItem("fba-high-contrast", String(next));
         if (next) {
             document.documentElement.classList.add("high-contrast");
         } else {
             document.documentElement.classList.remove("high-contrast");
         }
-    };
+        // Persist to DB
+        try {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                await supabase
+                    .from("user_settings")
+                    .upsert({
+                        user_id: user.id,
+                        high_contrast: next,
+                    }, { onConflict: "user_id" });
+            }
+        } catch {}
+    }, [highContrast]);
 
     if (!mounted) return null;
 

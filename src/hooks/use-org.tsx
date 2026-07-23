@@ -27,7 +27,14 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setIsLoading(false); return; }
 
-      const savedOrgId = typeof window !== "undefined" ? localStorage.getItem("current_org_id") : null;
+      // Read saved org from DB
+      const { data: settings } = await supabase
+        .from("user_settings")
+        .select("current_org_id")
+        .eq("user_id", user.id)
+        .single();
+
+      const savedOrgId = settings?.current_org_id;
 
       const { data: orgMembers } = await supabase
         .from("org_members")
@@ -70,9 +77,13 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         joined_at: currentMembership.joined_at,
       } : null);
 
-      if (typeof window !== "undefined") {
-        localStorage.setItem("current_org_id", currentOrg.id);
-      }
+      // Save to DB
+      await supabase
+        .from("user_settings")
+        .upsert({
+          user_id: user.id,
+          current_org_id: currentOrg.id,
+        }, { onConflict: "user_id" });
     } catch {
       // silent
     } finally {
@@ -83,10 +94,17 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   useEffect(() => { loadOrg(); }, [loadOrg]);
 
   const switchOrg = useCallback(async (orgId: string) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("current_org_id", orgId);
-    }
     setIsLoading(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from("user_settings")
+        .upsert({
+          user_id: user.id,
+          current_org_id: orgId,
+        }, { onConflict: "user_id" });
+    }
     await loadOrg();
   }, [loadOrg]);
 

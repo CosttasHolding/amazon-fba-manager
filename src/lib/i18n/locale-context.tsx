@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { Locale, Direction, getDirection } from "./translations";
+import { createClient } from "@/lib/supabase/client";
 
 interface LocaleContextType {
   locale: Locale;
@@ -19,26 +20,49 @@ export function LocaleProvider({ children, initialLocale = "es" }: { children: R
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
   const direction = getDirection(locale);
 
-  const setLocale = useCallback((newLocale: Locale) => {
+  const setLocale = useCallback(async (newLocale: Locale) => {
     setLocaleState(newLocale);
     const dir = getDirection(newLocale);
+    document.documentElement.lang = newLocale;
+    document.documentElement.dir = dir;
+    // Persist to DB
     try {
-      localStorage.setItem("fba-locale", newLocale);
-      document.documentElement.lang = newLocale;
-      document.documentElement.dir = dir;
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("user_settings")
+          .upsert({
+            user_id: user.id,
+            language: newLocale,
+          }, { onConflict: "user_id" });
+      }
     } catch {}
   }, []);
 
+  // Load from DB on mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("fba-locale") as Locale | null;
-      if (saved && (saved === "es" || saved === "en" || saved === "ar")) {
-        setLocaleState(saved);
-        const dir = getDirection(saved);
-        document.documentElement.lang = saved;
-        document.documentElement.dir = dir;
-      }
-    } catch {}
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data } = await supabase
+          .from("user_settings")
+          .select("language")
+          .eq("user_id", user.id)
+          .single();
+
+        if (data?.language && ["es", "en", "ar"].includes(data.language)) {
+          const saved = data.language as Locale;
+          setLocaleState(saved);
+          const dir = getDirection(saved);
+          document.documentElement.lang = saved;
+          document.documentElement.dir = dir;
+        }
+      } catch {}
+    })();
   }, []);
 
   return (
