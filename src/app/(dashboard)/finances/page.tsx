@@ -18,6 +18,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -88,6 +94,7 @@ export default function FinancesPage() {
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [savingExpense, setSavingExpense] = useState(false);
   const [expensePage, setExpensePage] = useState(1);
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
   const EXPENSES_PER_PAGE = DEFAULT_PAGE_SIZE;
   const categories = useMemo(() => EXPENSE_CATEGORIES(locale), [locale]);
 
@@ -190,6 +197,7 @@ export default function FinancesPage() {
         expense_date: new Date().toISOString().split("T")[0],
         vendor: "",
       });
+      setShowExpenseModal(false);
       toast.success(t("finances.expense_registered", locale));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : t("finances.error_register", locale);
@@ -245,9 +253,11 @@ export default function FinancesPage() {
         />
       </div>
 
+      {/* Main layout: left (stacked) + right (sidebar) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Monthly table */}
-        <div className="lg:col-span-2">
+        {/* LEFT: Monthly summary + Recent expenses stacked */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Monthly summary */}
           <DataTableWrapper title={t("finances.monthly_summary", locale)} icon={Calendar}>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -281,91 +291,73 @@ export default function FinancesPage() {
               </table>
             </div>
           </DataTableWrapper>
+
+          {/* Recent expenses */}
+          <DataTableWrapper title={t("finances.recent_expenses", locale)} icon={Receipt}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th scope="col" className="text-start px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("common.date", locale)}</th>
+                    <th scope="col" className="text-start px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("finances.category", locale)}</th>
+                    <th scope="col" className="text-start px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("common.product", locale)}</th>
+                    <th scope="col" className="text-start px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("finances.vendor", locale)}</th>
+                    <th scope="col" className="text-end px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("finances.amount", locale)}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {expenses.slice((expensePage - 1) * EXPENSES_PER_PAGE, expensePage * EXPENSES_PER_PAGE).map((e) => {
+                    const catLabel = categories.find((c) => c.value === e.category)?.label || e.category;
+                    return (
+                      <tr key={e.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-3 text-muted-foreground">{e.expense_date}</td>
+                        <td className="px-4 py-3">
+                          <StatusBadge status={e.category} />
+                        </td>
+                        <td className="px-4 py-3 text-foreground">{e.description}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{e.vendor || "—"}</td>
+                        <td className="px-4 py-3 text-end font-display text-red-600 dark:text-rose-400">{fmt(e.amount)}</td>
+                      </tr>
+                    );
+                  })}
+                  {expenses.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground text-sm">
+                        {t("finances.empty_expenses", locale)}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {expenses.length > EXPENSES_PER_PAGE && (
+              <div className="p-4 border-t border-border">
+                <PaginationControl
+                  currentPage={expensePage}
+                  totalPages={Math.ceil(expenses.length / EXPENSES_PER_PAGE)}
+                  totalItems={expenses.length}
+                  itemsPerPage={EXPENSES_PER_PAGE}
+                  onPageChange={setExpensePage}
+                />
+              </div>
+            )}
+          </DataTableWrapper>
         </div>
 
-        {/* Sidebar: Add expense + Category breakdown */}
+        {/* RIGHT: Category breakdown (fixed) + Add expense button */}
         <div className="space-y-4">
-          {/* Add expense */}
-          <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
-            <div className="flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">{t("finances.register_expense", locale)}</span>
-            </div>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-              <div>
-                <Label htmlFor="expense-category" className="text-xs text-muted-foreground">{t("finances.category", locale)}</Label>
-                <Select
-                  value={watchedCategory}
-                  onValueChange={(v) => setValue("category", v as ExpenseFormData["category"])}
-                >
-                  <SelectTrigger id="expense-category" className="h-9 bg-background border-border text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="expense-description" className="text-xs text-muted-foreground">{t("finances.description_required", locale)}</Label>
-                <Input
-                  id="expense-description"
-                  {...register("description")}
-                  placeholder={t("finances.description_placeholder", locale)}
-                  className="h-9 bg-background border-border text-sm"
-                />
-                {errors.description && (
-                  <p className="text-xs text-destructive mt-1">{errors.description.message}</p>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="expense-amount" className="text-xs text-muted-foreground">{t("finances.amount_required", locale)}</Label>
-                  <Input
-                    id="expense-amount"
-                    type="number"
-                    step="0.01"
-                    {...register("amount", { valueAsNumber: true })}
-                    placeholder="0.00"
-                    className="h-9 bg-background border-border text-sm"
-                  />
-                  {errors.amount && (
-                    <p className="text-xs text-destructive mt-1">{errors.amount.message}</p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="expense-date" className="text-xs text-muted-foreground">{t("finances.date_required", locale)}</Label>
-                  <Input
-                    id="expense-date"
-                    type="date"
-                    {...register("expense_date")}
-                    className="h-9 bg-background border-border text-sm"
-                  />
-                  {errors.expense_date && (
-                    <p className="text-xs text-destructive mt-1">{errors.expense_date.message}</p>
-                  )}
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="expense-vendor" className="text-xs text-muted-foreground">{t("finances.vendor_optional", locale)}</Label>
-                <Input
-                  id="expense-vendor"
-                  {...register("vendor")}
-                  placeholder={t("finances.vendor_placeholder", locale)}
-                  className="h-9 bg-background border-border text-sm"
-                />
-              </div>
-              <Button type="submit" disabled={savingExpense} className="w-full" size="default">
-                {savingExpense ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 me-1.5" />}
-                {t("finances.save_expense", locale)}
-              </Button>
-            </form>
-          </div>
+          {/* Add expense button */}
+          <Button
+            onClick={() => setShowExpenseModal(true)}
+            className="w-full"
+            size="default"
+          >
+            <Plus className="h-4 w-4 me-1.5" />
+            {t("finances.register_expense", locale)}
+          </Button>
 
           {/* Category breakdown */}
-          <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+          <div className="rounded-2xl border border-border bg-card p-5 space-y-3 sticky top-20">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" />
               <span className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">{t("finances.expenses_by_category", locale)}</span>
@@ -394,56 +386,97 @@ export default function FinancesPage() {
         </div>
       </div>
 
-      {/* Recent expenses table */}
-      <DataTableWrapper title={t("finances.recent_expenses", locale)} icon={Receipt}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                <th scope="col" className="text-start px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("common.date", locale)}</th>
-                <th scope="col" className="text-start px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("finances.category", locale)}</th>
-                <th scope="col" className="text-start px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("common.product", locale)}</th>
-                <th scope="col" className="text-start px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("finances.vendor", locale)}</th>
-                <th scope="col" className="text-end px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("finances.amount", locale)}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/50">
-              {expenses.slice((expensePage - 1) * EXPENSES_PER_PAGE, expensePage * EXPENSES_PER_PAGE).map((e) => {
-                const catLabel = categories.find((c) => c.value === e.category)?.label || e.category;
-                return (
-                  <tr key={e.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 text-muted-foreground">{e.expense_date}</td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={e.category} />
-                    </td>
-                    <td className="px-4 py-3 text-foreground">{e.description}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{e.vendor || "—"}</td>
-                    <td className="px-4 py-3 text-end font-display text-red-600 dark:text-rose-400">{fmt(e.amount)}</td>
-                  </tr>
-                );
-              })}
-              {expenses.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground text-sm">
-                    {t("finances.empty_expenses", locale)}
-                  </td>
-                </tr>
+      {/* Expense Modal */}
+      <Dialog open={showExpenseModal} onOpenChange={setShowExpenseModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-primary" />
+              {t("finances.register_expense", locale)}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <Label htmlFor="modal-expense-category" className="text-xs text-muted-foreground">{t("finances.category", locale)}</Label>
+              <Select
+                value={watchedCategory}
+                onValueChange={(v) => setValue("category", v as ExpenseFormData["category"])}
+              >
+                <SelectTrigger id="modal-expense-category" className="h-9 bg-background border-border text-sm mt-1.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="modal-expense-description" className="text-xs text-muted-foreground">{t("finances.description_required", locale)}</Label>
+              <Input
+                id="modal-expense-description"
+                {...register("description")}
+                placeholder={t("finances.description_placeholder", locale)}
+                className="h-9 bg-background border-border text-sm mt-1.5"
+              />
+              {errors.description && (
+                <p className="text-xs text-destructive mt-1">{errors.description.message}</p>
               )}
-            </tbody>
-          </table>
-        </div>
-        {expenses.length > EXPENSES_PER_PAGE && (
-          <div className="p-4 border-t border-border">
-            <PaginationControl
-              currentPage={expensePage}
-              totalPages={Math.ceil(expenses.length / EXPENSES_PER_PAGE)}
-              totalItems={expenses.length}
-              itemsPerPage={EXPENSES_PER_PAGE}
-              onPageChange={setExpensePage}
-            />
-          </div>
-        )}
-      </DataTableWrapper>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="modal-expense-amount" className="text-xs text-muted-foreground">{t("finances.amount_required", locale)}</Label>
+                <Input
+                  id="modal-expense-amount"
+                  type="number"
+                  step="0.01"
+                  {...register("amount", { valueAsNumber: true })}
+                  placeholder="0.00"
+                  className="h-9 bg-background border-border text-sm mt-1.5"
+                />
+                {errors.amount && (
+                  <p className="text-xs text-destructive mt-1">{errors.amount.message}</p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="modal-expense-date" className="text-xs text-muted-foreground">{t("finances.date_required", locale)}</Label>
+                <Input
+                  id="modal-expense-date"
+                  type="date"
+                  {...register("expense_date")}
+                  className="h-9 bg-background border-border text-sm mt-1.5"
+                />
+                {errors.expense_date && (
+                  <p className="text-xs text-destructive mt-1">{errors.expense_date.message}</p>
+                )}
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="modal-expense-vendor" className="text-xs text-muted-foreground">{t("finances.vendor_optional", locale)}</Label>
+              <Input
+                id="modal-expense-vendor"
+                {...register("vendor")}
+                placeholder={t("finances.vendor_placeholder", locale)}
+                className="h-9 bg-background border-border text-sm mt-1.5"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowExpenseModal(false)}
+              >
+                {t("common.cancel", locale)}
+              </Button>
+              <Button type="submit" disabled={savingExpense}>
+                {savingExpense ? <Loader2 className="h-4 w-4 animate-spin me-1.5" /> : <Plus className="h-4 w-4 me-1.5" />}
+                {t("finances.save_expense", locale)}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
