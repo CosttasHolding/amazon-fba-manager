@@ -38,3 +38,6 @@ tsconfig.tsbuildinfo
 
 # Supabase temp
 supabase/.temp/
+
+# Obsidian vault config (keep in sync locally)
+.obsidian/
