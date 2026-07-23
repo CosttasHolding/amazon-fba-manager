@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import Image from "next/image";
+/* logo uses native img to avoid CSP issues */
 import { usePathname } from "next/navigation";
 import { useCallback } from "react";
 import { LogOut, ShieldAlert } from "lucide-react";
@@ -36,7 +36,7 @@ export function Sidebar({ userEmail, userName }: SidebarProps) {
     <nav aria-label={t("accessibility.toggle_sidebar", locale)} className="hidden lg:flex w-64 flex-col fixed h-screen bg-card border-e border-border z-40">
       <div className="px-5 pt-6 pb-5">
         <div className="flex items-center gap-3">
-          <Image
+          <img
             src="/logo_solo.png"
             alt="CosttasHolding"
             width={40}

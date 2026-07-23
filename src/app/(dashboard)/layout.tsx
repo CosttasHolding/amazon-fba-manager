@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
-import Image from "next/image";
+/* logo uses native img to avoid CSP issues */
 import { createClient } from "@/lib/supabase/server";
 import "../animations.css";
 import "../ui-overrides.css";
@@ -46,7 +46,7 @@ export default async function DashboardLayout({
 
       <header role="banner" className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-card/90 backdrop-blur-xl border-b border-border">
         <div className="flex items-center gap-2.5">
-          <Image
+          <img
             src="/logo_solo.png"
             alt="CosttasHolding"
             width={32}

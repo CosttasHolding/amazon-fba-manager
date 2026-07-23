@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+/* logo uses native img to avoid CSP issues */
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Mail, Lock, User, UserPlus, Loader2 } from "lucide-react";
@@ -53,16 +53,15 @@ export default function RegisterPage() {
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center overflow-auto p-4">
-      <Image
+      <img
         src="/banner.png"
         alt=""
-        fill
-        className="object-cover object-center z-0"
+        className="fixed inset-0 w-full h-full object-cover object-center z-0"
       />
       <div className="fixed inset-0 bg-black/20 z-[1]" />
 
       <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
-        <Image
+        <img
           src="/logo_solo.png"
           alt="CosttasHolding"
           width={64}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+/* logo uses native img to avoid CSP issues */
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Mail, Lock, LogIn, Loader2 } from "lucide-react";
@@ -48,12 +48,11 @@ export default function LoginPage() {
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent z-[1]" />
 
       <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
-        <Image
+        <img
           src="/logo_solo.png"
           alt="CosttasHolding"
           width={64}
           height={48}
-          priority
           className="rounded-2xl object-contain mb-3"
         />
         <h1 className="text-2xl font-bold text-foreground drop-shadow-lg">
