@@ -38,13 +38,14 @@ export default async function DashboardLayout({
     redirect("/login");
   };
 
-  const userName = user.user_metadata?.full_name || user.user_metadata?.name;
+  const authName = user.user_metadata?.full_name || user.user_metadata?.name;
 
   const { data: settings } = await supabase
     .from("user_settings")
-    .select("avatar_url")
+    .select("full_name, avatar_url")
     .eq("user_id", user.id)
     .single();
+  const userName = settings?.full_name || authName;
   const avatarUrl = settings?.avatar_url || null;
 
   return (
