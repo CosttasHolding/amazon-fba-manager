@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Save, Loader2, Package, DollarSign, Info, Users, Weight } from "lucide-react";
+import { Save, Loader2, Package, DollarSign, Info, Users, Weight, Link2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { FeeCalculatorInline } from "@/components/fee-calculator-inline";
@@ -24,6 +24,7 @@ import { calcFBAFee, calcRefFee } from "@/lib/calculations";
 import { MARKETPLACES, PRODUCT_CATEGORIES, PRODUCT_STATUSES } from "@/lib/constants";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
+import { useUrlScrape } from "@/hooks/use-url-scrape";
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -80,6 +81,8 @@ export default function NewProductPage() {
 
   const watched = watch();
 
+  const urlScrape = useUrlScrape();
+
   // Auto-calculate FBA fee when weight changes
   useEffect(() => {
     const w = watched.weightKg;
@@ -129,6 +132,34 @@ export default function NewProductPage() {
     fetchSuppliers();
     fetchDefaults();
   }, [setValue]);
+
+  useEffect(() => {
+    if (urlScrape.scrapedData && urlScrape.platform === "amazon") {
+      const data = urlScrape.scrapedData;
+      if (data.platform === "amazon") {
+        if (data.name) setValue("name", data.name);
+        if (data.asin) setValue("asin", data.asin);
+        if (data.price && data.price > 0) setValue("salePrice", data.price);
+        if (data.weight_kg && data.weight_kg > 0) setValue("weightKg", data.weight_kg);
+        if (data.category) {
+          const catMap: Record<string, string> = {
+            "electronics": "Electronics",
+            "toys": "Toys",
+            "home": "Home",
+            "kitchen": "Kitchen",
+            "health": "Health",
+            "beauty": "Beauty",
+            "sports": "Sports",
+            "books": "Books",
+          };
+          const mapped = catMap[data.category.toLowerCase()] ?? data.category;
+          if (["Electronics","Toys","Home","Kitchen","Health","Beauty","Sports","Books","Other"].includes(mapped)) {
+            setValue("category", mapped as "Electronics" | "Toys" | "Home" | "Kitchen" | "Health" | "Beauty" | "Sports" | "Books" | "Other");
+          }
+        }
+      }
+    }
+  }, [urlScrape.scrapedData, urlScrape.platform, setValue]);
 
   const onSubmit = async (data: ProductFormData) => {
     setSaving(true);
@@ -191,6 +222,50 @@ export default function NewProductPage() {
       />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* URL Auto-detect */}
+        <div className="mb-6 p-4 rounded-lg border border-dashed border-border bg-muted/30">
+          <label className="text-xs font-semibold text-primary uppercase tracking-wider mb-2 block flex items-center gap-1.5">
+            <Link2 className="w-3.5 h-3.5" />
+            URL del producto (Amazon)
+          </label>
+          <div className="relative">
+            <Input
+              placeholder="https://amazon.com/dp/B08N5WRWNW..."
+              value={urlScrape.url}
+              onChange={(e) => urlScrape.setUrl(e.target.value)}
+              className="h-9 bg-background border-border text-sm pr-20"
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+              {urlScrape.isScraping && (
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              )}
+              {!urlScrape.isScraping && urlScrape.platform === "amazon" && urlScrape.scrapedData && (
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+              )}
+              {!urlScrape.isScraping && urlScrape.platform === "unknown" && urlScrape.url.length > 10 && (
+                <span className="text-xs text-muted-foreground">No detectado</span>
+              )}
+            </div>
+          </div>
+          {urlScrape.isScraping && (
+            <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Extrayendo datos del producto...
+            </p>
+          )}
+          {urlScrape.error && (
+            <p className="text-xs text-destructive mt-1.5">
+              {urlScrape.error}. Completá manualmente.
+            </p>
+          )}
+          {!urlScrape.isScraping && !urlScrape.error && urlScrape.scrapedData && urlScrape.platform === "amazon" && (
+            <p className="text-xs text-green-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" />
+              Datos extraídos correctamente
+            </p>
+          )}
+        </div>
+
         {/* Info basica */}
         <div className={sectionClass}>
           <div className={sectionTitleClass}>
