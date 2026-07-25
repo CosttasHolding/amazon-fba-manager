@@ -1,10 +1,11 @@
-export type Marketplace = 'US' | 'MX' | 'CA' | 'UK' | 'DE' | 'FR' | 'IT' | 'ES';
-export type ProductStatus = 'active' | 'paused' | 'discontinued';
+import { PRODUCT_STATUS_VALUES } from "@/lib/constants";
+
+export type Marketplace = 'US' | 'MX' | 'CA' | 'UK' | 'DE' | 'FR' | 'IT' | 'ES' | 'NA' | 'EU' | 'FE';
+export type ProductStatus = (typeof PRODUCT_STATUS_VALUES)[number];
 export type StockStatus = 'normal' | 'low_stock' | 'out_of_stock' | 'overstock';
 export type OrgMemberRole = 'owner' | 'admin' | 'editor' | 'viewer';
 export type OrgMemberStatus = 'pending' | 'active' | 'removed';
 export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
-export type InvitationRole = 'admin' | 'editor' | 'viewer';
 
 export interface Organization {
     id: string;
@@ -32,7 +33,7 @@ export interface OrgInvitation {
     id: string;
     org_id: string;
     email: string;
-    role: InvitationRole;
+    role: MemberRole;
     invited_by: string;
     token: string;
     expires_at: string;

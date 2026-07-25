@@ -11,7 +11,7 @@ interface Pagination {
   totalPages: number;
 }
 
-const SWR_CONFIG = {
+export const SWR_CONFIG = {
   revalidateOnFocus: false,
   revalidateOnReconnect: true,
   dedupingInterval: 10000,
@@ -57,12 +57,41 @@ export function useSales() {
   };
 }
 
-export function useDashboard() {
+export interface OrderListItem {
+  id: string;
+  po_number: string | null;
+  status: string;
+  quantity: number;
+  unit_cost: number;
+  total_cost: number;
+  currency: string;
+  shipping_method: string | null;
+  shipping_cost: number | null;
+  order_date: string | null;
+  estimated_arrival: string | null;
+  suppliers: { name: string } | null;
+  products: { name: string; sku: string } | null;
+  created_at: string;
+}
+
+export function useOrders() {
+  const { data, error, isLoading, mutate } = useSWR<{ data: OrderListItem[] }>("/api/orders", fetcher, SWR_CONFIG);
+  return {
+    orders: data?.data || [],
+    isLoading,
+    isError: !!error,
+    error,
+    mutate,
+  };
+}
+
+export function useDashboard(fallbackData?: DashboardResponse) {
   const { locale } = useLocale();
   const { data, error, isLoading, mutate } = useSWR<DashboardResponse>(`/api/dashboard?locale=${locale}`, fetcher, {
     ...SWR_CONFIG,
     dedupingInterval: 30000,
     refreshInterval: 120000,
+    fallbackData,
   });
   return {
     data: data || null,

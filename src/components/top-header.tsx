@@ -68,6 +68,7 @@ export function TopHeader({ userEmail, userName, avatarUrl }: TopHeaderProps) {
             <img
               src={avatarUrl || "/logo_solo.png"}
               alt={userName || "User"}
+              loading="lazy"
               className="w-8 h-8 rounded-lg object-cover border border-primary/20"
             />
           </button>

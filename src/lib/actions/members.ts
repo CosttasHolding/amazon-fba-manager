@@ -3,17 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getOrgId } from "./get-org-id";
 import { z } from "zod";
-
-const formSchema = z.object({
-  full_name: z.string().min(1, "Nombre requerido").max(255),
-  email: z.string().email().optional().nullable(),
-  ownership_pct: z.coerce.number().min(0).max(100).default(0),
-  status: z.enum(["active", "deceased", "retired"]).default("active"),
-  role: z.enum(["admin", "editor", "viewer"]).default("editor"),
-  executor_name: z.string().max(255).optional().nullable(),
-  executor_email: z.string().email().optional().nullable(),
-  notes: z.string().max(2000).optional().nullable(),
-});
+import { memberSchema as formSchema } from "@/validations/member";
 
 export async function createMember(data: {
   full_name: string;

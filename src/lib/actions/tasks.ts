@@ -2,17 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getOrgId } from "./get-org-id";
-import { z } from "zod";
-
-const formSchema = z.object({
-  title: z.string().min(1, "Título requerido").max(255),
-  description: z.string().max(5000).optional().nullable(),
-  status: z.enum(["pending", "in_progress", "completed"]).default("pending"),
-  priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
-  assigned_to: z.string().uuid().optional().nullable(),
-  due_date: z.string().optional().nullable(),
-  module: z.string().max(100).optional().nullable(),
-});
+import { taskSchema as formSchema } from "@/validations/member";
 
 export async function createTask(data: {
   title: string;

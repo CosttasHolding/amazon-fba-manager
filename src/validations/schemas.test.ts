@@ -113,9 +113,9 @@ describe("stockMovementSchema", () => {
 describe("saleSchema", () => {
   it("valida venta correcta", () => {
     const result = saleSchema.safeParse({
-      productId: "550e8400-e29b-41d4-a716-446655440000",
-      saleDate: new Date("2024-01-15"),
-      unitsSold: 10,
+      product_id: "550e8400-e29b-41d4-a716-446655440000",
+      sale_date: "2024-01-15",
+      units_sold: 10,
       revenue: 300,
     });
     expect(result.success).toBe(true);
@@ -123,8 +123,8 @@ describe("saleSchema", () => {
 
   it("falla sin producto", () => {
     const result = saleSchema.safeParse({
-      saleDate: new Date("2024-01-15"),
-      unitsSold: 10,
+      sale_date: "2024-01-15",
+      units_sold: 10,
       revenue: 300,
     });
     expect(result.success).toBe(false);

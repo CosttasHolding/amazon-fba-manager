@@ -1,12 +1,7 @@
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { Member, Task, BoardDecision } from "@/types";
-
-const SWR_CONFIG = {
-  revalidateOnFocus: false,
-  dedupingInterval: 10000,
-  errorRetryCount: 3,
-};
+import { SWR_CONFIG } from "@/hooks/use-data";
 
 interface ApiResponse<T> {
   data: T[];
@@ -31,23 +26,29 @@ export function useBoardDecisions() {
   return { decisions: data?.data || [], isLoading, isError: !!error, mutate };
 }
 
+export interface GovernanceSummary {
+  totalMembers: number;
+  activeMembers: number;
+  totalOwnership: number;
+  pendingTasks: number;
+  completedTasks: number;
+  overdueTasks: number;
+  totalDecisions: number;
+  approvedDecisions: number;
+}
+
+const EMPTY_SUMMARY: GovernanceSummary = {
+  totalMembers: 0,
+  activeMembers: 0,
+  totalOwnership: 0,
+  pendingTasks: 0,
+  completedTasks: 0,
+  overdueTasks: 0,
+  totalDecisions: 0,
+  approvedDecisions: 0,
+};
+
 export function useGovernanceSummary() {
-  const { data: membersData } = useSWR<ApiResponse<Member>>("/api/members", fetcher, SWR_CONFIG);
-  const { data: tasksData } = useSWR<ApiResponse<Task>>("/api/tasks", fetcher, SWR_CONFIG);
-  const { data: decisionsData } = useSWR<ApiResponse<BoardDecision>>("/api/board-decisions", fetcher, SWR_CONFIG);
-
-  const members = membersData?.data || [];
-  const tasks = tasksData?.data || [];
-  const decisions = decisionsData?.data || [];
-
-  return {
-    totalMembers: members.length,
-    activeMembers: members.filter((m) => m.status === "active").length,
-    totalOwnership: members.reduce((sum, m) => sum + (m.ownership_pct || 0), 0),
-    pendingTasks: tasks.filter((t) => t.status !== "completed").length,
-    completedTasks: tasks.filter((t) => t.status === "completed").length,
-    overdueTasks: tasks.filter((t) => t.due_date && new Date(t.due_date) < new Date() && t.status !== "completed").length,
-    totalDecisions: decisions.length,
-    approvedDecisions: decisions.filter((d) => d.status === "approved" || d.status === "executed").length,
-  };
+  const { data, error, isLoading, mutate } = useSWR<GovernanceSummary>("/api/governance/summary", fetcher, SWR_CONFIG);
+  return { ...(data || EMPTY_SUMMARY), isLoading, isError: !!error, mutate };
 }

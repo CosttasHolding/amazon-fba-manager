@@ -23,6 +23,15 @@ interface SearchResult {
   icon: React.ElementType;
 }
 
+type ApiSearchItem = Omit<SearchResult, "icon">;
+
+const RESULT_ICONS = {
+  product: Package,
+  supplier: Factory,
+  order: ClipboardList,
+  research: FlaskConical,
+} as const;
+
 export function GlobalSearch() {
   const router = useRouter();
   const { locale } = useLocale();
@@ -53,27 +62,12 @@ export function GlobalSearch() {
     abortRef.current = controller;
     setLoading(true);
     try {
-      const [productsRes, suppliersRes, ordersRes, researchRes] = await Promise.all([
-        fetch(`/api/products?search=${encodeURIComponent(q)}`, { signal: controller.signal }).then((r) => (r.ok ? r.json() : [])),
-        fetch(`/api/suppliers?search=${encodeURIComponent(q)}`, { signal: controller.signal }).then((r) => (r.ok ? r.json() : [])),
-        fetch(`/api/orders?search=${encodeURIComponent(q)}`, { signal: controller.signal }).then((r) => (r.ok ? r.json() : [])),
-        fetch(`/api/research`, { signal: controller.signal }).then((r) => (r.ok ? r.json() : [])),
-      ]);
-
-      const items: SearchResult[] = [];
-      (productsRes || []).slice(0, 5).forEach((p: { id: string; name: string; sku?: string }) => {
-        items.push({ id: p.id, type: "product", title: p.name, subtitle: p.sku || "", href: `/products/${p.id}`, icon: Package });
-      });
-      (suppliersRes || []).slice(0, 5).forEach((s: { id: string; name: string; country?: string }) => {
-        items.push({ id: s.id, type: "supplier", title: s.name, subtitle: s.country || "", href: `/suppliers/${s.id}`, icon: Factory });
-      });
-      (ordersRes || []).slice(0, 5).forEach((o: { id: string; po_number?: string; suppliers?: { name?: string } }) => {
-        items.push({ id: o.id, type: "order", title: o.po_number || `PO-${o.id.slice(0, 8)}`, subtitle: o.suppliers?.name || "", href: `/orders/${o.id}`, icon: ClipboardList });
-      });
-      (researchRes || []).filter((r: { name: string }) => r.name.toLowerCase().includes(q.toLowerCase())).slice(0, 5).forEach((r: { id: string; name: string; niche?: string }) => {
-        items.push({ id: r.id, type: "research", title: r.name, subtitle: r.niche || "", href: `/research`, icon: FlaskConical });
-      });
-
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
+      const json: { data?: ApiSearchItem[] } = res.ok ? await res.json() : { data: [] };
+      const items: SearchResult[] = (json.data || []).map((item) => ({
+        ...item,
+        icon: RESULT_ICONS[item.type],
+      }));
       setResults(items);
       setSelectedIndex(0);
     } catch { setResults([]); }

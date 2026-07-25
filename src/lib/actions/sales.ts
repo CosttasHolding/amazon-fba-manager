@@ -2,16 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getOrgId } from "./get-org-id";
-import { z } from "zod";
-
-const createSaleSchema = z.object({
-  product_id: z.string().uuid(),
-  sale_date: z.string().min(1),
-  units_sold: z.coerce.number().int().min(1),
-  revenue: z.coerce.number().min(0),
-  amazon_fees: z.coerce.number().min(0).default(0),
-  order_id: z.string().max(255).nullable().optional(),
-});
+import { saleSchema as createSaleSchema } from "@/validations/sales";
 
 export async function createSale(data: {
   product_id: string;

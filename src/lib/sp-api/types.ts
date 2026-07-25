@@ -1,7 +1,3 @@
-export type SpApiMarketplace =
-  | "NA" | "EU" | "FE" | "US" | "CA" | "MX"
-  | "UK" | "DE" | "FR" | "IT" | "ES";
-
 export interface SpApiConnection {
   id: string;
   user_id: string;

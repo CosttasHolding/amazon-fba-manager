@@ -25,6 +25,7 @@ import { MARKETPLACES, PRODUCT_CATEGORIES, PRODUCT_STATUSES } from "@/lib/consta
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { useUrlScrape } from "@/hooks/use-url-scrape";
+import { inputClass, labelClass } from "@/lib/form-constants";
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -37,9 +38,7 @@ interface Supplier {
 
 const sectionClass = "rounded-2xl border border-border bg-card p-6 space-y-4";
 const sectionTitleClass = "flex items-center gap-2 text-sm font-semibold text-foreground/80 uppercase tracking-wider mb-4";
-const labelClass = "text-sm text-muted-foreground";
 const errorClass = "text-xs text-destructive mt-1";
-const inputClass = "bg-background border-border";
 
 export default function NewProductPage() {
   const router = useRouter();

@@ -1,26 +1,17 @@
 import { z } from "zod";
+import { MARKETPLACE_VALUES, PRODUCT_CATEGORIES, PRODUCT_STATUS_VALUES } from "@/lib/constants";
 
 export const productSchema = z.object({
   sku: z.string().max(100).optional().nullable(),
   asin: z.string().max(100).optional().nullable(),
   name: z.string().min(1, "Name is required").max(255),
   category: z
-    .enum([
-      "Electronics",
-      "Toys",
-      "Home",
-      "Kitchen",
-      "Health",
-      "Beauty",
-      "Sports",
-      "Books",
-      "Other",
-    ])
+    .enum(PRODUCT_CATEGORIES)
     .optional()
     .nullable(),
-  status: z.enum(["active", "paused", "discontinued"]).default("active"),
+  status: z.enum(PRODUCT_STATUS_VALUES).default("active"),
   marketplace: z
-    .enum(["US", "MX", "CA", "UK", "DE", "FR", "IT", "ES"])
+    .enum(MARKETPLACE_VALUES)
     .optional()
     .default("US"),
   unitCost: z.coerce.number().min(0).default(0),

@@ -1,13 +1,14 @@
 ﻿"use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, Users, Shield } from "lucide-react";
+import { Users, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { createMember, updateMember } from "@/lib/actions/members";
 import { Member, type MemberRole, type MemberStatus } from "@/types";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
+import { FormDialogFooter, FormDialogLayout } from "@/components/ui/form-dialog";
+import { nativeInputClass as inputClass, labelClass } from "@/lib/form-constants";
 
 interface MemberFormModalProps {
   open: boolean;
@@ -15,9 +16,6 @@ interface MemberFormModalProps {
   onSuccess?: () => void;
   member?: Member | null;
 }
-
-const inputClass = "w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
-const labelClass = "text-xs text-muted-foreground";
 
 export function MemberFormModal({ open, onOpenChange, onSuccess, member }: MemberFormModalProps) {
   const { locale } = useLocale();
@@ -87,15 +85,13 @@ export function MemberFormModal({ open, onOpenChange, onSuccess, member }: Membe
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="text-foreground flex items-center gap-2 text-base">
-            <Users className="h-5 w-5 text-primary" />
-            {member ? t("members.edit_title", locale) : t("members.new_title", locale)}
-          </DialogTitle>
-        </DialogHeader>
-
+    <FormDialogLayout
+      open={open}
+      onOpenChange={onOpenChange}
+      title={member ? t("members.edit_title", locale) : t("members.new_title", locale)}
+      icon={<Users className="h-5 w-5 text-primary" />}
+      titleClassName="text-foreground flex items-center gap-2 text-base"
+    >
         <form onSubmit={handleSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pe-1">
           <div className="space-y-2">
             <label htmlFor="member-full-name" className={labelClass}>{t("members.field_name", locale)}</label>
@@ -207,25 +203,14 @@ export function MemberFormModal({ open, onOpenChange, onSuccess, member }: Membe
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-border">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              {t("common.cancel", locale)}
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
-              {saving ? t("common.saving", locale) : (member ? t("members.save_changes", locale) : t("members.create_button", locale))}
-            </button>
-          </div>
+          <FormDialogFooter
+            onCancel={() => onOpenChange(false)}
+            saving={saving}
+            locale={locale}
+            saveLabel={member ? t("members.save_changes", locale) : t("members.create_button", locale)}
+            saveIcon={<Users className="h-4 w-4" />}
+          />
         </form>
-      </DialogContent>
-    </Dialog>
+    </FormDialogLayout>
   );
 }

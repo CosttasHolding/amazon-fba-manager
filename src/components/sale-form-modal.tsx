@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,11 +11,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, ShoppingCart, DollarSign, Calculator } from "lucide-react";
+import { ShoppingCart, DollarSign, Calculator } from "lucide-react";
 import { createSale } from "@/lib/actions/sales";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { inputClass, labelClass, getTodayStr } from "@/lib/form-constants";
+import { fmt } from "@/lib/utils";
+import { FormDialogFooter, FormDialogLayout } from "@/components/ui/form-dialog";
 
 interface ProductOption {
   id: string;
@@ -34,10 +35,6 @@ interface SaleFormModalProps {
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
-
-const fmtMoney = (v: number) => {
-  return "$" + (v || 0).toFixed(2);
-};
 
 export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalProps) {
   const { locale } = useLocale();
@@ -152,15 +149,12 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="text-foreground flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5 text-primary" />
-            {t("sales.register_sale", locale)}
-          </DialogTitle>
-        </DialogHeader>
-
+    <FormDialogLayout
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("sales.register_sale", locale)}
+      icon={<ShoppingCart className="h-5 w-5 text-primary" />}
+    >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="product" className={labelClass}>{t("common.product", locale)} *</Label>
@@ -201,7 +195,7 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
                 placeholder="0.00" className={inputClass} />
               {selectedProductData && unitsNum > 0 && (
                 <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                  {t("sales.suggested_prefix", locale)}{fmtMoney(selectedProductData.sale_price)} x {unitsNum}
+                  {t("sales.suggested_prefix", locale)}{fmt(selectedProductData.sale_price)} x {unitsNum}
                 </p>
               )}
             </div>
@@ -229,35 +223,30 @@ export function SaleFormModal({ open, onOpenChange, onSuccess }: SaleFormModalPr
               <div className="grid grid-cols-3 gap-2 text-xs">
                 <div>
                   <span className="text-muted-foreground">{t("common.revenue", locale)}</span>
-                  <p className="font-medium text-foreground tabular-nums">{fmtMoney(revenueNum)}</p>
+                  <p className="font-medium text-foreground tabular-nums">{fmt(revenueNum)}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">{t("sales.cost_plus_fees", locale)}</span>
-                  <p className="font-medium text-foreground tabular-nums">{fmtMoney(totalCost + feesNum)}</p>
+                  <p className="font-medium text-foreground tabular-nums">{fmt(totalCost + feesNum)}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">{t("common.profit", locale)}</span>
                   <p className={"font-bold tabular-nums " + (estimatedProfit >= 0 ? "text-emerald-400" : "text-red-400")}>
-                    {fmtMoney(estimatedProfit)}
+                    {fmt(estimatedProfit)}
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-border">
-            <button type="button" onClick={() => onOpenChange(false)}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              {t("common.cancel", locale)}
-            </button>
-            <button type="submit" disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <DollarSign className="h-4 w-4" />}
-              {saving ? t("common.saving", locale) : t("sales.register_sale", locale)}
-            </button>
-          </div>
+          <FormDialogFooter
+            onCancel={() => onOpenChange(false)}
+            saving={saving}
+            locale={locale}
+            saveLabel={t("sales.register_sale", locale)}
+            saveIcon={<DollarSign className="h-4 w-4" />}
+          />
         </form>
-      </DialogContent>
-    </Dialog>
+    </FormDialogLayout>
   );
 }

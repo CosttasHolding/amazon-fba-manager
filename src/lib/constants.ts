@@ -25,6 +25,10 @@ export const PRODUCT_CATEGORIES = [
   "Other",
 ] as const;
 
+export const PRODUCT_STATUS_VALUES = ["active", "paused", "discontinued"] as const;
+
+export const MARKETPLACE_VALUES = ["US", "MX", "CA", "UK", "DE", "FR", "IT", "ES"] as const;
+
 export const PRODUCT_STATUSES = [
   { value: "active", label: "Activo" },
   { value: "paused", label: "Pausado" },

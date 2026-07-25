@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import React from "react";
 import { t } from "@/lib/i18n/translations";
 import type { Locale } from "@/lib/i18n/translations";
@@ -59,12 +59,12 @@ export default function AlertsPage() {
   const { history, isLoading: historyLoading, mutate: mutateHistory } = useAlertHistory();
   const { reports, isLoading: reportsLoading, mutate: mutateReports } = useScheduledReports();
 
-  const tabs: { id: Tab; label: string; icon: typeof Bell }[] = [
+  const tabs: { id: Tab; label: string; icon: typeof Bell }[] = useMemo(() => [
     { id: "rules", label: t("alerts.rules", locale), icon: Bell },
     { id: "history", label: t("alerts.history", locale), icon: History },
     { id: "schedules", label: t("alerts.schedules", locale), icon: Clock },
     { id: "auto-reorder", label: t("alerts.reorder", locale), icon: ShoppingCart },
-  ];
+  ], [locale]);
 
   if (rulesLoading && historyLoading && reportsLoading) {
     return <PageSkeleton kpiCount={3} rowCount={4} showCharts showSearch={false} />;
@@ -127,8 +127,8 @@ function RulesTab({ rules, mutate, locale }: { rules: AlertRule[]; mutate: () =>
   });
   const [loading, setLoading] = useState(false);
 
-  const entityLabels = ENTITY_LABELS(locale);
-  const conditionLabels = CONDITION_LABELS(locale);
+  const entityLabels = useMemo(() => ENTITY_LABELS(locale), [locale]);
+  const conditionLabels = useMemo(() => CONDITION_LABELS(locale), [locale]);
 
   const handleSubmit = async () => {
     if (!form.name.trim()) return;
@@ -348,7 +348,7 @@ function RulesTab({ rules, mutate, locale }: { rules: AlertRule[]; mutate: () =>
 
 /* ─── History Tab ─── */
 function HistoryTab({ history, mutate, locale }: { history: AlertHistory[]; mutate: () => void; locale: Locale }) {
-  const conditionLabels = CONDITION_LABELS(locale);
+  const conditionLabels = useMemo(() => CONDITION_LABELS(locale), [locale]);
 
   const handleMarkRead = async (ids: string[]) => {
     try {
@@ -426,12 +426,12 @@ function SchedulesTab({ reports, mutate, locale }: { reports: ScheduledReport[];
   });
   const [loading, setLoading] = useState(false);
 
-  const templateLabels: Record<string, string> = {
+  const templateLabels: Record<string, string> = useMemo(() => ({
     profitability: t("alerts.template.profitability", locale),
     inventory: t("alerts.template.inventory", locale),
     "sales-summary": t("alerts.template.sales_summary", locale),
     "roi-ranking": t("alerts.template.roi_ranking", locale),
-  };
+  }), [locale]);
 
   const handleSubmit = async () => {
     if (!form.name.trim()) return;

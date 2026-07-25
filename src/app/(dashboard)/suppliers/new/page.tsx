@@ -20,6 +20,7 @@ import { supplierSchema, SupplierFormData } from "@/validations/supplier";
 import { PageHeader } from "@/components/ui/page-header";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
+import { inputClass, labelClass } from "@/lib/form-constants";
 
 const COUNTRIES = [
   "China", "India", "Vietnam", "Taiwan", "Corea del Sur",
@@ -28,9 +29,7 @@ const COUNTRIES = [
 
 const sectionClass = "rounded-2xl border border-border bg-background p-6 space-y-4";
 const sectionTitleClass = "flex items-center gap-2 text-sm font-semibold text-foreground uppercase tracking-wider mb-4";
-const labelClass = "text-sm text-muted-foreground";
 const errorClass = "text-xs text-destructive mt-1";
-const inputClass = "bg-muted border-border";
 
 export default function NewSupplierPage() {
   const router = useRouter();

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,11 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, ClipboardList, DollarSign } from "lucide-react";
+import { ClipboardList, DollarSign } from "lucide-react";
 import { createOrder } from "@/lib/actions/orders";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { inputClass, labelClass, getTodayStr } from "@/lib/form-constants";
+import { FormDialogFooter, FormDialogLayout } from "@/components/ui/form-dialog";
 
 interface SupplierOption {
   id: string;
@@ -130,15 +130,13 @@ export function OrderFormModal({ open, onOpenChange, onSuccess }: OrderFormModal
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg bg-card border-border max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-foreground flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 text-primary" />
-            {t("orders.new_order_modal", locale)}
-          </DialogTitle>
-        </DialogHeader>
-
+    <FormDialogLayout
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("orders.new_order_modal", locale)}
+      icon={<ClipboardList className="h-5 w-5 text-primary" />}
+      contentClassName="max-w-lg bg-card border-border max-h-[90vh] overflow-y-auto"
+    >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -224,19 +222,14 @@ export function OrderFormModal({ open, onOpenChange, onSuccess }: OrderFormModal
             <Textarea id="order-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("orders.notes_placeholder", locale)} rows={2} className="bg-muted/50 border-border text-sm" />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-border">
-            <button type="button" onClick={() => onOpenChange(false)}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              {t("common.cancel", locale)}
-            </button>
-            <button type="submit" disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <DollarSign className="h-4 w-4" />}
-              {saving ? t("common.saving", locale) : t("orders.create_order", locale)}
-            </button>
-          </div>
+          <FormDialogFooter
+            onCancel={() => onOpenChange(false)}
+            saving={saving}
+            locale={locale}
+            saveLabel={t("orders.create_order", locale)}
+            saveIcon={<DollarSign className="h-4 w-4" />}
+          />
         </form>
-      </DialogContent>
-    </Dialog>
+    </FormDialogLayout>
   );
 }

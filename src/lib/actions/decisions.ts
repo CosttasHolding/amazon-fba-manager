@@ -3,16 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getOrgId } from "./get-org-id";
 import { z } from "zod";
-
-const formSchema = z.object({
-  title: z.string().min(1, "Título requerido").max(255),
-  doc_reference: z.string().max(100).optional().nullable(),
-  description: z.string().max(5000).optional().nullable(),
-  decision_date: z.string().optional().nullable(),
-  voted_by: z.record(z.unknown()).optional().nullable(),
-  status: z.enum(["draft", "approved", "rejected", "executed"]).default("draft"),
-  file_url: z.string().max(500).optional().nullable(),
-});
+import { boardDecisionSchema as formSchema } from "@/validations/member";
 
 export async function createBoardDecision(data: {
   title: string;

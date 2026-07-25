@@ -12,7 +12,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Sidebar } from "@/components/sidebar";
 import { TopHeader } from "@/components/top-header";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
-import { ErrorBoundaryWrapper } from "@/components/error-boundary-wrapper";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { HelpButton } from "@/components/help-button";
 import { SkipToContent } from "@/components/skip-to-content";
 import { OrgLayout } from "@/components/org-layout";
@@ -99,7 +99,7 @@ export default async function DashboardLayout({
       <main id="main-content" role="main" aria-label="Contenido principal" className="lg:ms-64 min-h-screen pb-24 lg:pb-0">
         <TopHeader userEmail={user.email} userName={userName} avatarUrl={avatarUrl} />
         <div className="p-4 sm:p-6 lg:p-8">
-          <ErrorBoundaryWrapper>{children}</ErrorBoundaryWrapper>
+          <ErrorBoundary>{children}</ErrorBoundary>
         </div>
       </main>
 

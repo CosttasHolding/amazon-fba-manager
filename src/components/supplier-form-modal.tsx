@@ -3,7 +3,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supplierSchema, SupplierFormData } from "@/validations/supplier";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,11 +17,12 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createSupplier } from "@/lib/actions/suppliers";
-import { Loader2, Factory, Mail, Package, FileText } from "lucide-react";
+import { Factory, Mail, Package, FileText } from "lucide-react";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { FormErrorMessage } from "@/components/ui/announcer";
 import { inputClass, labelClass, sectionLabel } from "@/lib/form-constants";
+import { FormDialogFooter, FormDialogLayout } from "@/components/ui/form-dialog";
 
 const COUNTRY_SUGGESTIONS = [
   "China", "India", "Vietnam", "Taiwan", "Corea del Sur",
@@ -85,15 +85,13 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="text-foreground flex items-center gap-2">
-            <Factory className="h-5 w-5 text-primary" />
-            {t("suppliers.new_supplier", locale)}
-          </DialogTitle>
-        </DialogHeader>
-
+    <FormDialogLayout
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("suppliers.new_supplier", locale)}
+      icon={<Factory className="h-5 w-5 text-primary" />}
+      contentClassName="max-w-2xl bg-card border-border"
+    >
         <form onSubmit={form.handleSubmit(onSubmit)} className="max-h-[75vh] overflow-y-auto pe-1 space-y-4">
           <div>
             <div className={sectionLabel}>
@@ -223,25 +221,15 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-border sticky bottom-0 bg-card pb-1">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              {t("common.cancel", locale)}
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Factory className="h-4 w-4" />}
-              {saving ? t("common.saving", locale) : t("suppliers.create_button", locale)}
-            </button>
-          </div>
+          <FormDialogFooter
+            onCancel={() => onOpenChange(false)}
+            saving={saving}
+            locale={locale}
+            saveLabel={t("suppliers.create_button", locale)}
+            saveIcon={<Factory className="h-4 w-4" />}
+            sticky
+          />
         </form>
-      </DialogContent>
-    </Dialog>
+    </FormDialogLayout>
   );
 }

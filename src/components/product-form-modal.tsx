@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { productSchema } from "@/validations/product";
 import { z } from "zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +24,7 @@ import { useLocale } from "@/lib/i18n/locale-context";
 import { FormErrorMessage } from "@/components/ui/announcer";
 import { inputClass, labelClass, sectionLabel } from "@/lib/form-constants";
 import { useUrlScrape } from "@/hooks/use-url-scrape";
+import { FormDialogFooter, FormDialogLayout } from "@/components/ui/form-dialog";
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -119,15 +119,13 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="text-foreground flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" />
-            {t("products.new_product", locale)}
-          </DialogTitle>
-        </DialogHeader>
-
+    <FormDialogLayout
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("products.new_product", locale)}
+      icon={<Package className="h-5 w-5 text-primary" />}
+      contentClassName="max-w-2xl bg-card border-border"
+    >
         <form onSubmit={form.handleSubmit(onSubmit)} className="max-h-[75vh] overflow-y-auto pe-1 space-y-4">
           <div className="mb-4 p-3 rounded-lg border border-dashed border-border bg-muted/30">
             <label className={sectionLabel}>
@@ -365,25 +363,15 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-border sticky bottom-0 bg-card pb-1">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              {t("common.cancel", locale)}
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
-              {saving ? t("common.saving", locale) : t("products.form_create_button", locale)}
-            </button>
-          </div>
+          <FormDialogFooter
+            onCancel={() => onOpenChange(false)}
+            saving={saving}
+            locale={locale}
+            saveLabel={t("products.form_create_button", locale)}
+            saveIcon={<Package className="h-4 w-4" />}
+            sticky
+          />
         </form>
-      </DialogContent>
-    </Dialog>
+    </FormDialogLayout>
   );
 }

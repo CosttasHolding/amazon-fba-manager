@@ -5,13 +5,14 @@ import { createClient } from "@/lib/supabase/server";
 import { getOrgId } from "@/lib/api-handler";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/api-utils";
+import { PRODUCT_STATUS_VALUES } from "@/lib/constants";
 
 const productUpdateSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   sku: z.string().max(100).nullable().optional(),
   asin: z.string().max(100).nullable().optional(),
   category: z.string().nullable().optional(),
-  status: z.enum(["active","paused","discontinued"]).optional(),
+  status: z.enum(PRODUCT_STATUS_VALUES).optional(),
   marketplace: z.string().max(10).optional(),
   unit_cost: z.coerce.number().min(0).optional(),
   sale_price: z.coerce.number().min(0).optional(),

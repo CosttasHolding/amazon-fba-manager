@@ -46,6 +46,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { CommentsSection } from "@/components/comments-section";
+import { fmt } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -96,8 +97,6 @@ interface ProductSupplier {
     status: string;
   };
 }
-
-const fmtMoney = (v: number) => "$" + (v || 0).toFixed(2);
 
 function RatingStars({ rating, locale }: { rating: number; locale: string }) {
   if (!rating) return <span className="text-xs text-muted-foreground">N/A</span>;
@@ -323,6 +322,7 @@ export default function ProductDetailPage() {
           <img
             src={product.image_url}
             alt={product.name}
+            loading="lazy"
             className="max-h-[360px] w-auto object-contain rounded-xl"
           />
         </div>
@@ -331,14 +331,14 @@ export default function ProductDetailPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label={t("products.sale_price", locale)}
-          value={fmtMoney(sellPrice)}
+          value={fmt(sellPrice)}
           icon={DollarSign}
           accentColor="green"
           animationDelay={0}
         />
         <KpiCard
           label={t("products.buy_cost", locale)}
-          value={fmtMoney(buyCost)}
+          value={fmt(buyCost)}
           icon={ShoppingCart}
           accentColor="cyan"
           animationDelay={75}
@@ -398,7 +398,7 @@ export default function ProductDetailPage() {
               profitValue >= 0 ? "text-emerald-400" : "text-red-400"
             )}
           >
-            {fmtMoney(profitValue)}
+            {fmt(profitValue)}
           </span>
         </div>
       </div>
@@ -416,13 +416,13 @@ export default function ProductDetailPage() {
               <div key={item.label} className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">{item.label}</span>
                 <span className="text-sm font-medium text-foreground tabular-nums">
-                  {fmtMoney(item.value)}
+                  {fmt(item.value)}
                 </span>
               </div>
             ))}
             <div className="border-t border-border pt-3 flex justify-between items-center">
               <span className="text-sm font-semibold text-foreground">{t("products.total_cost_label", locale)}</span>
-              <span className="text-sm font-bold text-primary tabular-nums">{fmtMoney(totalCost)}</span>
+              <span className="text-sm font-bold text-primary tabular-nums">{fmt(totalCost)}</span>
             </div>
           </div>
         </div>
@@ -556,7 +556,7 @@ export default function ProductDetailPage() {
                         <RatingStars rating={ps.suppliers.rating} locale={locale} />
                       </td>
                       <td className={tableCellClass + " text-end font-medium text-foreground tabular-nums"}>
-                        {fmtMoney(ps.unit_cost)}
+                        {fmt(ps.unit_cost)}
                       </td>
                       <td className={tableCellClass + " text-end text-muted-foreground tabular-nums"}>
                         {ps.moq || "N/A"}
@@ -599,7 +599,7 @@ export default function ProductDetailPage() {
                     <div>
                       <span className="text-muted-foreground">{t("products.cost", locale)}</span>
                       <p className="font-medium text-foreground tabular-nums">
-                        {fmtMoney(ps.unit_cost)}
+                        {fmt(ps.unit_cost)}
                       </p>
                     </div>
                     <div>

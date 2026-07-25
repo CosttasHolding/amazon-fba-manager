@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { rateLimit, buildRateLimitKey } from "@/lib/rate-limit";
+import { resolveOrgId } from "@/lib/org-resolver";
 
 type HandlerContext = {
   supabase: Awaited<ReturnType<typeof createClient>>;
@@ -46,42 +47,7 @@ export function createApiHandler(handler: ApiHandler, rateLimitOpts?: { limit?: 
       let orgId: string | null = req.headers.get("x-org-id") || null;
 
       if (!orgId) {
-        const { data: membership } = await supabase
-          .from("org_members")
-          .select("org_id")
-          .eq("user_id", user.id)
-          .eq("status", "active")
-          .order("joined_at", { ascending: true })
-          .limit(1)
-          .single();
-        orgId = membership?.org_id || null;
-      }
-
-      if (!orgId) {
-        const admin = createServiceRoleClient();
-        const slug = "org-" + user.id.replace(/-/g, "") + "-default";
-
-        const { data: existing } = await admin
-          .from("organizations")
-          .select("id")
-          .eq("slug", slug)
-          .maybeSingle();
-
-        if (existing) {
-          orgId = existing.id;
-        } else {
-          const { data: newOrg } = await admin
-            .from("organizations")
-            .insert({ name: "Mi Organización", slug, owner_id: user.id })
-            .select("id")
-            .single();
-          if (newOrg) {
-            await admin
-              .from("org_members")
-              .insert({ org_id: newOrg.id, user_id: user.id, role: "owner", status: "active" });
-            orgId = newOrg.id;
-          }
-        }
+        orgId = await resolveOrgId(supabase, user.id);
       }
 
       return await handler({ supabase, user: { id: user.id, email: user.email }, orgId, req });
@@ -93,33 +59,9 @@ export function createApiHandler(handler: ApiHandler, rateLimitOpts?: { limit?: 
 }
 
 export async function getOrgId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, req: Request): Promise<string | null> {
-  let orgId: string | null = req.headers.get("x-org-id") || null;
-  if (!orgId) {
-    const { data: membership } = await supabase
-      .from("org_members")
-      .select("org_id")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .order("joined_at", { ascending: true })
-      .limit(1)
-      .single();
-    orgId = membership?.org_id || null;
-  }
-  if (!orgId) {
-    const admin = createServiceRoleClient();
-    const slug = "org-" + userId.replace(/-/g, "") + "-default";
-    const { data: existing } = await admin.from("organizations").select("id").eq("slug", slug).maybeSingle();
-    if (existing) {
-      orgId = existing.id;
-    } else {
-      const { data: newOrg } = await admin.from("organizations").insert({ name: "Mi Organización", slug, owner_id: userId }).select("id").single();
-      if (newOrg) {
-        await admin.from("org_members").insert({ org_id: newOrg.id, user_id: userId, role: "owner", status: "active" });
-        orgId = newOrg.id;
-      }
-    }
-  }
-  return orgId;
+  const headerOrgId = req.headers.get("x-org-id") || null;
+  if (headerOrgId) return headerOrgId;
+  return resolveOrgId(supabase, userId);
 }
 
 export function buildPagination(req: NextRequest, defaultPerPage = 20) {

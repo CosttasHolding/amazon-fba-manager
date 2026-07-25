@@ -29,26 +29,10 @@ import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { PaginationControl } from "@/components/ui/pagination-control";
 import { OrderFormModal } from "@/components/order-form-modal";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useOrders } from "@/hooks/use-data";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
-
-interface OrderItem {
-  id: string;
-  po_number: string | null;
-  status: string;
-  quantity: number;
-  unit_cost: number;
-  total_cost: number;
-  currency: string;
-  shipping_method: string | null;
-  shipping_cost: number | null;
-  order_date: string | null;
-  estimated_arrival: string | null;
-  suppliers: { name: string } | null;
-  products: { name: string; sku: string } | null;
-  created_at: string;
-}
 
 const STATUS_FLOW = [
   { key: "draft", color: "bg-slate-500", border: "border-slate-500", text: "text-slate-400" },
@@ -96,8 +80,7 @@ function TimelineProgress({ status }: { status: string }) {
 export default function OrdersPage() {
   const { locale } = useLocale();
   const router = useRouter();
-  const [orders, setOrders] = useState<OrderItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { orders, isLoading: loading, isError, mutate } = useOrders();
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounce(searchInput, 300);
   const [filterStatus, setFilterStatus] = useState("all");
@@ -105,16 +88,9 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  useEffect(() => { fetchOrders(); }, []);
-
-  const fetchOrders = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/orders");
-      if (res.ok) { const data = await res.json(); setOrders(data.data || []); }
-    } catch { toast.error(t("common.error_loading_orders", locale)); }
-    finally { setLoading(false); }
-  };
+  useEffect(() => {
+    if (isError) toast.error(t("common.error_loading_orders", locale));
+  }, [isError, locale]);
 
   const filtered = useMemo(() => {
     let result = orders;
@@ -306,7 +282,7 @@ export default function OrdersPage() {
         )}
       </DataTableWrapper>
 
-      <OrderFormModal open={showModal} onOpenChange={setShowModal} onSuccess={fetchOrders} />
+      <OrderFormModal open={showModal} onOpenChange={setShowModal} onSuccess={() => mutate()} />
     </div>
   );
 }

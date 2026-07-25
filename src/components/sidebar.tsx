@@ -3,7 +3,7 @@
 import Link from "next/link";
 /* logo uses native img to avoid CSP issues */
 import { usePathname } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { LogOut, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { navItems } from "@/lib/navigation";
@@ -27,6 +27,34 @@ export function Sidebar({ userEmail, userName, avatarUrl }: SidebarProps) {
     return pathname.startsWith(href);
   }, [pathname]);
 
+  const navLinks = useMemo(() => navItems.map((item) => {
+    const active = isActive(item.href);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        aria-current={active ? "page" : undefined}
+        className={
+          "relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group " +
+          (active
+            ? "text-primary bg-primary/[0.08]"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/50")
+        }
+      >
+        {active && (
+          <div className="absolute start-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-e-full bg-primary" />
+        )}
+        <item.icon
+          className={
+            "w-[18px] h-[18px] transition-colors duration-200 " +
+            (active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")
+          }
+        />
+        <span className="text-sm font-medium font-body">{t(`nav.${item.href.replace("/", "").replace(/-/g, "_")}`, locale) || item.label}</span>
+      </Link>
+    );
+  }), [isActive, locale]);
+
   return (
     <nav aria-label={t("accessibility.toggle_sidebar", locale)} className="hidden lg:flex w-64 flex-col fixed h-screen bg-card border-e border-border z-40">
       <div className="px-5 pt-6 pb-5">
@@ -36,6 +64,7 @@ export function Sidebar({ userEmail, userName, avatarUrl }: SidebarProps) {
             alt="CosttasHolding"
             width={40}
             height={32}
+            loading="lazy"
             className="rounded-lg object-contain"
           />
           <div>
@@ -54,33 +83,7 @@ export function Sidebar({ userEmail, userName, avatarUrl }: SidebarProps) {
       </div>
 
       <nav className="flex-1 px-3 mt-2 space-y-0.5 overflow-y-auto">
-        {navItems.map((item) => {
-          const active = isActive(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              className={
-                "relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group " +
-                (active
-                  ? "text-primary bg-primary/[0.08]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50")
-              }
-            >
-              {active && (
-                <div className="absolute start-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-e-full bg-primary" />
-              )}
-              <item.icon
-                className={
-                  "w-[18px] h-[18px] transition-colors duration-200 " +
-                  (active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")
-                }
-              />
-              <span className="text-sm font-medium font-body">{t(`nav.${item.href.replace("/", "").replace(/-/g, "_")}`, locale) || item.label}</span>
-            </Link>
-          );
-        })}
+        {navLinks}
       </nav>
 
       <div className="px-3 pb-4 pt-2 border-t border-border space-y-1">
@@ -88,6 +91,7 @@ export function Sidebar({ userEmail, userName, avatarUrl }: SidebarProps) {
           <img
             src={avatarUrl || "/logo_solo.png"}
             alt={userName || "User"}
+            loading="lazy"
             className="w-8 h-8 rounded-lg object-cover border border-primary/20"
           />
           <div className="flex-1 min-w-0">

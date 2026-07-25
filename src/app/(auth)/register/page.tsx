@@ -56,6 +56,7 @@ export default function RegisterPage() {
       <img
         src="/banner.png"
         alt=""
+        loading="lazy"
         className="fixed inset-0 w-full h-full object-cover object-center z-0"
       />
       <div className="fixed inset-0 bg-black/20 z-[1]" />
@@ -66,6 +67,7 @@ export default function RegisterPage() {
           alt="CosttasHolding"
           width={64}
           height={48}
+          loading="lazy"
           className="rounded-2xl object-contain mb-3"
         />
         <h1 className="text-2xl font-bold text-foreground drop-shadow-lg">

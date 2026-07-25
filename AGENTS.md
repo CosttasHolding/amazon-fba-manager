@@ -32,6 +32,7 @@ Este proyecto usa **Superpowers** para desarrollo de software. El agente debe se
 
 ## Reglas del Proyecto
 
+- **Idioma**: Siempre responder y comunicarse en **español**
 - **TypeScript strict**: Nunca usar `any`
 - **CSS variables**: Siempre `bg-background`, nunca `bg-white`
 - **snake_case** en DB/API, **camelCase** en frontend

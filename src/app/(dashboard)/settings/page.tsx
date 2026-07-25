@@ -48,6 +48,7 @@ import { toast } from "sonner";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { t, getLanguageName } from "@/lib/i18n/translations";
 import type { Locale } from "@/lib/i18n/translations";
+import { inputClass } from "@/lib/form-constants";
 
 const TABS = [
   { id: "profile", label: "Perfil", icon: User },
@@ -138,8 +139,6 @@ function Field({
     </div>
   );
 }
-
-const inputClass = "bg-muted/50 border-border";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -396,6 +395,7 @@ export default function SettingsPage() {
                 <img
                   src={avatarUrl || "/logo_solo.png"}
                   alt="Avatar"
+                  loading="lazy"
                   className="w-20 h-20 rounded-2xl object-cover border border-border"
                 />
                 <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">

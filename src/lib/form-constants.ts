@@ -7,6 +7,9 @@
 /** Default input class for form fields */
 export const inputClass = "h-9 bg-muted/50 border-border text-sm";
 
+/** Full input class for native <input> elements (no shadcn Input base styles) */
+export const nativeInputClass = "w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
+
 /** Default label class for form fields */
 export const labelClass = "text-xs text-muted-foreground";
 
