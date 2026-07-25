@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,12 +12,10 @@ import {
   List,
   Search,
   Filter,
-  X,
   TrendingUp,
   Star,
   DollarSign,
   Trash2,
-  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +41,8 @@ import { cn } from "@/lib/utils";
 import { ProductResearch } from "@/types";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
+import { FormDialogLayout, FormDialogFooter } from "@/components/ui/form-dialog";
+import { inputClass, labelClass } from "@/lib/form-constants";
 
 type ViewMode = "kanban" | "list";
 type FilterStatus = "all" | ProductResearch["status"];
@@ -66,8 +66,6 @@ const PRIORITY_COLORS: Record<number, string> = {
   5: "text-slate-500 bg-slate-500/5 border-slate-500/10",
 };
 
-const inputClass = "h-9 bg-muted/50 border-border text-sm";
-
 export default function ResearchPage() {
   const { locale } = useLocale();
   const router = useRouter();
@@ -82,7 +80,6 @@ export default function ResearchPage() {
   const ITEMS_PER_PAGE = DEFAULT_PAGE_SIZE;
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ProductResearch | null>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
@@ -118,26 +115,6 @@ export default function ResearchPage() {
   const formStatus = watch("status");
   const formPriority = watch("priority");
   const formCompetition = watch("competition_level");
-
-  useEffect(() => {
-    if (!showModal) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setShowModal(false);
-    };
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [showModal]);
-
-  useEffect(() => {
-    if (!showModal) return;
-    const handleClick = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        setShowModal(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showModal]);
 
   useEffect(() => { fetchItems(); }, []);
 
@@ -439,129 +416,128 @@ export default function ResearchPage() {
         </DataTableWrapper>
       )}
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-          <div ref={modalRef} className="bg-card border border-border rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 animate-scale-in">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-foreground">{editingItem ? t("research.modal_edit_title", locale) : t("research.modal_new_title", locale)}</h3>
-               <Button variant="ghost" size="icon-sm" onClick={() => setShowModal(false)} aria-label={t("accessibility.close_modal", locale)} className="min-w-[44px] min-h-[44px]">
-                 <X className="h-4 w-4" />
-               </Button>
-            </div>
-            <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <Label htmlFor="name" className="text-xs text-muted-foreground">{t("research.form.name", locale)}</Label>
-                <Input id="name" {...register("name")} className={inputClass} />
-                {errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="niche" className="text-xs text-muted-foreground">{t("research.form.niche", locale)}</Label>
-                <Input id="niche" {...register("niche")} className={inputClass} />
-                {errors.niche && <p className="text-xs text-destructive mt-1">{errors.niche.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="asin_reference" className="text-xs text-muted-foreground">{t("research.form.asin", locale)}</Label>
-                <Input id="asin_reference" {...register("asin_reference")} className={inputClass} />
-                {errors.asin_reference && <p className="text-xs text-destructive mt-1">{errors.asin_reference.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="amazon_category" className="text-xs text-muted-foreground">{t("research.form.category", locale)}</Label>
-                <Input id="amazon_category" {...register("amazon_category")} className={inputClass} />
-                {errors.amazon_category && <p className="text-xs text-destructive mt-1">{errors.amazon_category.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="competition_level" className="text-xs text-muted-foreground">{t("research.form.competition", locale)}</Label>
-                <Select value={formCompetition || ""} onValueChange={(v) => setValue("competition_level", v as "low" | "medium" | "high", { shouldValidate: true })}>
-                  <SelectTrigger id="competition_level" className={inputClass}><SelectValue placeholder={t("common.dash", locale)} /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">{t("research.competition.low", locale)}</SelectItem>
-                    <SelectItem value="medium">{t("research.competition.medium", locale)}</SelectItem>
-                    <SelectItem value="high">{t("research.competition.high", locale)}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="estimated_monthly_sales" className="text-xs text-muted-foreground">{t("research.form.monthly_sales", locale)}</Label>
-                <Input id="estimated_monthly_sales" type="number" {...register("estimated_monthly_sales", { valueAsNumber: true })} className={inputClass} />
-                {errors.estimated_monthly_sales && <p className="text-xs text-destructive mt-1">{errors.estimated_monthly_sales.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="average_price" className="text-xs text-muted-foreground">{t("research.form.avg_price", locale)}</Label>
-                <Input id="average_price" type="number" step="0.01" {...register("average_price", { valueAsNumber: true })} className={inputClass} />
-                {errors.average_price && <p className="text-xs text-destructive mt-1">{errors.average_price.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="review_count_competitor" className="text-xs text-muted-foreground">{t("research.form.review_count", locale)}</Label>
-                <Input id="review_count_competitor" type="number" {...register("review_count_competitor", { valueAsNumber: true })} className={inputClass} />
-                {errors.review_count_competitor && <p className="text-xs text-destructive mt-1">{errors.review_count_competitor.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="average_rating" className="text-xs text-muted-foreground">{t("research.form.rating", locale)}</Label>
-                <Input id="average_rating" type="number" step="0.01" {...register("average_rating", { valueAsNumber: true })} className={inputClass} />
-                {errors.average_rating && <p className="text-xs text-destructive mt-1">{errors.average_rating.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="bsr" className="text-xs text-muted-foreground">{t("research.form.bsr", locale)}</Label>
-                <Input id="bsr" type="number" {...register("bsr", { valueAsNumber: true })} className={inputClass} />
-                {errors.bsr && <p className="text-xs text-destructive mt-1">{errors.bsr.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="estimated_cogs" className="text-xs text-muted-foreground">{t("research.form.cogs", locale)}</Label>
-                <Input id="estimated_cogs" type="number" step="0.01" {...register("estimated_cogs", { valueAsNumber: true })} className={inputClass} />
-                {errors.estimated_cogs && <p className="text-xs text-destructive mt-1">{errors.estimated_cogs.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="estimated_selling_price" className="text-xs text-muted-foreground">{t("research.form.selling_price", locale)}</Label>
-                <Input id="estimated_selling_price" type="number" step="0.01" {...register("estimated_selling_price", { valueAsNumber: true })} className={inputClass} />
-                {errors.estimated_selling_price && <p className="text-xs text-destructive mt-1">{errors.estimated_selling_price.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="estimated_roi" className="text-xs text-muted-foreground">{t("research.form.roi", locale)}</Label>
-                <Input id="estimated_roi" type="number" step="0.01" {...register("estimated_roi", { valueAsNumber: true })} className={inputClass} />
-                {errors.estimated_roi && <p className="text-xs text-destructive mt-1">{errors.estimated_roi.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="priority" className="text-xs text-muted-foreground">{t("research.form.priority", locale)}</Label>
-                <Select value={String(formPriority)} onValueChange={(v) => setValue("priority", parseInt(v), { shouldValidate: true })}>
-                  <SelectTrigger id="priority" className={inputClass}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {[1,2,3,4,5].map((p) => (
-                      <SelectItem key={p} value={String(p)}>P{p} {p===1?t("research.priority_high", locale):p===5?t("research.priority_low", locale):""}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="status" className="text-xs text-muted-foreground">{t("research.form.status", locale)}</Label>
-                <Select value={formStatus} onValueChange={(v) => setValue("status", v as ResearchFormData["status"], { shouldValidate: true })}>
-                  <SelectTrigger id="status" className={inputClass}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {STATUS_ORDER.map((s) => (
-                      <SelectItem key={s} value={s}>{t("research.status." + s, locale)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="sm:col-span-2">
-                <Label htmlFor="differentiation_notes" className="text-xs text-muted-foreground">{t("research.form.differentiation", locale)}</Label>
-                <Textarea id="differentiation_notes" {...register("differentiation_notes")} className="bg-muted/50 border-border text-sm min-h-[60px]" />
-                {errors.differentiation_notes && <p className="text-xs text-destructive mt-1">{errors.differentiation_notes.message}</p>}
-              </div>
-              <div className="sm:col-span-2">
-                <Label htmlFor="notes" className="text-xs text-muted-foreground">{t("research.form.notes", locale)}</Label>
-                <Textarea id="notes" {...register("notes")} className="bg-muted/50 border-border text-sm min-h-[60px]" />
-                {errors.notes && <p className="text-xs text-destructive mt-1">{errors.notes.message}</p>}
-              </div>
-              <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
-                <Button type="button" variant="outline" onClick={() => setShowModal(false)}>{t("common.cancel", locale)}</Button>
-                <Button type="submit" disabled={saving}>
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : editingItem ? t("research.modal_save_changes", locale) : t("research.modal_create", locale)}
-                </Button>
-              </div>
-            </form>
+      <FormDialogLayout
+        open={showModal}
+        onOpenChange={setShowModal}
+        title={editingItem ? t("research.modal_edit_title", locale) : t("research.modal_new_title", locale)}
+        icon={<FlaskConical className="h-5 w-5" />}
+        contentClassName="max-w-2xl bg-card border-border"
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="sm:col-span-2">
+            <Label htmlFor="name" className={labelClass}>{t("research.form.name", locale)}</Label>
+            <Input id="name" {...register("name")} className={inputClass} />
+            {errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}
           </div>
-        </div>
-      )}
+          <div>
+            <Label htmlFor="niche" className={labelClass}>{t("research.form.niche", locale)}</Label>
+            <Input id="niche" {...register("niche")} className={inputClass} />
+            {errors.niche && <p className="text-xs text-destructive mt-1">{errors.niche.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="asin_reference" className={labelClass}>{t("research.form.asin", locale)}</Label>
+            <Input id="asin_reference" {...register("asin_reference")} className={inputClass} />
+            {errors.asin_reference && <p className="text-xs text-destructive mt-1">{errors.asin_reference.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="amazon_category" className={labelClass}>{t("research.form.category", locale)}</Label>
+            <Input id="amazon_category" {...register("amazon_category")} className={inputClass} />
+            {errors.amazon_category && <p className="text-xs text-destructive mt-1">{errors.amazon_category.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="competition_level" className={labelClass}>{t("research.form.competition", locale)}</Label>
+            <Select value={formCompetition || ""} onValueChange={(v) => setValue("competition_level", v as "low" | "medium" | "high", { shouldValidate: true })}>
+              <SelectTrigger id="competition_level" className={inputClass}><SelectValue placeholder={t("common.dash", locale)} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">{t("research.competition.low", locale)}</SelectItem>
+                <SelectItem value="medium">{t("research.competition.medium", locale)}</SelectItem>
+                <SelectItem value="high">{t("research.competition.high", locale)}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="estimated_monthly_sales" className={labelClass}>{t("research.form.monthly_sales", locale)}</Label>
+            <Input id="estimated_monthly_sales" type="number" {...register("estimated_monthly_sales", { valueAsNumber: true })} className={inputClass} />
+            {errors.estimated_monthly_sales && <p className="text-xs text-destructive mt-1">{errors.estimated_monthly_sales.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="average_price" className={labelClass}>{t("research.form.avg_price", locale)}</Label>
+            <Input id="average_price" type="number" step="0.01" {...register("average_price", { valueAsNumber: true })} className={inputClass} />
+            {errors.average_price && <p className="text-xs text-destructive mt-1">{errors.average_price.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="review_count_competitor" className={labelClass}>{t("research.form.review_count", locale)}</Label>
+            <Input id="review_count_competitor" type="number" {...register("review_count_competitor", { valueAsNumber: true })} className={inputClass} />
+            {errors.review_count_competitor && <p className="text-xs text-destructive mt-1">{errors.review_count_competitor.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="average_rating" className={labelClass}>{t("research.form.rating", locale)}</Label>
+            <Input id="average_rating" type="number" step="0.01" {...register("average_rating", { valueAsNumber: true })} className={inputClass} />
+            {errors.average_rating && <p className="text-xs text-destructive mt-1">{errors.average_rating.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="bsr" className={labelClass}>{t("research.form.bsr", locale)}</Label>
+            <Input id="bsr" type="number" {...register("bsr", { valueAsNumber: true })} className={inputClass} />
+            {errors.bsr && <p className="text-xs text-destructive mt-1">{errors.bsr.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="estimated_cogs" className={labelClass}>{t("research.form.cogs", locale)}</Label>
+            <Input id="estimated_cogs" type="number" step="0.01" {...register("estimated_cogs", { valueAsNumber: true })} className={inputClass} />
+            {errors.estimated_cogs && <p className="text-xs text-destructive mt-1">{errors.estimated_cogs.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="estimated_selling_price" className={labelClass}>{t("research.form.selling_price", locale)}</Label>
+            <Input id="estimated_selling_price" type="number" step="0.01" {...register("estimated_selling_price", { valueAsNumber: true })} className={inputClass} />
+            {errors.estimated_selling_price && <p className="text-xs text-destructive mt-1">{errors.estimated_selling_price.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="estimated_roi" className={labelClass}>{t("research.form.roi", locale)}</Label>
+            <Input id="estimated_roi" type="number" step="0.01" {...register("estimated_roi", { valueAsNumber: true })} className={inputClass} />
+            {errors.estimated_roi && <p className="text-xs text-destructive mt-1">{errors.estimated_roi.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="priority" className={labelClass}>{t("research.form.priority", locale)}</Label>
+            <Select value={String(formPriority)} onValueChange={(v) => setValue("priority", parseInt(v), { shouldValidate: true })}>
+              <SelectTrigger id="priority" className={inputClass}><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {[1,2,3,4,5].map((p) => (
+                  <SelectItem key={p} value={String(p)}>P{p} {p===1?t("research.priority_high", locale):p===5?t("research.priority_low", locale):""}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="status" className={labelClass}>{t("research.form.status", locale)}</Label>
+            <Select value={formStatus} onValueChange={(v) => setValue("status", v as ResearchFormData["status"], { shouldValidate: true })}>
+              <SelectTrigger id="status" className={inputClass}><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {STATUS_ORDER.map((s) => (
+                  <SelectItem key={s} value={s}>{t("research.status." + s, locale)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="differentiation_notes" className={labelClass}>{t("research.form.differentiation", locale)}</Label>
+            <Textarea id="differentiation_notes" {...register("differentiation_notes")} className="bg-muted/50 border-border text-sm min-h-[60px]" />
+            {errors.differentiation_notes && <p className="text-xs text-destructive mt-1">{errors.differentiation_notes.message}</p>}
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="notes" className={labelClass}>{t("research.form.notes", locale)}</Label>
+            <Textarea id="notes" {...register("notes")} className="bg-muted/50 border-border text-sm min-h-[60px]" />
+            {errors.notes && <p className="text-xs text-destructive mt-1">{errors.notes.message}</p>}
+          </div>
+          <div className="sm:col-span-2">
+            <FormDialogFooter
+              onCancel={() => setShowModal(false)}
+              saving={saving}
+              locale={locale}
+              saveLabel={editingItem ? t("research.modal_save_changes", locale) : t("research.modal_create", locale)}
+              saveIcon={<FlaskConical className="h-4 w-4" />}
+            />
+          </div>
+        </form>
+      </FormDialogLayout>
     </div>
   );
 }
