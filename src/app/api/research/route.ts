@@ -47,11 +47,11 @@ export async function POST(req: NextRequest) {
     const clean = { ...result.data, user_id: user.id, org_id: orgId };
     const { data, error } = await supabase.from("product_research").insert(clean).select().single();
     if (error) {
-      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+      return NextResponse.json({ error: "Error interno del servidor", details: error.message, code: error.code }, { status: 500 });
     }
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    return apiErrorResponse(error, 500, "POST /api/research");
+    return NextResponse.json({ error: "Error interno del servidor", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
 

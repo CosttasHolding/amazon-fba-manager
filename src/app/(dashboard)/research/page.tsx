@@ -159,7 +159,7 @@ export default function ResearchPage() {
     setSaving(true);
     try {
       const body = {
-        name: data.name,
+        name: data.name || "",
         niche: data.niche || null,
         asin_reference: data.asin_reference || null,
         amazon_category: data.amazon_category || null,

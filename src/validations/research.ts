@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const researchSchema = z.object({
-  name: z.string().min(1, "Name is required").max(200),
+  name: z.string().max(200).nullable().optional(),
   niche: z.string().max(200).nullable().optional(),
   asin_reference: z.string().max(50).nullable().optional(),
   amazon_category: z.string().max(100).nullable().optional(),
