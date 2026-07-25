@@ -22,7 +22,7 @@ export function FormDialogLayout({
   icon,
   children,
   contentClassName = "max-w-lg bg-card border-border",
-  titleClassName = "text-foreground flex items-center gap-2",
+  titleClassName = "text-foreground flex items-center gap-2 pe-10",
 }: FormDialogLayoutProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
