@@ -44,3 +44,9 @@ supabase/.temp/
 
 # Obsidian portable app (install separately, NOT in project)
 Obsidian/
+
+# Superpowers internal tooling
+.superpowers/
+
+# Misc
+esto es
