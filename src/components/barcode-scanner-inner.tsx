@@ -21,8 +21,8 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const stopScanner = useCallback(async () => {
     try {
       await scannerRef.current?.stop();
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("ERROR stopping scanner", e);
     }
     scannerRef.current = null;
     setScanning(false);

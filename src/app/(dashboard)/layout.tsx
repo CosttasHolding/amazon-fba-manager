@@ -29,7 +29,7 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/login");
 
-  try { await getOrgId(); } catch { /* auto-created on first CRUD */ }
+  try { await getOrgId(); } catch (e) { console.error("ERROR getting org ID on mount", e); }
 
   const handleLogout = async () => {
     "use server";

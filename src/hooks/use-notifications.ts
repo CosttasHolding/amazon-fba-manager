@@ -19,8 +19,8 @@ export function useNotifications() {
         setData(json);
         return json;
       }
-    } catch {
-      // silent
+    } catch (e) {
+      console.error("ERROR fetching notifications", e);
     } finally {
       setLoading(false);
     }

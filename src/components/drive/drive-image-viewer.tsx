@@ -31,7 +31,8 @@ export function DriveImageViewer({ file, onClose }: DriveImageViewerProps) {
             setUrl(objectUrl);
           }
         }
-      } catch {
+      } catch (e) {
+        console.error("ERROR loading drive image", e);
       } finally {
         if (!cancelled) setLoading(false);
       }

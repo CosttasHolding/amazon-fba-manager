@@ -15,8 +15,8 @@ export function useAuth() {
       await supabase.auth.signOut();
       router.push("/login");
       router.refresh();
-    } catch {
-      // silent
+    } catch (e) {
+      console.error("ERROR logging out", e);
     } finally {
       setLoggingOut(false);
     }

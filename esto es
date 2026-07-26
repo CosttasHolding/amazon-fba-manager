@@ -1,0 +1,324 @@
+ Wrote docs\superpowers\specs\2026-07-23-optimization-design.md
+# Diseño: Optimización del Proyecto Amazon FBA Manager
+
+**Fecha:** 2026-07-23
+**Objetivo:** Mejorar rendimiento, eliminar código duplicado/innecesario, y reducir bundle size
+**Enfoque:** Bottom-up (seguro primero, luego más profundo)
+**Estado:** Aprobado por el usuario
+
+---
+
+## Resumen Ejecutivo
+
+El proyecto tiene ~20 módulos, 86+ API routes, y 90+ Client Components. Los principales problemas son:
+
+- **6 dependencias fantasma** (~2-3MB de peso muerto)
+- **Código duplicado** en 6+ áreas críticas (getOrgId, schemas Zod, constantes, form modales)
+- **90+ Client Components** — casi ninguna página usa Server Components
+- **Fetching inconsistente** — algunos usan SWR, otros fetch manual
+- **CSS classes repetidas** ~30+ veces sin componentes compartidos
+
+**Impacto estimado:** -30-40% JS bundle, -2-3MB node_modules, -1500+ líneas de código duplicado.
+
+---
+
+## Fase 1: Limpieza Segura
+
+**Riesgo:** Bajo | **Resultado:** -2-3MB bundle, código más limpio
+
+### 1.1 Eliminar dependencias fantasma
+
+```bash
+npm uninstall @tanstack/react-table @capacitor/haptics @capacitor/keyboard \
+  @capacitor/status-bar @dnd-kit/core @dnd-kit/sortable
+```
+
+Ninguna de estas tiene imports en el código fuente. Confirmed via grep.
+
+### 1.2 Eliminar dead code
+
+| Archivo | Razón |
+|---------|-------|
+| `src/components/onboarding-checklist.tsx` | Nunca se importa en ningún archivo |
+| `src/lib/currencies.ts` | Nunca se importa — `order-form-modal` hardcodea USD/CNY/ARS |
+| `src/components/error-boundary-wrapper.tsx` | Wrapper trivial (1 línea), importado una sola vez. Usar `ErrorBoundary` directamente en `layout.tsx` |
+
+### 1.3 Unificar `fmtMoney`
+
+Eliminar definiciones locales en:
+- `src/components/sale-form-modal.tsx:38-39`
+- `src/app/(dashboard)/products/[id]/page.tsx:100`
+
+Usar `fmt()` de `src/lib/utils.ts:8-11` que ya existe.
+
+### 1.4 Unificar `SWR_CONFIG`
+
+Eliminar `SWR_CONFIG` de `src/hooks/use-governance.ts:5-9`. Importar el de `src/hooks/use-data.ts`.
+
+---
+
+## Fase 2: Unificar Código Duplicado
+
+**Riesgo:** Bajo-medio | **Resultado:** Consistencia, menos bugs
+
+### 2.1 Unificar `getOrgId` (3→1)
+
+Crear `src/lib/org-resolver.ts` con implementación canónica:
+
+```ts
+export async function getOrgId(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<string> {
+  // 1. Buscar membresía existente
+  const { data: membership } = await supabase
+    .from('org_members')
+    .select('org_id')
+    .eq('user_id', userId)
+    .single();
+
+  if (membership) return membership.org_id;
+
+  // 2. Buscar org por slug
+  const slug = `org-${userId.replace(/-/g, '')}-default`;
+  const { data: existingOrg } = await supabase
+    .from('organizations')
+    .select('id')
+    .eq('slug', slug)
+    .single();
+
+  if (existingOrg) {
+    await supabase.from('org_members').insert({ org_id: existingOrg.id, user_id: userId, role: 'admin' });
+    return existingOrg.id;
+  }
+
+  // 3. Crear org + membresía
+  const { data: newOrg } = await supabase
+    .from('organizations')
+    .insert({ name: 'Mi Organización', slug })
+    .select('id')
+    .single();
+
+  await supabase.from('org_members').insert({ org_id: newOrg!.id, user_id: userId, role: 'admin' });
+  return newOrg!.id;
+}
+```
+
+**Archivos a modificar:**
+- `src/lib/actions/get-org-id.ts` → importar de `org-resolver.ts`
+- `src/lib/api-handler.ts` → eliminar función inline + exportada, importar de `org-resolver.ts`
+- Verificar que todos los consumidores usen la función unificada
+
+### 2.2 Unificar validaciones Zod
+
+| Schema a unificar | Eliminar de | Usar de |
+|-------------------|-------------|---------|
+| `memberSchema` | `src/lib/actions/members.ts:7-16` | `src/validations/member.ts:3-12` |
+| `taskSchema` | `src/lib/actions/tasks.ts:7-15` | `src/validations/member.ts:14-23` |
+| `boardDecisionSchema` | `src/lib/actions/decisions.ts:7-15` | `src/validations/member.ts:25-33` |
+| `saleSchema` | `src/lib/actions/sales.ts:7-14` | `src/validations/sales.ts:2` |
+
+### 2.3 Unificar tipos
+
+- Eliminar `InvitationRole` de `src/types/index.ts:433`, usar `MemberRole` en ambos contextos
+- Agregar `"NA" | "EU" | "FE"` al tipo `Marketplace` existente, eliminar `SpApiMarketplace`
+
+### 2.4 Unificar constantes de productos
+
+Consolidar valores en `src/lib/constants.ts` y eliminar repeticiones inline en:
+- `src/types/index.ts:2`
+- `src/validations/product.ts:21`
+- `src/app/api/products/[id]/route.ts:14`
+
+---
+
+## Fase 3: Extraer Componentes Compartidos
+
+**Riesgo:** Medio | **Resultado:** -40% código duplicado
+
+### 3.1 Extraer `FormDialogFooter` y `FormDialogLayout`
+
+Nuevo archivo: `src/components/ui/form-dialog.tsx`
+
+```tsx
+interface FormDialogLayoutProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}
+
+interface FormDialogFooterProps {
+  onCancel: () => void;
+  onSave: () => void;
+  saving: boolean;
+  locale: string;
+  saveLabel?: string;
+}
+```
+
+Reemplazar boilerplate en los 5 modales:
+- `supplier-form-modal.tsx`
+- `product-form-modal.tsx`
+- `order-form-modal.tsx`
+- `sale-form-modal.tsx`
+- `member-form-modal.tsx`
+
+### 3.2 Unificar CSS de formularios
+
+Consolidar `inputClass`, `labelClass`, `sectionLabel` en `src/lib/form-constants.ts` y eliminar redefiniciones en:
+- `suppliers/new/page.tsx`
+- `suppliers/[id]/edit/page.tsx`
+- `products/new/page.tsx`
+- `products/[id]/edit/page.tsx`
+- `members/new/page.tsx`
+- `members/[id]/edit/page.tsx`
+- `settings/page.tsx`
+- `member-form-modal.tsx`
+
+### 3.3 Unificar páginas new/edit
+
+Crear componentes de form compartidos:
+- `src/components/supplier-form.tsx` → usado por new y edit
+- `src/components/member-form.tsx` → usado por new y edit
+- `src/components/product-form.tsx` → usado por new y edit
+
+Las páginas new/edit importan el form, solo cambian datos iniciales y endpoint de submit.
+
+---
+
+## Fase 4: Optimizar Fetching y Memoización
+
+**Riesgo:** Medio | **Resultado:** Menos requests, menos re-renders
+
+### 4.1 Migrar `orders/page.tsx` a SWR
+
+Crear `useOrdersQuery` en `src/hooks/use-data.ts` siguiendo el patrón de `useProductsQuery`. Eliminar fetch manual + useEffect.
+
+### 4.2 Consolidar `global-search.tsx`
+
+Crear endpoint `/api/search?q=...` que busque en products, suppliers, orders, research. Una sola llamada, resultados unificados.
+
+### 4.3 Consolidar `useGovernanceSummary`
+
+Crear endpoint `/api/governance/summary` que retorne members + tasks + boardDecisions en una sola query. Un solo hook con una llamada.
+
+### 4.4 Memoizar cálculos
+
+| Archivo | Qué memoizar |
+|---------|--------------|
+| `alerts/page.tsx` | `CONDITION_LABELS`, `ENTITY_LABELS`, `tabs`, `templateLabels` |
+| `dashboard/page.tsx` | Objeto `charts`, `handleExport` |
+| `global-search.tsx` | `results` filtering |
+| `sidebar.tsx` | `navItems.map()` |
+
+### 4.5 Lazy loading de imágenes
+
+Agregar `loading="lazy"` a 8 usos de `<img>`:
+- `sidebar.tsx` (líneas 34, 88)
+- `top-header.tsx` (línea 68)
+- `login/page.tsx` (línea 51) — puede quedarse eager
+- `register/page.tsx` (líneas 56, 64)
+- `settings/page.tsx` (línea 396)
+- `products/[id]/page.tsx` (línea 323)
+- `layout.tsx` (línea 60) — puede quedarse eager por ser crítico
+
+---
+
+## Fase 5: Server Components
+
+**Riesgo:** Alto | **Resultado:** -30-40% JS bundle client
+
+### Páginas candidatas a Server Component
+
+| Página | Estrategia |
+|--------|-----------|
+| `dashboard/page.tsx` | Fetch datos en SC, pasar charts como props con dynamic import |
+| `finances/page.tsx` | Fetch datos en SC, pasar categories/expenses como props |
+| `forecasting/page.tsx` | Fetch datos en SC, pasar forecast como props |
+| `analytics/page.tsx` | Fetch datos en SC, pasar metrics como props |
+| `team/page.tsx` | Fetch datos en SC, listar members/tasks |
+| `tasks/page.tsx` | Fetch datos en SC, CRUD con Server Actions |
+| `ads/page.tsx` | Fetch datos en SC, filtros en Client Component hijo |
+| `members/page.tsx` | Fetch datos en SC, listar members |
+
+### Páginas que DEBEN quedarse como Client Components
+
+| Página | Razón |
+|--------|-------|
+| `calculator/page.tsx` | Cálculos reactivos en tiempo real |
+| `import/page.tsx` | File upload drag-drop |
+| `login/register` | Formularios auth |
+| `products/[id]/*` (edit) | Formulario reactivo |
+| `research/page.tsx` | CRUD complejo con filtros |
+| `alerts/page.tsx` | CRUD complejo con tabs |
+| `sp-api/page.tsx` | Múltiples acciones async |
+
+### Estrategia de migración por página
+
+1. Mover fetch de datos al Server Component (page.tsx sin "use client")
+2. Crear Client Component hijo para la parte interactiva
+3. Pasar datos iniciales como props
+4. Usar Server Actions para mutaciones
+5. Mantener SWR solo para data que necesita real-time updates
+
+---
+
+## Criterios de Verificación
+
+### Fase 1
+- [ ] `npm run build` pasa sin errores
+- [ ] `npm run typecheck` pasa
+- [ ] `npm run lint` pasa
+- [ ] No hay imports rotos
+
+### Fase 2
+- [ ] Todas las API routes usan `getOrgId` de `org-resolver.ts`
+- [ ] No hay schemas Zod duplicados
+- [ ] No hay tipos duplicados
+- [ ] Tests existentes pasan
+
+### Fase 3
+- [ ] Los 5 modales usan `FormDialogLayout`
+- [ ] No hay `inputClass`/`labelClass` redefinidos localmente
+- [ ] Las páginas new/edit importan form compartido
+- [ ] UI visualmente idéntica
+
+### Fase 4
+- [ ] `orders/page.tsx` usa SWR
+- [ ] `global-search` hace 1 llamada en vez de 4
+- [ ] `useGovernanceSummary` hace 1 llamada en vez de 3
+- [ ] Imágenes tienen `loading="lazy"`
+
+### Fase 5
+- [ ] Las 8 páginas candidatas son Server Components
+- [ ] El JS bundle se redujo (medir con `next build`)
+- [ ] La funcionalidad es idéntica
+- [ ] No hay hydration errors
+
++ Thought: 2.1s
+Spec escrito. Ahora hago el self-review del spec:
+Placeholder scan: Sin "TBD" o "TODO". ✅
+Internal consistency: Las fases son dependientes en orden (1→2→3→4→5). Sin contradicciones. ✅
+Scope check: 5 fases, cada una con tareas específicas. Suficientemente detallado para un plan. ✅
+Ambiguity check: Las decisiones de qué convertir a SC y qué no están explícitas. ✅
+El spec está completo y sin problemas.
+# Todos
+[✓] Explorar contexto del proyecto (estructura, archivos, commits recientes)
+[✓] Hacer preguntas clarificadoras sobre prioridades de mejora
+[✓] Proponer 2-3 enfoques con trade-offs
+[✓] Presentar diseño de mejoras por secciones
+[✓] Aprobación del diseño por el usuario
+[✓] Escribir doc de diseño y transicionar a plan de implementación
++ Thought: 824ms
+Spec escrito y guardado en docs/superpowers/specs/2026-07-23-optimization-design.md.
+Por favor revisalo y decime si querés hacer cambios antes de que escriba el plan de implementación detallado.
+Resumen rápido de lo que cubre:
+- 5 fases ordenadas de menor a mayor riesgo
+- Fase 1: Eliminar 6 deps fantasma, dead code, duplicación obvia
+- Fase 2: Unificar getOrgId, schemas Zod, tipos, constantes
+- Fase 3: Extraer FormDialog, CSS compartido, pages new/edit
+- Fase 4: Migrar orders a SWR, consolidar search/governance, memoizar, lazy load
+- Fase 5: Convertir 8 páginas a Server Components

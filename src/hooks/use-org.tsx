@@ -103,8 +103,8 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           user_id: user.id,
           current_org_id: currentOrg.id,
         }, { onConflict: "user_id" });
-    } catch {
-      // silent
+    } catch (e) {
+      console.error("ERROR saving org preference", e);
     } finally {
       setIsLoading(false);
     }

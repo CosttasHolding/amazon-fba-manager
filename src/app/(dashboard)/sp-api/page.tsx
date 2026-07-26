@@ -129,7 +129,8 @@ export default function SpApiPage() {
         const data = await res.json();
         setSyncLogs(data.data || []);
       }
-    } catch {
+    } catch (e) {
+      console.error("ERROR fetching sync logs", e);
     }
   };
 
@@ -140,7 +141,8 @@ export default function SpApiPage() {
         const data = await res.json();
         setWebhookSubscriptions(data.data || []);
       }
-    } catch {
+    } catch (e) {
+      console.error("ERROR fetching webhook subscriptions", e);
     }
   };
 
@@ -151,7 +153,8 @@ export default function SpApiPage() {
         const data = await res.json();
         setWebhookLogs(data.data || []);
       }
-    } catch {
+    } catch (e) {
+      console.error("ERROR fetching webhook logs", e);
     }
   };
 

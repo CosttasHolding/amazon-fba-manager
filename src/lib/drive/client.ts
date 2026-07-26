@@ -59,9 +59,9 @@ export async function getDriveClient(userId?: string): Promise<drive_v3.Drive> {
       oauth2Client.setCredentials({ refresh_token: refreshToken });
       return google.drive({ version: "v3", auth: oauth2Client });
     }
-  } catch {
-    // Fallback to service account
-  }
+    } catch (e) {
+      console.error("ERROR getting OAuth2 drive client", e);
+    }
 
   return getServiceAccountDriveClient();
 }

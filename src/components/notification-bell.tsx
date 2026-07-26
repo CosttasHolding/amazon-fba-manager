@@ -97,8 +97,8 @@ export function NotificationBell() {
         const json: NotificationsResponse = await res.json();
         setData(json);
       }
-    } catch {
-      // Silently handle fetch errors - notifications are non-critical
+    } catch (e) {
+      console.error("ERROR fetching notifications", e);
     } finally {
       setLoading(false);
     }

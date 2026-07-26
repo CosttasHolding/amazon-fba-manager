@@ -189,8 +189,8 @@ export async function DELETE(request: NextRequest) {
         sellerId: "",
       });
       await deleteSubscription(client, notificationType, sub.amazon_subscription_id);
-    } catch {
-      // Continue even if Amazon API fails
+    } catch (e) {
+      console.error("ERROR deleting Amazon subscription", e);
     }
   }
 
