@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { productSchema } from "@/validations/product";
@@ -81,6 +81,26 @@ export default function NewProductPage() {
   const watched = watch();
 
   const urlScrape = useUrlScrape();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const name = searchParams.get("name");
+    const asin = searchParams.get("asin");
+    const salePrice = searchParams.get("salePrice");
+    const weightKg = searchParams.get("weightKg");
+    const category = searchParams.get("category");
+
+    if (name) setValue("name", name);
+    if (asin) setValue("asin", asin);
+    if (salePrice) setValue("salePrice", parseFloat(salePrice));
+    if (weightKg) setValue("weightKg", parseFloat(weightKg));
+    if (category) {
+      const valid = ["Electronics","Toys","Home","Kitchen","Health","Beauty","Sports","Books","Other"];
+      if (valid.includes(category)) {
+        setValue("category", category as "Electronics" | "Toys" | "Home" | "Kitchen" | "Health" | "Beauty" | "Sports" | "Books" | "Other");
+      }
+    }
+  }, [searchParams, setValue]);
 
   // Auto-calculate FBA fee when weight changes
   useEffect(() => {

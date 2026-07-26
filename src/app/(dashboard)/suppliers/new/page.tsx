@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, Loader2, CheckCircle2, Factory, Mail, Package, FileText, Link2 } from "lucide-react";
@@ -38,6 +38,7 @@ export default function NewSupplierPage() {
   const [saving, setSaving] = useState(false);
 
   const urlScrape = useUrlScrape();
+  const searchParams = useSearchParams();
 
   const {
     register,
@@ -73,6 +74,21 @@ export default function NewSupplierPage() {
       }
     }
   }, [urlScrape.scrapedData, urlScrape.platform, setValue]);
+
+  useEffect(() => {
+    const name = searchParams.get("name");
+    const country = searchParams.get("country");
+    const moq = searchParams.get("min_order_qty");
+    const alibabaUrl = searchParams.get("alibaba_url");
+
+    if (name) setValue("name", name);
+    if (country) setValue("country", country);
+    if (moq) setValue("min_order_qty", parseInt(moq));
+    if (alibabaUrl) {
+      setValue("alibaba_url", alibabaUrl);
+      urlScrape.setUrl(alibabaUrl);
+    }
+  }, [searchParams, setValue, urlScrape]);
 
   const onSubmit = async (data: SupplierFormData) => {
     setSaving(true);
