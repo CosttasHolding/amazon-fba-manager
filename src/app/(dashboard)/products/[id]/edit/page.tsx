@@ -29,6 +29,7 @@ import { calcFBAFee, calcRefFee } from "@/lib/calculations";
 import { MARKETPLACES, PRODUCT_CATEGORIES, PRODUCT_STATUSES } from "@/lib/constants";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
+import { inputClass, labelClass, sectionLabel } from "@/lib/form-constants";
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -48,10 +49,6 @@ interface LinkedSupplier {
   is_primary: boolean;
   suppliers: { id: string; name: string };
 }
-
-const inputClass = "h-9 bg-muted/50 border-border text-sm";
-const labelClass = "text-xs text-muted-foreground";
-const sectionLabel = "flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wider mb-3 mt-1";
 
 export default function EditProductPage() {
   const router = useRouter();

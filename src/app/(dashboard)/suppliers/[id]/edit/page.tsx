@@ -26,6 +26,7 @@ import { supplierSchema, SupplierFormData } from "@/validations/supplier";
 import { Supplier } from "@/types";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
+import { inputClass, labelClass, sectionLabel } from "@/lib/form-constants";
 
 const COUNTRY_SUGGESTIONS = [
   "China", "India", "Vietnam", "Taiwan", "Corea del Sur",
@@ -40,10 +41,6 @@ const STAR_OPTIONS = [
   { value: "4", label: "\u2B50\u2B50\u2B50\u2B50" },
   { value: "5", label: "\u2B50\u2B50\u2B50\u2B50\u2B50" },
 ];
-
-const inputClass = "h-9 bg-muted/50 border-border text-sm";
-const labelClass = "text-xs text-muted-foreground";
-const sectionLabel = "flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wider mb-3 mt-1";
 
 export default function EditSupplierPage() {
   const params = useParams();
