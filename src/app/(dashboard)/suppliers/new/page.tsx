@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Save, Loader2, Factory, Mail, Package, FileText } from "lucide-react";
+import { Save, Loader2, CheckCircle2, Factory, Mail, Package, FileText, Link2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +21,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { inputClass, labelClass } from "@/lib/form-constants";
+import { useUrlScrape } from "@/hooks/use-url-scrape";
 
 const COUNTRIES = [
   "China", "India", "Vietnam", "Taiwan", "Corea del Sur",
@@ -35,6 +36,8 @@ export default function NewSupplierPage() {
   const router = useRouter();
   const { locale } = useLocale();
   const [saving, setSaving] = useState(false);
+
+  const urlScrape = useUrlScrape();
 
   const {
     register,
@@ -59,6 +62,17 @@ export default function NewSupplierPage() {
       status: "active",
     },
   });
+
+  useEffect(() => {
+    if (urlScrape.scrapedData && urlScrape.platform === "alibaba") {
+      const data = urlScrape.scrapedData;
+      if (data.platform === "alibaba") {
+        if (data.supplier_name) setValue("name", data.supplier_name);
+        if (data.country) setValue("country", data.country);
+        if (data.moq && data.moq > 0) setValue("min_order_qty", data.moq);
+      }
+    }
+  }, [urlScrape.scrapedData, urlScrape.platform, setValue]);
 
   const onSubmit = async (data: SupplierFormData) => {
     setSaving(true);
@@ -110,8 +124,42 @@ export default function NewSupplierPage() {
             </div>
             <div className="md:col-span-2">
               <Label htmlFor="alibaba_url" className={labelClass}>{t("suppliers.edit_alibaba_url", locale)}</Label>
-              <Input id="alibaba_url" {...register("alibaba_url")} placeholder={t("suppliers.url_placeholder", locale)} className={inputClass} />
+              <div className="relative">
+                <Input
+                  id="alibaba_url"
+                  placeholder={t("suppliers.url_placeholder", locale)}
+                  {...register("alibaba_url")}
+                  onChange={(e) => {
+                    register("alibaba_url").onChange(e);
+                    urlScrape.setUrl(e.target.value);
+                  }}
+                  className={inputClass + " pr-20"}
+                />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                  {urlScrape.isScraping && (
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  )}
+                  {!urlScrape.isScraping && urlScrape.platform === "alibaba" && urlScrape.scrapedData && (
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  )}
+                </div>
+              </div>
               {errors.alibaba_url && <p className={errorClass}>{errors.alibaba_url.message}</p>}
+              {urlScrape.isScraping && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Extrayendo datos del proveedor...
+                </p>
+              )}
+              {urlScrape.error && (
+                <p className="text-xs text-destructive mt-1">{urlScrape.error}</p>
+              )}
+              {!urlScrape.isScraping && !urlScrape.error && urlScrape.scrapedData && urlScrape.platform === "alibaba" && (
+                <p className="text-xs text-green-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Datos del proveedor extraídos
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="country" className={labelClass}>{t("suppliers.field_country", locale)}</Label>
