@@ -1,6 +1,6 @@
-import { PRODUCT_STATUS_VALUES } from "@/lib/constants";
+import { PRODUCT_STATUS_VALUES, MARKETPLACE_VALUES } from "@/lib/constants";
 
-export type Marketplace = 'US' | 'MX' | 'CA' | 'UK' | 'DE' | 'FR' | 'IT' | 'ES' | 'NA' | 'EU' | 'FE';
+export type Marketplace = (typeof MARKETPLACE_VALUES)[number];
 export type ProductStatus = (typeof PRODUCT_STATUS_VALUES)[number];
 export type StockStatus = 'normal' | 'low_stock' | 'out_of_stock' | 'overstock';
 export type OrgMemberRole = 'owner' | 'admin' | 'editor' | 'viewer';

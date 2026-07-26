@@ -1,6 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
+export async function getOrgId(
+  supabase: SupabaseClient,
+  userId: string,
+  req?: { headers: { get: (name: string) => string | null } }
+): Promise<string | null> {
+  if (req) {
+    const headerOrgId = req.headers.get("x-org-id") || null;
+    if (headerOrgId) return headerOrgId;
+  }
+  return resolveOrgId(supabase, userId);
+}
+
 export async function resolveOrgId(
   supabase: SupabaseClient,
   userId: string

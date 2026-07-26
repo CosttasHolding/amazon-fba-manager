@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimit, buildRateLimitKey } from "@/lib/rate-limit";
-import { resolveOrgId } from "@/lib/org-resolver";
+import { getOrgId, resolveOrgId } from "@/lib/org-resolver";
+
+export { getOrgId };
 
 type HandlerContext = {
   supabase: Awaited<ReturnType<typeof createClient>>;
@@ -56,12 +58,6 @@ export function createApiHandler(handler: ApiHandler, rateLimitOpts?: { limit?: 
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
   };
-}
-
-export async function getOrgId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, req: Request): Promise<string | null> {
-  const headerOrgId = req.headers.get("x-org-id") || null;
-  if (headerOrgId) return headerOrgId;
-  return resolveOrgId(supabase, userId);
 }
 
 export function buildPagination(req: NextRequest, defaultPerPage = 20) {
