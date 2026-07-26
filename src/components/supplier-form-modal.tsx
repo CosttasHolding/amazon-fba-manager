@@ -15,14 +15,15 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createSupplier } from "@/lib/actions/suppliers";
-import { Factory, Mail, Package, FileText } from "lucide-react";
+import { Factory, Mail, Package, FileText, Loader2, CheckCircle2 } from "lucide-react";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { FormErrorMessage } from "@/components/ui/announcer";
 import { inputClass, labelClass, sectionLabel } from "@/lib/form-constants";
 import { FormDialogFooter, FormDialogLayout } from "@/components/ui/form-dialog";
+import { useUrlScrape } from "@/hooks/use-url-scrape";
 
 const COUNTRY_SUGGESTIONS = [
   "China", "India", "Vietnam", "Taiwan", "Corea del Sur",
@@ -49,6 +50,8 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
   const [saving, setSaving] = useState(false);
   const { locale } = useLocale();
 
+  const urlScrape = useUrlScrape();
+
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
@@ -66,6 +69,17 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
       status: "active",
     },
   });
+
+  useEffect(() => {
+    if (urlScrape.scrapedData && urlScrape.platform === "alibaba") {
+      const data = urlScrape.scrapedData;
+      if (data.platform === "alibaba") {
+        if (data.supplier_name) form.setValue("name", data.supplier_name);
+        if (data.country) form.setValue("country", data.country);
+        if (data.moq && data.moq > 0) form.setValue("min_order_qty", data.moq);
+      }
+    }
+  }, [urlScrape.scrapedData, urlScrape.platform, form.setValue]);
 
   const onSubmit = async (data: SupplierFormData) => {
     setSaving(true);
@@ -134,8 +148,42 @@ export function SupplierFormModal({ open, onOpenChange, onSuccess }: SupplierFor
               </div>
               <div className="sm:col-span-2 lg:col-span-3">
                 <Label htmlFor="supplier-alibaba-url" className={labelClass}>{t("suppliers.edit_alibaba_url", locale)}</Label>
-                <Input id="supplier-alibaba-url" {...form.register("alibaba_url")} placeholder={t("suppliers.url_placeholder", locale)} className={inputClass} />
+                <div className="relative">
+                  <Input
+                    id="supplier-alibaba-url"
+                    placeholder={t("suppliers.url_placeholder", locale)}
+                    {...form.register("alibaba_url")}
+                    onChange={(e) => {
+                      form.register("alibaba_url").onChange(e);
+                      urlScrape.setUrl(e.target.value);
+                    }}
+                    className={inputClass + " pr-20"}
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                    {urlScrape.isScraping && (
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                    )}
+                    {!urlScrape.isScraping && urlScrape.platform === "alibaba" && urlScrape.scrapedData && (
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    )}
+                  </div>
+                </div>
                 <FormErrorMessage message={form.formState.errors.alibaba_url?.message} />
+                {urlScrape.isScraping && (
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Extrayendo datos del proveedor...
+                  </p>
+                )}
+                {urlScrape.error && (
+                  <p className="text-xs text-destructive mt-1">{urlScrape.error}</p>
+                )}
+                {!urlScrape.isScraping && !urlScrape.error && urlScrape.scrapedData && urlScrape.platform === "alibaba" && (
+                  <p className="text-xs text-green-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Datos del proveedor extraídos
+                  </p>
+                )}
               </div>
               <div>
                 <Label htmlFor="supplier-rating" className={labelClass}>{t("suppliers.form_rating_label", locale)}</Label>
