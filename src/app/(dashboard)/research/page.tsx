@@ -16,9 +16,11 @@ import {
   Star,
   DollarSign,
   Trash2,
+  Sparkles,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ProductAnalyzer } from "@/components/research/product-analyzer";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -80,6 +82,8 @@ export default function ResearchPage() {
   const ITEMS_PER_PAGE = DEFAULT_PAGE_SIZE;
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ProductResearch | null>(null);
+  const [showAnalyzer, setShowAnalyzer] = useState(false);
+  const [analyzerInput, setAnalyzerInput] = useState("");
 
   const {
     register,
@@ -216,6 +220,28 @@ export default function ResearchPage() {
     } catch { toast.error(t("research.toast.error_status", locale)); }
   };
 
+  const handleAnalyzeSave = async (data: Record<string, unknown>) => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/research", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        toast.success("Producto guardado desde análisis");
+        fetchItems();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Error al guardar");
+      }
+    } catch {
+      toast.error("Error al guardar el análisis");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const resetForm = () => reset({
     name: "", niche: "", asin_reference: "", amazon_category: "",
     estimated_monthly_sales: null, average_price: null, review_count_competitor: null,
@@ -268,6 +294,23 @@ export default function ResearchPage() {
           </Button>
         </div>
       </PageHeader>
+
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4 p-3 rounded-xl bg-muted/20 border border-border">
+        <div className="flex items-center gap-2 flex-1">
+          <Sparkles className="h-4 w-4 text-primary shrink-0" />
+          <Input
+            placeholder="ASIN o URL de Amazon..."
+            value={analyzerInput}
+            onChange={(e) => setAnalyzerInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") setShowAnalyzer(true); }}
+            className="bg-background border-border text-sm h-9"
+          />
+          <Button size="sm" onClick={() => setShowAnalyzer(true)} className="shrink-0">
+            <Sparkles className="h-3.5 w-3.5 me-1.5" />
+            Analizar con IA
+          </Button>
+        </div>
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-sm">
@@ -538,6 +581,12 @@ export default function ResearchPage() {
           </div>
         </form>
       </FormDialogLayout>
+
+      <ProductAnalyzer
+        open={showAnalyzer}
+        onOpenChange={setShowAnalyzer}
+        onSave={handleAnalyzeSave}
+      />
     </div>
   );
 }

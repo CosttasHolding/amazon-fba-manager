@@ -4,6 +4,7 @@ export {
   getListings,
   getOrders,
   getOrderItems,
+  getCatalogItem,
   getInventory,
   getFeeEstimate,
   createReport,
