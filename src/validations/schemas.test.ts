@@ -204,14 +204,14 @@ describe("researchSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("falla sin nombre", () => {
+  it("acepta sin nombre (opcional)", () => {
     const result = researchSchema.safeParse({ status: "idea" });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
-  it("falla con nombre vacio", () => {
+  it("acepta con nombre vacio", () => {
     const result = researchSchema.safeParse({ name: "" });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("valida rating entre 0 y 5", () => {
