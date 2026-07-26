@@ -19,6 +19,7 @@ import {
   ShoppingCart,
   Percent,
   TrendingDown,
+  Upload,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard } from "@/components/ui/kpi-card";
@@ -37,7 +38,9 @@ const CategoryChart = dynamic(() => import("@/components/charts/category-chart")
 const ProfitBarChart = dynamic(() => import("@/components/charts/profit-bar-chart").then((m) => m.ProfitBarChart), {
   loading: () => <ChartSkeleton />,
 });
+import { Button } from "@/components/ui/button";
 import { ExportButton } from "@/components/ui/export-button";
+import { UrlImportDialog } from "@/components/url-import-dialog";
 import { exportToExcelPro } from "@/lib/export";
 import { useDashboard } from "@/hooks/use-data";
 import type { DashboardResponse } from "@/types";
@@ -179,6 +182,12 @@ export function DashboardClient({ initialData }: { initialData?: DashboardRespon
         subtitle={t("dashboard.subtitle", locale)}
         breadcrumbs={[{ label: t("nav.dashboard", locale) }]}
       >
+        <UrlImportDialog>
+          <Button variant="outline" size="sm">
+            <Upload className="w-4 h-4 mr-1.5" />
+            Importar URL
+          </Button>
+        </UrlImportDialog>
         <ExportButton onClick={handleExport} />
       </PageHeader>
 
