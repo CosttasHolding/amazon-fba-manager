@@ -56,27 +56,9 @@ Entorno: Production (y Preview si queres probar)
 
 ---
 
-### 2.2 Agregar .superpowers/ y "esto es" a .gitignore (OPCIONAL pero recomendado)
+### ~~2.2 Agregar .superpowers/ y "esto es" a .gitignore~~ ✅ YA HECHO
 
-Se me escaparon esos archivos en un commit. Para evitar trackearlos en el futuro:
-
-**Archivo:** `.gitignore` (raiz del proyecto)
-**Agregar estas lineas AL FINAL del archivo:**
-```
-# Superpowers internals
-.superpowers/
-
-# Misc
-esto es
-```
-
-Luego ejecutar:
-```bash
-# Si queres sacarlos del tracking (no borra los archivos, solo los deja de trackear)
-git rm --cached .superpowers/ -r
-git rm --cached "esto es" -r
-git commit -m "chore: dejar de trackear .superpowers/ y esto es"
-```
+Ya se agrego al `.gitignore` y se ejecuto `git rm --cached`. No necesitas hacer nada.
 
 ---
 
@@ -187,32 +169,20 @@ Buscar donde se setean los headers `Amazon-Advertising-API-*`. Esos headers son 
 
 ---
 
-### 2.6 Refactors pendientes (si queres seguir optimizando)
+### ~~2.6.1 Centralizar navItems~~ ✅ YA EXISTE
 
-#### 2.6.1 Centralizar navItems
+`src/lib/navigation.ts` ya existe y es la unica fuente de verdad. Tanto `sidebar.tsx` como `mobile-bottom-nav.tsx` importan desde ahi. No hay duplicacion.
 
-**Archivo a crear:** `src/lib/navigation.ts` (si no existe ya)
+### 2.7 Tests agregados (182 tests)
 
-Mover los arrays de items del sidebar y mobile-bottom-nav a un unico archivo central. Actualmente estan duplicados.
+Se agregaron tests para la infraestructura AI:
+- `src/lib/ai/types.test.ts` - 6 tests (estructura de tipos)
+- `src/lib/ai/prompts.test.ts` - 8 tests (generacion de prompts)
 
-**Donde buscar:**
-- `src/components/sidebar.tsx` - tiene ~17 items de navegacion
-- `src/components/mobile-bottom-nav.tsx` - tiene los mismos items
-
-**Que hacer:** Crear un array compartido en `src/lib/navigation.ts` y exportarlo. Importar en ambos componentes.
-
----
-
-### 2.7 Tests (para coverage completo)
-
-Los tests existentes pasan (168). Para coverage completo, agregar:
-
-```bash
-# Tests sugeridos para cubrir:
-# - Componentes: dashboard, sidebar, product-form, tables
-# - Hooks: use-url-scrape, use-research
-# - API routes: research, dashboard, scrape
-```
+**Tests que faltarian (opcional):**
+- Componentes: dashboard-client, sidebar, product-form, tables
+- Hooks: use-url-scrape
+- API routes: research/analyze, scrape
 
 ---
 
@@ -255,14 +225,16 @@ Se instalo `openai` v4.x. Si queres cambiar a otro proveedor de AI (Anthropic Cl
 | Item | Quien lo hace | Tiempo estimado |
 |------|---------------|-----------------|
 | Setear OPENAI_API_KEY en Vercel | **Vos** | 2 min |
-| Agregar .gitignore + rm --cached | **Vos** | 1 min |
-| Google Drive redirect URI prod | **Vos** | 5 min |
+| ~~Agregar .gitignore + rm --cached~~ | ✅ YA HECHO | - |
+| Google Drive redirect URI prod (usar NEXT_PUBLIC_APP_URL) | **Vos** (ver nota) | 5 min |
 | SP-API sync real | **Vos** si usas SP-API | 30-60 min |
 | SP-API headers fix | **Vos** si usas SP-API | 5 min |
-| Refactor navItems | **Vos** (o pedir a mi) | 15 min |
-| Tests coverage | **Vos** (o pedir a mi) | 30 min |
-| Todo lo demas | **YA ESTA HECHO** | - |
+| ~~Refactor navItems~~ | ✅ YA EXISTE | - |
+| Tests coverage adicional | **Vos** (opcional) | 30 min |
+| **Todo lo demas** | **YA ESTA HECHO** | - |
+
+**Nota Drive:** El redirect URI usa `NEXT_PUBLIC_APP_URL` (linea 17 de `src/lib/drive/client.ts`). Si seteas esa variable en Vercel como `https://amazon-fba-manager-virid.vercel.app`, funciona automaticamente. Tambien agregar esa URL + `/api/drive/auth/callback` en Google Cloud Console.
 
 **Build:** 0 errores ✅
-**Tests:** 168 pasando ✅
+**Tests:** 182 pasando ✅
 **Deploy:** https://amazon-fba-manager-virid.vercel.app ✅
