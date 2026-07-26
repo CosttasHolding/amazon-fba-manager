@@ -16,7 +16,7 @@ import {
   UserCheck, Plus, GripVertical, Calendar, User as UserIcon,
   Loader2, X, LayoutGrid, List,
 } from "lucide-react";
-import { Member, Task } from "@/types";
+import { Member, Task, BoardDecision, AuditLogEntry } from "@/types";
 import { createTask, updateTask, deleteTask } from "@/lib/actions/tasks";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -277,7 +277,7 @@ function OverviewTab({
   totalOwnership, pendingTasks, completedTasks, onSelectMember,
 }: {
   locale: Locale; activeMembers: Member[]; memberRoles: Record<string, number>;
-  taskStats: Record<string, number>; decisions: any[];
+  taskStats: Record<string, number>; decisions: BoardDecision[];
   totalOwnership: number; pendingTasks: number; completedTasks: number;
   onSelectMember: (m: Member) => void;
 }) {
@@ -340,7 +340,7 @@ function OverviewTab({
                   </tr>
                 </thead>
                 <tbody>
-                  {decisions.slice(0, 5).map((d: any) => (
+                  {decisions.slice(0, 5).map((d) => (
                     <tr key={d.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                       <td className="p-3 text-sm font-medium text-foreground">{d.title}</td>
                       <td className="p-3 text-center">
@@ -388,7 +388,7 @@ function RecentActivity({ locale }: { locale: Locale }) {
           <p className="text-sm text-muted-foreground text-center py-4">{t("team.no_activity", locale)}</p>
         ) : (
           <div className="space-y-1.5 max-h-[280px] overflow-y-auto">
-            {log.slice(0, 10).map((entry: any) => (
+            {log.slice(0, 10).map((entry: AuditLogEntry) => (
               <div key={entry.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/20">
                 <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
                   entry.action === "create" ? "bg-green-500" :

@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     if (error || !data) return NextResponse.json({ error: "Orden no encontrada" }, { status: 404 });
     return NextResponse.json(data);
-  } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
+  } catch (e) { console.error("Route error", e); return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
 }
 
 export async function PUT(req: NextRequest, { params }: RouteParams) {
@@ -49,7 +49,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const { data, error } = await supabase.from("purchase_orders").update(result.data).eq("id", id).eq("org_id", orgId).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
-  } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
+  } catch (e) { console.error("Route error", e); return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
 }
 
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
@@ -65,5 +65,5 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const { error } = await supabase.from("purchase_orders").delete().eq("id", id).eq("org_id", orgId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ message: "Orden eliminada" });
-  } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
+  } catch (e) { console.error("Route error", e); return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
 }

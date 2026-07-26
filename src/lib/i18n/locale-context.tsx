@@ -37,10 +37,9 @@ export function LocaleProvider({ children, initialLocale = "es" }: { children: R
             language: newLocale,
           }, { onConflict: "user_id" });
       }
-    } catch {}
+    } catch (e) { console.error("Failed to persist locale", e); }
   }, []);
 
-  // Load from DB on mount
   useEffect(() => {
     (async () => {
       try {
@@ -61,7 +60,7 @@ export function LocaleProvider({ children, initialLocale = "es" }: { children: R
           document.documentElement.lang = saved;
           document.documentElement.dir = dir;
         }
-      } catch {}
+      } catch (e) { console.error("Failed to load locale from DB", e); }
     })();
   }, []);
 

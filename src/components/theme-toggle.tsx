@@ -30,7 +30,7 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
                     setHighContrast(true);
                     document.documentElement.classList.add("high-contrast");
                 }
-            } catch {}
+            } catch (e) { console.error("Failed to load high contrast setting", e); }
         })();
     }, []);
 
@@ -54,7 +54,7 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
                         high_contrast: next,
                     }, { onConflict: "user_id" });
             }
-        } catch {}
+        } catch (e) { console.error("Failed to save high contrast setting", e); }
     }, [highContrast]);
 
     if (!mounted) return null;

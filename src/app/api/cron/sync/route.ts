@@ -111,6 +111,7 @@ async function executeSync(
       throw new Error("SP_API_CLIENT_ID y SP_API_CLIENT_SECRET no configurados");
     }
 
+    console.warn("CRON sync stub: SP-API sync no implementado aun. Marcar como completado sin datos.");
     await supabase
       .from("sync_logs")
       .update({

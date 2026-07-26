@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const { data, error } = await supabase.from("fba_shipments").select("*, fba_shipment_items(*, products(name, sku)), purchase_orders(po_number)").eq("id", params.id).eq("org_id", orgId).single();
     if (error) return NextResponse.json({ error: error.message }, { status: 404 });
     return NextResponse.json(data);
-  } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
+  } catch (e) { console.error("Route error", e); return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
@@ -37,7 +37,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const { data, error } = await supabase.from("fba_shipments").update(result.data).eq("id", params.id).eq("org_id", orgId).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
-  } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
+  } catch (e) { console.error("Route error", e); return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
@@ -52,5 +52,5 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     const { error } = await supabase.from("fba_shipments").delete().eq("id", params.id).eq("org_id", orgId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ message: "Eliminado" });
-  } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
+  } catch (e) { console.error("Route error", e); return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
 }

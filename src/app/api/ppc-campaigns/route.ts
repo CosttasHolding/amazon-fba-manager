@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     const { data, error, count } = await supabase.from("ppc_campaigns").select("*", { count: "exact" }).eq("org_id", orgId).order("created_at", { ascending: false }).range(from, to);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ data: data || [], count, page, limit });
-  } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
+  } catch (e) { console.error("Route error", e); return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
 }
 
 export async function POST(req: NextRequest) {
@@ -43,5 +43,5 @@ export async function POST(req: NextRequest) {
     const { data, error } = await supabase.from("ppc_campaigns").insert(clean).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data, { status: 201 });
-  } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
+  } catch (e) { console.error("Route error", e); return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
 }

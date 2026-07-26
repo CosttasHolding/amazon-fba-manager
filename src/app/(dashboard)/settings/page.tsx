@@ -254,7 +254,7 @@ export default function SettingsPage() {
               .eq("id", settings.current_org_id);
           }
         }
-      } catch { /* silent */ }
+      } catch (e) { console.error("Failed to update org name", e); }
     }
   };
 

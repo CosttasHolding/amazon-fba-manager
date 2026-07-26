@@ -70,7 +70,7 @@ export function GlobalSearch() {
       }));
       setResults(items);
       setSelectedIndex(0);
-    } catch { setResults([]); }
+    } catch (e) { console.error("Search failed", e); setResults([]); }
     finally { setLoading(false); }
   }, []);
 
