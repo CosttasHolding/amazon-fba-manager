@@ -174,13 +174,13 @@ export default function OrdersPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-4">{t("orders.table_po_supplier", locale)}</th>
-                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-4">{t("orders.table_product", locale)}</th>
-                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-4">{t("orders.table_quantity", locale)}</th>
-                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-4">{t("orders.table_total", locale)}</th>
-                    <th scope="col" className="text-center text-xs font-medium text-muted-foreground p-4">{t("orders.table_status", locale)}</th>
-                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-4 hidden lg:table-cell">{t("orders.table_progress", locale)}</th>
-                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-4 hidden md:table-cell">{t("orders.table_eta", locale)}</th>
+                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3">{t("orders.table_po_supplier", locale)}</th>
+                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3">{t("orders.table_product", locale)}</th>
+                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3">{t("orders.table_quantity", locale)}</th>
+                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3">{t("orders.table_total", locale)}</th>
+                    <th scope="col" className="text-center text-xs font-medium text-muted-foreground px-4 py-3">{t("orders.table_status", locale)}</th>
+                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">{t("orders.table_progress", locale)}</th>
+                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">{t("orders.table_eta", locale)}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -188,17 +188,17 @@ export default function OrdersPage() {
                     const statusCfg = STATUS_FLOW.find((s) => s.key === order.status);
                     return (
                       <tr key={order.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => router.push(`/orders/${order.id}`)}>
-                        <td className="p-4">
+                        <td className="px-4 py-3">
                           <p className="text-sm font-medium text-foreground">{order.po_number || `PO-${order.id.slice(0, 8)}`}</p>
                           <p className="text-xs text-muted-foreground">{order.suppliers?.name || t("common.no_supplier", locale)}</p>
                         </td>
-                        <td className="p-4">
+                        <td className="px-4 py-3">
                           <p className="text-sm text-foreground">{order.products?.name || "—"}</p>
                           {order.products?.sku && <p className="text-xs text-muted-foreground font-mono">{order.products.sku}</p>}
                         </td>
-                        <td className="p-4 text-end font-display text-sm text-foreground">{order.quantity}</td>
-                        <td className="p-4 text-end font-display font-semibold text-sm text-foreground">${order.total_cost?.toFixed(2)}</td>
-                        <td className="p-4 text-center">
+                        <td className="px-4 py-3 text-end font-display text-sm text-foreground">{order.quantity}</td>
+                        <td className="px-4 py-3 text-end font-display font-semibold text-sm text-foreground">${order.total_cost?.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-center">
                           <span className={cn("inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium border",
                             statusCfg?.color?.replace("bg-", "bg-")?.replace("500", "500/10") || "bg-slate-500/10",
                             statusCfg?.border?.replace("500", "500/20") || "border-slate-500/20",
@@ -208,10 +208,10 @@ export default function OrdersPage() {
                             {t("orders.status." + order.status, locale)}
                           </span>
                         </td>
-                        <td className="p-4 hidden lg:table-cell">
+                        <td className="px-4 py-3 hidden lg:table-cell">
                           <TimelineProgress status={order.status} />
                         </td>
-                        <td className="p-4 text-end hidden md:table-cell text-sm text-muted-foreground">
+                        <td className="px-4 py-3 text-end hidden md:table-cell text-sm text-muted-foreground">
                           {order.estimated_arrival ? new Date(order.estimated_arrival).toLocaleDateString(locale === "en" ? "en-US" : "es-ES") : "—"}
                         </td>
                       </tr>

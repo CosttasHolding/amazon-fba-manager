@@ -110,11 +110,11 @@ export function ProfitabilityHeatmap({ products }: HeatmapProps) {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-2">{t("common.product", locale)}</th>
-                <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-2">{t("common.roi", locale)}</th>
-                <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-2">{t("common.profit", locale)}</th>
-                <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-2 hidden sm:table-cell">{t("analytics.sales_per_month", locale)}</th>
-                <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-2 hidden md:table-cell">{t("common.stock", locale)}</th>
+                <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3">{t("common.product", locale)}</th>
+                <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3">{t("common.roi", locale)}</th>
+                <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3">{t("common.profit", locale)}</th>
+                <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">{t("analytics.sales_per_month", locale)}</th>
+                <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">{t("common.stock", locale)}</th>
               </tr>
             </thead>
             <tbody>
@@ -128,11 +128,11 @@ export function ProfitabilityHeatmap({ products }: HeatmapProps) {
                     }%)`,
                   }}
                 >
-                  <td className="p-2">
+                  <td className="px-4 py-3">
                     <p className="text-xs font-medium text-foreground truncate max-w-[160px]">{p.name}</p>
                     <p className="text-[10px] font-mono text-muted-foreground">{p.sku}</p>
                   </td>
-                  <td className="p-2 text-end">
+                  <td className="px-4 py-3 text-end">
                     <span className={cn(
                       "inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-mono font-semibold min-w-[52px]",
                       getHeatBg(p.roi || 0, maxRoi),
@@ -141,7 +141,7 @@ export function ProfitabilityHeatmap({ products }: HeatmapProps) {
                       {(p.roi || 0).toFixed(0)}%
                     </span>
                   </td>
-                  <td className="p-2 text-end">
+                  <td className="px-4 py-3 text-end">
                     <span className={cn(
                       "inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-mono font-semibold min-w-[60px]",
                       getProfitBg(p.net_profit || 0),
@@ -150,10 +150,10 @@ export function ProfitabilityHeatmap({ products }: HeatmapProps) {
                       ${(p.net_profit || 0).toFixed(2)}
                     </span>
                   </td>
-                  <td className="p-2 text-end text-xs text-muted-foreground hidden sm:table-cell">
+                  <td className="px-4 py-3 text-end text-xs text-muted-foreground hidden sm:table-cell">
                     {p.sales_velocity_30d ?? "—"}
                   </td>
-                  <td className="p-2 text-end text-xs text-muted-foreground hidden md:table-cell">
+                  <td className="px-4 py-3 text-end text-xs text-muted-foreground hidden md:table-cell">
                     {p.stock_available ?? "—"}
                   </td>
                 </tr>
@@ -165,7 +165,7 @@ export function ProfitabilityHeatmap({ products }: HeatmapProps) {
     }
 
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gapx-4 py-3">
         {items.map((p) => (
           <div
             key={p.id}

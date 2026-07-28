@@ -201,7 +201,7 @@ export default function CompareSuppliersPage() {
           </div>
         )}
 
-        <div className="flex items-center gap-4 pt-2 border-t border-border">
+        <div className="flex items-center gapx-4 py-3 pt-2 border-t border-border">
           <div className="flex-1 max-w-xs">
             <Label className="text-xs text-muted-foreground">{t("suppliers.compare_quantity", locale)}</Label>
             <Input
@@ -232,7 +232,7 @@ export default function CompareSuppliersPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gapx-4 py-3">
             {comparisonData.map((d, i) => (
               <KpiCard
                 key={d.supplier.id}
@@ -251,9 +251,9 @@ export default function CompareSuppliersPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-4 uppercase tracking-wider">{t("suppliers.compare_metric", locale)}</th>
+                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3 uppercase tracking-wider">{t("suppliers.compare_metric", locale)}</th>
                     {comparisonData.map((d) => (
-                      <th scope="col" key={d.supplier.id} className="text-center text-xs font-medium text-muted-foreground p-4 uppercase tracking-wider">
+                      <th scope="col" key={d.supplier.id} className="text-center text-xs font-medium text-muted-foreground px-4 py-3 uppercase tracking-wider">
                         <div className="flex flex-col items-center gap-1">
                           <span className="text-foreground font-semibold">{d.supplier.name}</span>
                           {renderStars(d.supplier.rating)}
@@ -264,34 +264,34 @@ export default function CompareSuppliersPage() {
                 </thead>
                 <tbody>
                   <tr className="border-b border-border/50">
-                    <td className="p-4 text-sm text-muted-foreground">{t("suppliers.compare_unit_price", locale)}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{t("suppliers.compare_unit_price", locale)}</td>
                     {comparisonData.map((d) => (
-                      <td key={d.supplier.id} className="p-4 text-center font-display text-sm text-foreground">
+                      <td key={d.supplier.id} className="px-4 py-3 text-center font-display text-sm text-foreground">
                         {fmt(d.unitPrice)}
                       </td>
                     ))}
                   </tr>
                   <tr className="border-b border-border/50">
-                    <td className="p-4 text-sm text-muted-foreground">{t("suppliers.compare_product_cost", locale).replace("{qty}", qtyNum.toString())}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{t("suppliers.compare_product_cost", locale).replace("{qty}", qtyNum.toString())}</td>
                     {comparisonData.map((d) => (
-                      <td key={d.supplier.id} className="p-4 text-center font-display text-sm text-foreground">
+                      <td key={d.supplier.id} className="px-4 py-3 text-center font-display text-sm text-foreground">
                         {fmt(d.totalProductCost)}
                       </td>
                     ))}
                   </tr>
                   <tr className="border-b border-border/50">
-                    <td className="p-4 text-sm text-muted-foreground">{t("suppliers.compare_estimated_shipping", locale)}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{t("suppliers.compare_estimated_shipping", locale)}</td>
                     {comparisonData.map((d) => (
-                      <td key={d.supplier.id} className="p-4 text-center font-display text-sm text-foreground">
+                      <td key={d.supplier.id} className="px-4 py-3 text-center font-display text-sm text-foreground">
                         {fmt(d.shippingCost)}
                       </td>
                     ))}
                   </tr>
                   <tr className="border-b border-border/50">
-                    <td className="p-4 text-sm text-muted-foreground">{t("suppliers.compare_total_estimated", locale)}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{t("suppliers.compare_total_estimated", locale)}</td>
                     {comparisonData.map((d) => (
                       <td key={d.supplier.id} className={cn(
-                        "p-4 text-center font-display font-bold text-sm",
+                        "px-4 py-3 text-center font-display font-bold text-sm",
                         d.supplier.id === bestSupplier?.supplier.id ? "text-emerald-400" : "text-foreground"
                       )}>
                         {fmt(d.totalCost)}
@@ -299,31 +299,31 @@ export default function CompareSuppliersPage() {
                     ))}
                   </tr>
                   <tr className="border-b border-border/50">
-                    <td className="p-4 text-sm text-muted-foreground flex items-center gap-1.5">
+                    <td className="px-4 py-3 text-sm text-muted-foreground flex items-center gap-1.5">
                       <Package className="h-3.5 w-3.5" /> {t("suppliers.moq_short", locale)}
                     </td>
                     {comparisonData.map((d) => (
-                      <td key={d.supplier.id} className="p-4 text-center text-sm text-foreground">
+                      <td key={d.supplier.id} className="px-4 py-3 text-center text-sm text-foreground">
                         {d.moq ?? "—"} {t("suppliers.compare_units", locale)}
                       </td>
                     ))}
                   </tr>
                   <tr className="border-b border-border/50">
-                    <td className="p-4 text-sm text-muted-foreground flex items-center gap-1.5">
+                    <td className="px-4 py-3 text-sm text-muted-foreground flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5" /> {t("suppliers.compare_lead_time", locale)}
                     </td>
                     {comparisonData.map((d) => (
-                      <td key={d.supplier.id} className="p-4 text-center text-sm text-foreground">
+                      <td key={d.supplier.id} className="px-4 py-3 text-center text-sm text-foreground">
                         {d.lead ?? "—"} {t("suppliers.compare_days", locale)}
                       </td>
                     ))}
                   </tr>
                   <tr>
-                    <td className="p-4 text-sm text-muted-foreground flex items-center gap-1.5">
+                    <td className="px-4 py-3 text-sm text-muted-foreground flex items-center gap-1.5">
                       <Star className="h-3.5 w-3.5" /> {t("suppliers.rating", locale)}
                     </td>
                     {comparisonData.map((d) => (
-                      <td key={d.supplier.id} className="p-4 text-center">
+                      <td key={d.supplier.id} className="px-4 py-3 text-center">
                         {renderStars(d.supplier.rating)}
                       </td>
                     ))}

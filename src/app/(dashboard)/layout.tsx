@@ -12,7 +12,10 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Sidebar } from "@/components/sidebar";
 import { TopHeader } from "@/components/top-header";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
+import { MobileSearchToggle } from "@/components/mobile-search-toggle";
+import { NotificationBell } from "@/components/notification-bell";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { AnimatedPage } from "@/components/ui/animated-page";
 import { HelpButton } from "@/components/help-button";
 import { SkipToContent } from "@/components/skip-to-content";
 import { OrgLayout } from "@/components/org-layout";
@@ -55,7 +58,7 @@ export default async function DashboardLayout({
       <Sidebar userEmail={user.email} userName={userName} avatarUrl={avatarUrl} />
       <MobileBottomNav />
 
-      <header role="banner" className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-card/90 backdrop-blur-xl border-b border-border">
+      <header role="banner" className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3 bg-card/90 backdrop-blur-xl border-b border-border">
         <div className="flex items-center gap-2.5">
           <img
             src="/logo_solo.png"
@@ -73,7 +76,9 @@ export default async function DashboardLayout({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <MobileSearchToggle />
+          <NotificationBell />
           <Link
             href="/settings"
             className="min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
@@ -99,7 +104,7 @@ export default async function DashboardLayout({
       <main id="main-content" role="main" aria-label="Contenido principal" className="lg:ms-64 min-h-screen pb-24 lg:pb-0">
         <TopHeader userEmail={user.email} userName={userName} avatarUrl={avatarUrl} />
         <div className="p-4 sm:p-6 lg:p-8">
-          <ErrorBoundary>{children}</ErrorBoundary>
+          <ErrorBoundary><AnimatedPage>{children}</AnimatedPage></ErrorBoundary>
         </div>
       </main>
 

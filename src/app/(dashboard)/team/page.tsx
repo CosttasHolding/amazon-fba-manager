@@ -334,16 +334,16 @@ function OverviewTab({
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-3">{t("team.table.title", locale)}</th>
-                    <th scope="col" className="text-center text-xs font-medium text-muted-foreground p-3">{t("team.table.status", locale)}</th>
-                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-3">{t("team.table.date", locale)}</th>
+                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3">{t("team.table.title", locale)}</th>
+                    <th scope="col" className="text-center text-xs font-medium text-muted-foreground px-4 py-3">{t("team.table.status", locale)}</th>
+                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3">{t("team.table.date", locale)}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {decisions.slice(0, 5).map((d) => (
                     <tr key={d.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                      <td className="p-3 text-sm font-medium text-foreground">{d.title}</td>
-                      <td className="p-3 text-center">
+                      <td className="px-4 py-3 text-sm font-medium text-foreground">{d.title}</td>
+                      <td className="px-4 py-3 text-center">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                           d.status === "approved" ? "bg-green-500/10 text-green-500" :
                           d.status === "executed" ? "bg-blue-500/10 text-blue-500" :
@@ -353,7 +353,7 @@ function OverviewTab({
                           {t(`status.${d.status}`, locale)}
                         </span>
                       </td>
-                      <td className="p-3 text-end text-sm text-muted-foreground">
+                      <td className="px-4 py-3 text-end text-sm text-muted-foreground">
                         {d.decision_date ? new Date(d.decision_date).toLocaleDateString(locale === "en" ? "en-US" : "es-ES") : "-"}
                       </td>
                     </tr>
@@ -437,34 +437,34 @@ function MembersTab({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-3">{t("members.table_name", locale)}</th>
-                  <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-3">{t("members.table_email", locale)}</th>
-                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground p-3">{t("members.table_role", locale)}</th>
-                  <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-3">{t("members.table_participation", locale)}</th>
-                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground p-3">{t("members.table_status", locale)}</th>
-                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground p-3">{t("members.table_actions", locale)}</th>
+                  <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3">{t("members.table_name", locale)}</th>
+                  <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3">{t("members.table_email", locale)}</th>
+                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground px-4 py-3">{t("members.table_role", locale)}</th>
+                  <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3">{t("members.table_participation", locale)}</th>
+                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground px-4 py-3">{t("members.table_status", locale)}</th>
+                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground px-4 py-3">{t("members.table_actions", locale)}</th>
                 </tr>
               </thead>
               <tbody>
                 {members.map((member) => (
                   <tr key={member.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                    <td className="p-3">
+                    <td className="px-4 py-3">
                       <button onClick={() => onSelect(member)} className="text-sm font-medium text-foreground hover:text-primary transition-colors">
                         {member.full_name}
                       </button>
                     </td>
-                    <td className="p-3 text-sm text-muted-foreground">{member.email || "—"}</td>
-                    <td className="p-3 text-center">
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{member.email || "—"}</td>
+                    <td className="px-4 py-3 text-center">
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${ROLE_COLORS[member.role] || ""}`}>
                         {t(`role.${member.role}`, locale)}
                       </span>
                     </td>
-                    <td className="p-3 text-end">
+                    <td className="px-4 py-3 text-end">
                       <span className="text-sm font-display font-semibold text-foreground">
                         {member.ownership_pct.toFixed(1)}%
                       </span>
                     </td>
-                    <td className="p-3 text-center">
+                    <td className="px-4 py-3 text-center">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
                         member.status === "active" ? "bg-emerald-500/10 text-emerald-400" :
                         member.status === "deceased" ? "bg-rose-500/10 text-rose-400" :
@@ -477,7 +477,7 @@ function MembersTab({
                         {t(`members.status_${member.status}`, locale)}
                       </span>
                     </td>
-                    <td className="p-3 text-center">
+                    <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => onEdit(member)}

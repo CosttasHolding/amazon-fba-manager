@@ -11,12 +11,12 @@ interface DataTableWrapperProps {
 }
 
 export const tableHeaderClass =
-  "font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-5 py-3.5 text-start border-b-2 border-border";
+  "font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-4 py-3 text-start border-b-2 border-border";
 
 export const tableRowClass =
   "border-b border-border/40 hover:bg-muted/30 transition-colors even:bg-muted/10";
 
-export const tableCellClass = "px-5 py-3.5 text-sm";
+export const tableCellClass = "px-4 py-3 text-sm";
 
 export function DataTableWrapper({
   children,

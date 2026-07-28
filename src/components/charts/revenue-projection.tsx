@@ -367,23 +367,23 @@ export function RevenueProjection({ salesData = [], products = [] }: RevenueProj
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-3">{t("common.product", locale)}</th>
-                  <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-3">{t("analytics.stock_actual", locale)}</th>
-                  <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-3">{t("analytics.velocity_units_month", locale)}</th>
-                  <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-3">{t("analytics.days_remaining", locale)}</th>
-                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground p-3">{t("common.status", locale)}</th>
+                  <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3">{t("common.product", locale)}</th>
+                  <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3">{t("analytics.stock_actual", locale)}</th>
+                  <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3">{t("analytics.velocity_units_month", locale)}</th>
+                  <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3">{t("analytics.days_remaining", locale)}</th>
+                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground px-4 py-3">{t("common.status", locale)}</th>
                 </tr>
               </thead>
               <tbody>
                 {stockProjections.map((row) => (
                   <tr key={row.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                    <td className="p-3">
+                    <td className="px-4 py-3">
                       <p className="text-sm font-medium text-foreground truncate max-w-[200px]">{row.name}</p>
                       <p className="text-xs text-muted-foreground font-mono">{row.sku}</p>
                     </td>
-                    <td className="p-3 text-end text-sm font-display text-foreground">{row.currentStock}</td>
-                    <td className="p-3 text-end text-sm font-display text-foreground">{row.velocity.toFixed(1)}</td>
-                    <td className="p-3 text-end">
+                    <td className="px-4 py-3 text-end text-sm font-display text-foreground">{row.currentStock}</td>
+                    <td className="px-4 py-3 text-end text-sm font-display text-foreground">{row.velocity.toFixed(1)}</td>
+                    <td className="px-4 py-3 text-end">
                       <span className={cn(
                         "text-sm font-display font-semibold",
                         row.daysUntilStockout === null ? "text-muted-foreground" :
@@ -393,7 +393,7 @@ export function RevenueProjection({ salesData = [], products = [] }: RevenueProj
                         {row.daysUntilStockout === null ? "∞" : row.daysUntilStockout}
                       </span>
                     </td>
-                    <td className="p-3 text-center">
+                    <td className="px-4 py-3 text-center">
                       {row.status === "critical" ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-500/10 text-red-500 border border-red-500/20">
                           <AlertTriangle className="w-3 h-3" /> {t("analytics.status_critical", locale)}

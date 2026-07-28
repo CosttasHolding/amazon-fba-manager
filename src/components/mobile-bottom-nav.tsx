@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { navItems, type NavItem } from "@/lib/navigation";
+import { useEffect, useState, useMemo } from "react";
+import { navItems, navCategories, type NavItem } from "@/lib/navigation";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { t } from "@/lib/i18n/translations";
 import { X, MoreHorizontal } from "lucide-react";
 
-const PRIMARY_ITEMS = ["/dashboard", "/products", "/inventory", "/sales", "/more"];
+const PRIMARY_HREFS = ["/dashboard", "/products", "/inventory", "/sales"];
 
 export function MobileBottomNav() {
   const pathname = usePathname();
@@ -41,37 +41,29 @@ export function MobileBottomNav() {
     return pathname.startsWith(href);
   };
 
-  const isMoreActive = !PRIMARY_ITEMS.slice(0, -1).some((h) => isActive(h));
+  const isMoreActive = !PRIMARY_HREFS.some((h) => isActive(h));
 
-  const primaryItems: (NavItem & { isMore?: boolean })[] = [
-    navItems.find((i) => i.href === "/dashboard")!,
-    navItems.find((i) => i.href === "/products")!,
-    navItems.find((i) => i.href === "/inventory")!,
-    navItems.find((i) => i.href === "/sales")!,
-    {
-      href: "/more",
-      icon: MoreHorizontal,
-      label: "More",
-      labelShort: "More",
-      isMore: true,
-    },
-  ];
-
-  const moreItems = navItems.filter((i) => !PRIMARY_ITEMS.includes(i.href));
+  const primaryItems = useMemo<(NavItem & { isMore?: boolean })[]>(() => {
+    const dash = navItems.find((i) => i.href === "/dashboard")!;
+    return [
+      dash,
+      ...PRIMARY_HREFS.slice(1).map((href) => {
+        for (const cat of navCategories) {
+          const found = cat.items.find((i) => i.href === href);
+          if (found) return found;
+        }
+        return null!;
+      }),
+    ];
+  }, []);
 
   return (
     <>
       <nav aria-label={t("accessibility.toggle_sidebar", locale)} className="lg:hidden fixed bottom-0 start-0 end-0 z-50 bg-card/95 border-t border-border px-2 pt-1 pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
         <div className="flex items-stretch justify-around">
           {primaryItems.map((item) => {
-            const active = item.isMore ? moreOpen || isMoreActive : isActive(item.href);
+            const active = isActive(item.href);
             const showBadge = item.href === "/inventory" && unreadCount > 0;
-
-            const handleClick = () => {
-              if (item.isMore) {
-                setMoreOpen((prev) => !prev);
-              }
-            };
 
             const content = (
               <>
@@ -97,20 +89,29 @@ export function MobileBottomNav() {
                 : "text-muted-foreground hover:text-foreground"
             }`;
 
-            if (item.isMore) {
-              return (
-                <button key="more" onClick={handleClick} className={baseClass}>
-                  {content}
-                </button>
-              );
-            }
-
             return (
               <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={baseClass}>
                 {content}
               </Link>
             );
           })}
+
+          <button
+            key="more"
+            onClick={() => setMoreOpen((prev) => !prev)}
+            className={`relative flex flex-col items-center justify-center min-w-0 flex-1 py-2 rounded-xl transition-all duration-200 min-h-[48px] ${
+              moreOpen || isMoreActive
+                ? "text-primary bg-primary/[0.08]"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {moreOpen || isMoreActive ? (
+              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-5 h-[2.5px] rounded-full bg-primary" />
+            ) : null}
+            <MoreHorizontal
+              className={`w-5 h-5 transition-all duration-200 ${moreOpen || isMoreActive ? "text-primary scale-110" : ""}`}
+            />
+          </button>
         </div>
       </nav>
 
@@ -127,22 +128,34 @@ export function MobileBottomNav() {
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
-            <div className="grid grid-cols-4 gap-1 p-3">
-              {moreItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-colors min-h-[72px] ${
-                    isActive(item.href)
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span className="text-[10px] font-medium text-center leading-tight">
-                    {t(`nav.short.${item.href.replace("/", "").replace(/-/g, "_")}`, locale) || item.labelShort || item.label}
-                  </span>
-                </Link>
+            <div className="p-3 space-y-4">
+              {navCategories.map((cat) => (
+                <div key={cat.label}>
+                  <div className="flex items-center gap-2 px-1 pb-2">
+                    <cat.icon className="w-3.5 h-3.5 text-muted-foreground/50" />
+                    <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.12em] font-body">
+                      {cat.label}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1">
+                    {cat.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-colors min-h-[72px] ${
+                          isActive(item.href)
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`}
+                      >
+                        <item.icon className="w-5 h-5" />
+                        <span className="text-[10px] font-medium text-center leading-tight">
+                          {t(`nav.short.${item.href.replace("/", "").replace(/-/g, "_")}`, locale) || item.labelShort || item.label}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>

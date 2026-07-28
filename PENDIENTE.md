@@ -1,6 +1,6 @@
 # PENDIENTE.md - Todo lo que falta y lo que se hizo
 
-> Generado el 25/Jul/2026. Proyecto: Amazon FBA Manager v2
+> Generado el 25/Jul/2026. Ultima actualizacion: 26/Jul/2026. Proyecto: Amazon FBA Manager v2
 > URL: https://amazon-fba-manager-virid.vercel.app
 
 ---
@@ -17,6 +17,27 @@
 | Marcar cron sync como stub | `src/app/api/cron/sync/route.ts` | `8f3d6eb` |
 | Fix 14 catch blocks restantes en componentes | barcode-scanner, drive, notifications, hooks, etc. | `14e4e96` |
 | Agregar loading.tsx a 11 paginas | ads, alerts, analytics, finances, forecasting, import, research, returns, shipments, sp-api, team | `14e4e96` |
+
+### Fase 5: Server Components (4 paginas migradas)
+| Pagina | Antes | Despues |
+|--------|:-----:|:-------:|
+| forecasting/page.tsx | ❌ Client | ✅ **Server** + `ForecastingClient` |
+| ads/page.tsx | ❌ Client | ✅ **Server** + `AdsClient` |
+| finances/page.tsx | ❌ Client | ✅ **Server** + `FinancesClient` |
+| analytics/page.tsx | ❌ Client | ✅ **Server** + `AnalyticsClient` |
+| team/page.tsx | ❌ Client | ❌ Client (saltado, 98% interactivo) |
+
+Nuevos archivos: `forecasting-client.tsx`, `ads-client.tsx`, `finances-client.tsx`, `analytics-client.tsx`
+
+### UI Optimization (Jul 26): Navegación, Mobile UX, Animaciones
+| Item | Archivos |
+|------|----------|
+| Nav categories: sidebar agrupado con headers + "More" sheet agrupado | `navigation.ts`, `sidebar.tsx`, `mobile-bottom-nav.tsx` |
+| Search + Notifications en mobile top bar | `mobile-search-toggle.tsx` (nuevo), `layout.tsx` |
+| Safe area insets en mobile header | `layout.tsx` |
+| KPI grids `grid-cols-2` en mobile (7 archivos) | dashboard, finances, ads, forecasting, returns, page-skeleton, loading |
+| Table padding estandarizado `px-4 py-3` (10 archivos) | data-table-wrapper, orders, suppliers/compare, team, import, sp-api, dashboard-client, members-table, revenue-projection, profitability-heatmap |
+| Page transitions con Framer Motion (fade + slide-up 300ms) | `animated-page.tsx` + `layout.tsx` |
 
 ### URL Auto-Fill (15 tareas completadas)
 Backend: `src/lib/scraping/` (amazon.ts, alibaba.ts, index.ts, types.ts, selectors.ts), `POST /api/scrape`
@@ -231,10 +252,26 @@ Se instalo `openai` v4.x. Si queres cambiar a otro proveedor de AI (Anthropic Cl
 | SP-API headers fix | **Vos** si usas SP-API | 5 min |
 | ~~Refactor navItems~~ | ✅ YA EXISTE | - |
 | Tests coverage adicional | **Vos** (opcional) | 30 min |
-| **Todo lo demas** | **YA ESTA HECHO** | - |
+| **Todo lo demas (Fases 1-5)** | **YA ESTA HECHO** | - |
+
+## 5. ESTADO FINAL DEL PROYECTO
+
+| Check | Item |
+|:-----:|------|
+| ✅ | Fase 1: Limpieza segura (deps fantasma, dead code, fmtMoney, SWR_CONFIG) |
+| ✅ | Fase 2: Unificar codigo duplicado (getOrgId, Zod schemas, tipos, constantes) |
+| ✅ | Fase 3: Extraer componentes compartidos (FormDialogLayout, form constants, new/edit forms) |
+| ✅ | Fase 4: Optimizar fetching y memoizacion (orders SWR, global-search, lazy loading) |
+| ✅ | Fase 5: Server Components (forecasting, ads, finances, analytics) |
+| ✅ | UI Optimization: Navegación por categorías, search/notifs mobile, KPI grids, table padding, page transitions |
+| ✅ | URL Auto-Fill + Research Bot + IA |
+| ✅ | Security: `any` violations, catch blocks, logging |
+| ✅ | Tests: 182 passing, 19 suites |
+| ✅ | Build: 0 errores |
+| ✅ | Deploy: https://amazon-fba-manager-virid.vercel.app |
 
 **Nota Drive:** El redirect URI usa `NEXT_PUBLIC_APP_URL` (linea 17 de `src/lib/drive/client.ts`). Si seteas esa variable en Vercel como `https://amazon-fba-manager-virid.vercel.app`, funciona automaticamente. Tambien agregar esa URL + `/api/drive/auth/callback` en Google Cloud Console.
 
-**Build:** 0 errores ✅
-**Tests:** 182 pasando ✅
+**Build:** 0 errores ✅ (Fases 1-5 completadas)
+**Tests:** 182 pasando, 19 suites ✅
 **Deploy:** https://amazon-fba-manager-virid.vercel.app ✅

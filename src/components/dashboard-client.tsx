@@ -192,7 +192,7 @@ export function DashboardClient({ initialData }: { initialData?: DashboardRespon
       </PageHeader>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
         {/* Revenue mensual */}
         <KpiCard
           label={t("dashboard.kpi_revenue_monthly", locale)}
@@ -344,13 +344,13 @@ export function DashboardClient({ initialData }: { initialData?: DashboardRespon
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-4">{t("common.rank", locale)}</th>
-                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-4">{t("common.product", locale)}</th>
-                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-4">{t("common.units", locale)}</th>
-                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-4">{t("common.revenue", locale)}</th>
-                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-4 hidden sm:table-cell">{t("common.roi", locale)}</th>
-                    <th scope="col" className="text-center text-xs font-medium text-muted-foreground p-4 hidden md:table-cell">{t("common.status", locale)}</th>
-                    <th scope="col" className="text-center text-xs font-medium text-muted-foreground p-4">{t("common.view", locale)}</th>
+                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3">{t("common.rank", locale)}</th>
+                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3">{t("common.product", locale)}</th>
+                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3">{t("common.units", locale)}</th>
+                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3">{t("common.revenue", locale)}</th>
+                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">{t("common.roi", locale)}</th>
+                    <th scope="col" className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">{t("common.status", locale)}</th>
+                    <th scope="col" className="text-center text-xs font-medium text-muted-foreground px-4 py-3">{t("common.view", locale)}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -359,8 +359,8 @@ export function DashboardClient({ initialData }: { initialData?: DashboardRespon
                       key={product.id}
                       className="border-b border-border/50 hover:bg-muted/30 transition-colors"
                     >
-                      <td className="p-4 text-sm text-muted-foreground font-mono">{index + 1}</td>
-                      <td className="p-4">
+                      <td className="px-4 py-3 text-sm text-muted-foreground font-mono">{index + 1}</td>
+                      <td className="px-4 py-3">
                         <div>
                           <p className="text-sm font-medium text-foreground truncate max-w-[180px] sm:max-w-[240px]">
                             {product.name}
@@ -368,17 +368,17 @@ export function DashboardClient({ initialData }: { initialData?: DashboardRespon
                           <p className="text-xs text-muted-foreground font-mono">{product.sku}</p>
                         </div>
                       </td>
-                      <td className="p-4 text-end">
+                      <td className="px-4 py-3 text-end">
                         <span className="text-sm font-display text-foreground">
                           {product.sales_velocity_30d ?? 0}
                         </span>
                       </td>
-                      <td className="p-4 text-end">
+                      <td className="px-4 py-3 text-end">
                         <span className="text-sm font-display font-semibold text-foreground">
                           {fmt((product.sale_price || 0) * (product.sales_velocity_30d || 0))}
                         </span>
                       </td>
-                      <td className="p-4 text-end hidden sm:table-cell">
+                      <td className="px-4 py-3 text-end hidden sm:table-cell">
                         <div className="flex items-center justify-end gap-1">
                           {(product.roi || 0) >= 20 ? (
                             <ArrowUpRight className="w-3 h-3 text-emerald-500" />
@@ -392,10 +392,10 @@ export function DashboardClient({ initialData }: { initialData?: DashboardRespon
                           </span>
                         </div>
                       </td>
-                      <td className="p-4 text-center hidden md:table-cell">
+                      <td className="px-4 py-3 text-center hidden md:table-cell">
                         <RoiBadge roi={product.roi || 0} locale={locale} />
                       </td>
-                      <td className="p-4 text-center">
+                      <td className="px-4 py-3 text-center">
                         <Link
                           href={`/products/${product.id}`}
                           className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
@@ -425,23 +425,23 @@ export function DashboardClient({ initialData }: { initialData?: DashboardRespon
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-4">{t("common.product", locale)}</th>
-                    <th scope="col" className="text-center text-xs font-medium text-muted-foreground p-4">{t("common.type", locale)}</th>
-                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-4">{t("common.stock", locale)}</th>
-                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-4 hidden sm:table-cell">{t("dashboard.reorder_period", locale)}</th>
-                    <th scope="col" className="text-center text-xs font-medium text-muted-foreground p-4">{t("common.action", locale)}</th>
+                    <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3">{t("common.product", locale)}</th>
+                    <th scope="col" className="text-center text-xs font-medium text-muted-foreground px-4 py-3">{t("common.type", locale)}</th>
+                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3">{t("common.stock", locale)}</th>
+                    <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">{t("dashboard.reorder_period", locale)}</th>
+                    <th scope="col" className="text-center text-xs font-medium text-muted-foreground px-4 py-3">{t("common.action", locale)}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {alerts.map((alert) => (
                     <tr key={alert.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                      <td className="p-4">
+                      <td className="px-4 py-3">
                         <div>
                           <p className="text-sm font-medium text-foreground truncate max-w-[180px] sm:max-w-[240px]">{alert.product_name}</p>
                           <p className="text-xs text-muted-foreground font-mono">{alert.sku}</p>
                         </div>
                       </td>
-                      <td className="p-4 text-center">
+                      <td className="px-4 py-3 text-center">
                         {alert.type === "out_of_stock" && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-red-600 dark:text-rose-400 border border-rose-500/20">
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
@@ -461,15 +461,15 @@ export function DashboardClient({ initialData }: { initialData?: DashboardRespon
                           </span>
                         )}
                       </td>
-                      <td className="p-4 text-end">
+                      <td className="px-4 py-3 text-end">
                         <span className={`text-sm font-display font-semibold ${alert.current_stock === 0 ? "text-red-600 dark:text-rose-400" : "text-foreground"}`}>
                           {alert.current_stock ?? 0}
                         </span>
                       </td>
-                      <td className="p-4 text-end hidden sm:table-cell">
+                      <td className="px-4 py-3 text-end hidden sm:table-cell">
                         <span className="text-sm text-muted-foreground">{alert.threshold ?? "—"}</span>
                       </td>
-                      <td className="p-4 text-center">
+                      <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <Link
                             href={`/products/${alert.id}`}

@@ -439,25 +439,25 @@ export default function ImportPage() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-border bg-muted/30">
-                          <th scope="col" className="px-3 py-2 text-start text-xs font-semibold text-foreground w-12">
+                          <th scope="col" className="px-4 py-3 text-start text-xs font-semibold text-foreground w-12">
                             {t("import.table_num", locale)}
                           </th>
-                          <th scope="col" className="px-3 py-2 text-start text-xs font-semibold text-foreground w-16">
+                          <th scope="col" className="px-4 py-3 text-start text-xs font-semibold text-foreground w-16">
                             {t("import.table_status", locale)}
                           </th>
-                          <th scope="col" className="px-3 py-2 text-start text-xs font-semibold text-foreground">
+                          <th scope="col" className="px-4 py-3 text-start text-xs font-semibold text-foreground">
                             {t("import.table_sku", locale)}
                           </th>
-                          <th scope="col" className="px-3 py-2 text-start text-xs font-semibold text-foreground">
+                          <th scope="col" className="px-4 py-3 text-start text-xs font-semibold text-foreground">
                             {t("import.table_name", locale)}
                           </th>
-                          <th scope="col" className="px-3 py-2 text-start text-xs font-semibold text-foreground">
+                          <th scope="col" className="px-4 py-3 text-start text-xs font-semibold text-foreground">
                             {t("import.table_price", locale)}
                           </th>
-                          <th scope="col" className="px-3 py-2 text-start text-xs font-semibold text-foreground">
+                          <th scope="col" className="px-4 py-3 text-start text-xs font-semibold text-foreground">
                             {t("import.table_cost", locale)}
                           </th>
-                          <th scope="col" className="px-3 py-2 text-start text-xs font-semibold text-foreground">
+                          <th scope="col" className="px-4 py-3 text-start text-xs font-semibold text-foreground">
                             {t("import.table_details", locale)}
                           </th>
                         </tr>
@@ -470,29 +470,29 @@ export default function ImportPage() {
                               r.valid ? "" : "bg-destructive/5"
                             }`}
                           >
-                            <td className="px-3 py-2 text-xs text-muted-foreground">
+                            <td className="px-4 py-3 text-xs text-muted-foreground">
                               {r.row}
                             </td>
-                            <td className="px-3 py-2">
+                            <td className="px-4 py-3">
                               {r.valid ? (
                                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                               ) : (
                                 <XCircle className="h-4 w-4 text-destructive" />
                               )}
                             </td>
-                            <td className="px-3 py-2 font-mono text-xs text-foreground">
+                            <td className="px-4 py-3 font-mono text-xs text-foreground">
                               {r.data.sku || "-"}
                             </td>
-                            <td className="px-3 py-2 text-xs text-foreground max-w-[200px] truncate">
+                            <td className="px-4 py-3 text-xs text-foreground max-w-[200px] truncate">
                               {r.data.name || "-"}
                             </td>
-                            <td className="px-3 py-2 text-xs text-foreground">
+                            <td className="px-4 py-3 text-xs text-foreground">
                               {r.data.salePrice != null ? `$${r.data.salePrice}` : "-"}
                             </td>
-                            <td className="px-3 py-2 text-xs text-foreground">
+                            <td className="px-4 py-3 text-xs text-foreground">
                               {r.data.unitCost != null ? `$${r.data.unitCost}` : "-"}
                             </td>
-                            <td className="px-3 py-2 text-xs">
+                            <td className="px-4 py-3 text-xs">
                               {r.valid ? (
                                 <span className="text-emerald-500">{t("import.ok_status", locale)}</span>
                               ) : (

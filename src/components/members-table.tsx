@@ -92,35 +92,35 @@ export function MembersTable({ members }: { members: Member[] }) {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-4">{t("members.table_name", locale)}</th>
-                  <th scope="col" className="text-start text-xs font-medium text-muted-foreground p-4 hidden sm:table-cell">{t("members.table_email", locale)}</th>
-                  <th scope="col" className="text-end text-xs font-medium text-muted-foreground p-4">{t("members.table_participation", locale)}</th>
-                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground p-4">{t("members.table_status", locale)}</th>
-                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground p-4 hidden md:table-cell">{t("members.table_executor", locale)}</th>
-                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground p-4">{t("members.table_actions", locale)}</th>
+                  <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3">{t("members.table_name", locale)}</th>
+                  <th scope="col" className="text-start text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">{t("members.table_email", locale)}</th>
+                  <th scope="col" className="text-end text-xs font-medium text-muted-foreground px-4 py-3">{t("members.table_participation", locale)}</th>
+                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground px-4 py-3">{t("members.table_status", locale)}</th>
+                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">{t("members.table_executor", locale)}</th>
+                  <th scope="col" className="text-center text-xs font-medium text-muted-foreground px-4 py-3">{t("members.table_actions", locale)}</th>
                 </tr>
               </thead>
               <tbody>
                 {members.map((member: Member) => (
                   <tr key={member.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                    <td className="p-4">
+                    <td className="px-4 py-3">
                       <p className="text-sm font-medium text-foreground">{member.full_name}</p>
                     </td>
-                    <td className="p-4 hidden sm:table-cell">
+                    <td className="px-4 py-3 hidden sm:table-cell">
                       <span className="text-sm text-muted-foreground">{member.email || "—"}</span>
                     </td>
-                    <td className="p-4 text-end">
+                    <td className="px-4 py-3 text-end">
                       <span className="text-sm font-display font-semibold text-foreground">
                         {fmtPct(member.ownership_pct / 100)}
                       </span>
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="px-4 py-3 text-center">
                       <StatusBadge status={member.status} locale={locale} />
                     </td>
-                    <td className="p-4 text-center hidden md:table-cell">
+                    <td className="px-4 py-3 text-center hidden md:table-cell">
                       <span className="text-sm text-muted-foreground">{member.executor_name || "—"}</span>
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <Link
                           href={`/members/${member.id}`}

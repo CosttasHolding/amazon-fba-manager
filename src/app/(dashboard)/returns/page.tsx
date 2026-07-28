@@ -247,7 +247,7 @@ export default function ReturnsPage() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-border bg-card p-5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
             {t("returns.kpi_total_returns", locale)}

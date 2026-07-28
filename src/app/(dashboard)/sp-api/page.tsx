@@ -509,19 +509,19 @@ export default function SpApiPage() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-border">
-                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-6 py-4 text-start">
+                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-4 py-3 text-start">
                             {t("sp_api.type_header", locale)}
                           </th>
-                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-6 py-4 text-start">
+                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-4 py-3 text-start">
                             {t("sp_api.status_header", locale)}
                           </th>
-                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-6 py-4 text-end">
+                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-4 py-3 text-end">
                             {t("sp_api.processed_header", locale)}
                           </th>
-                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-6 py-4 text-end">
+                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-4 py-3 text-end">
                             {t("sp_api.failed_header", locale)}
                           </th>
-                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-6 py-4 text-end">
+                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-4 py-3 text-end">
                             {t("sp_api.date_header", locale)}
                           </th>
                         </tr>
@@ -529,8 +529,8 @@ export default function SpApiPage() {
                       <tbody>
                         {syncLogs.map((log) => (
                           <tr key={log.id} className="border-b border-border/50 hover:bg-foreground/[0.02] transition-colors">
-                            <td className="px-6 py-4 text-sm text-foreground/80 capitalize">{log.sync_type}</td>
-                            <td className="px-6 py-4">
+                            <td className="px-4 py-3 text-sm text-foreground/80 capitalize">{log.sync_type}</td>
+                            <td className="px-4 py-3">
                               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${
                                 log.status === "completed"
                                   ? "bg-emerald-500/10 text-emerald-500"
@@ -544,13 +544,13 @@ export default function SpApiPage() {
                                 {log.status}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-sm text-end text-foreground/70 tabular-nums">
+                            <td className="px-4 py-3 text-sm text-end text-foreground/70 tabular-nums">
                               {log.items_processed}
                             </td>
-                            <td className="px-6 py-4 text-sm text-end text-red-500 tabular-nums">
+                            <td className="px-4 py-3 text-sm text-end text-red-500 tabular-nums">
                               {log.items_failed}
                             </td>
-                            <td className="px-6 py-4 text-sm text-end text-muted-foreground tabular-nums">
+                            <td className="px-4 py-3 text-sm text-end text-muted-foreground tabular-nums">
                               {new Date(log.created_at).toLocaleString(locale === "en" ? "en-US" : "es-ES")}
                             </td>
                           </tr>
@@ -654,16 +654,16 @@ export default function SpApiPage() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-border">
-                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-6 py-4 text-start">
+                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-4 py-3 text-start">
                             {t("sp_api.type_header", locale)}
                           </th>
-                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-6 py-4 text-start">
+                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-4 py-3 text-start">
                             {t("sp_api.status_header", locale)}
                           </th>
-                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-6 py-4 text-end">
+                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-4 py-3 text-end">
                             {t("sp_api.webhooks_logs_time", locale)}
                           </th>
-                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-6 py-4 text-end">
+                          <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-4 py-3 text-end">
                             {t("sp_api.date_header", locale)}
                           </th>
                         </tr>
@@ -671,10 +671,10 @@ export default function SpApiPage() {
                       <tbody>
                         {webhookLogs.map((log) => (
                           <tr key={log.id} className="border-b border-border/50 hover:bg-foreground/[0.02] transition-colors">
-                            <td className="px-6 py-4 text-sm text-foreground/80">
+                            <td className="px-4 py-3 text-sm text-foreground/80">
                               {t(WEBHOOK_TYPE_LABELS[log.notification_type] || log.notification_type, locale)}
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-4 py-3">
                               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${
                                 log.status === "processed"
                                   ? "bg-emerald-500/10 text-emerald-500"
@@ -687,12 +687,12 @@ export default function SpApiPage() {
                                 {log.status}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-sm text-end text-muted-foreground tabular-nums">
+                            <td className="px-4 py-3 text-sm text-end text-muted-foreground tabular-nums">
                               {log.processing_time_ms != null
                                 ? t("sp_api.webhooks_logs_ms", locale).replace("{time}", String(log.processing_time_ms))
                                 : "—"}
                             </td>
-                            <td className="px-6 py-4 text-sm text-end text-muted-foreground tabular-nums">
+                            <td className="px-4 py-3 text-sm text-end text-muted-foreground tabular-nums">
                               {new Date(log.created_at).toLocaleString(locale === "en" ? "en-US" : "es-ES")}
                             </td>
                           </tr>
