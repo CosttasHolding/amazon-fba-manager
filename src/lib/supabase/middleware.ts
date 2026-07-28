@@ -43,6 +43,7 @@ export async function updateSession(request: NextRequest) {
     !user &&
     pathname !== "/login" &&
     pathname !== "/register" &&
+    pathname !== "/reset-password" &&
     !pathname.startsWith("/api")
   ) {
     const url = request.nextUrl.clone();

@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 /* logo uses native img to avoid CSP issues */
-import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Mail, Lock, LogIn, Loader2 } from "lucide-react";
+import { Mail, Lock, LogIn, Loader2, X } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -12,6 +11,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,26 +22,51 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (authError) {
-        setError(authError.message);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Error al iniciar sesión");
         setLoading(false);
         return;
       }
 
-      // Force cookie sync before navigation
-      await supabase.auth.getSession();
-
-      // Navigate to dashboard with a full reload to ensure server picks up cookies
       window.location.href = "/dashboard";
     } catch {
-      setError("Error al iniciar sesión");
+      setError("Error de conexión. Intentá de nuevo.");
       setLoading(false);
+    }
+  };
+
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resetEmail }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Error al enviar el email");
+        setResetLoading(false);
+        return;
+      }
+
+      setResetSent(true);
+      setResetLoading(false);
+    } catch {
+      setError("Error de conexión. Intentá de nuevo.");
+      setResetLoading(false);
     }
   };
 
@@ -126,6 +154,15 @@ export default function LoginPage() {
           </button>
         </form>
 
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => setShowReset(true)}
+            className="text-sm text-muted-foreground hover:text-primary transition-colors"
+          >
+            {"¿"}Olvidaste tu contraseña?
+          </button>
+        </div>
+
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground">
             {"¿"}No tienes cuenta?{" "}
@@ -138,6 +175,53 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
+      {showReset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowReset(false); setResetSent(false); }} />
+          <div className="relative z-10 w-full max-w-[380px] bg-card border border-border/40 rounded-2xl p-6 shadow-2xl animate-fade-in">
+            <button
+              onClick={() => { setShowReset(false); setResetSent(false); }}
+              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              Restablecer Contraseña
+            </h3>
+            <p className="text-sm text-muted-foreground mb-5">
+              Ingresa tu email y te enviaremos un link para restablecer tu contraseña.
+            </p>
+
+            {resetSent ? (
+              <div className="rounded-xl bg-primary/10 border border-primary/20 px-4 py-4 text-center">
+                <p className="text-sm text-foreground">
+                  Si el email está registrado, recibirás un link de recuperación.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleReset} className="space-y-4">
+                <Input
+                  type="email"
+                  placeholder="tu@email.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                  className="bg-muted/50 border-border/40"
+                />
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 transition-all duration-200 disabled:opacity-60"
+                >
+                  {resetLoading ? "Enviando..." : "Enviar link"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       <p className="relative z-10 mt-6 text-xs text-muted-foreground/70 drop-shadow-md">
         CosttasHolding Manager v2.0

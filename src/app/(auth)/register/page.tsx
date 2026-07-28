@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 /* logo uses native img to avoid CSP issues */
-import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Mail, Lock, User, UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,27 +24,26 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 8) {
-      toast.error("La contraseña debe tener al menos 8 caracteres");
-      return;
-    }
-
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: fullName } },
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, fullName }),
       });
 
-      if (error) throw error;
+      const data = await res.json();
 
-      toast.success("Cuenta creada. Revisa tu email para confirmar.");
+      if (!res.ok) {
+        toast.error(data.error || "Error al crear cuenta");
+        setLoading(false);
+        return;
+      }
+
+      toast.success(data.message || "Cuenta creada. Revisa tu email para confirmar.");
       setTimeout(() => router.push("/login"), 2000);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Error al crear cuenta";
-      toast.error(message);
+    } catch {
+      toast.error("Error de conexión. Intentá de nuevo.");
     } finally {
       setLoading(false);
     }

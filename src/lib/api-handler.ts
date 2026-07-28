@@ -20,7 +20,7 @@ export function createApiHandler(handler: ApiHandler, rateLimitOpts?: { limit?: 
       const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
       const route = req.nextUrl.pathname;
 
-      const rl = rateLimit(
+      const rl = await rateLimit(
         buildRateLimitKey(ip, route),
         rateLimitOpts?.limit ?? 60,
         rateLimitOpts?.windowMs ?? 60000

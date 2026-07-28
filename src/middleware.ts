@@ -1,8 +1,45 @@
 import { updateSession } from "@/lib/supabase/middleware";
-import { type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+
+function generateNonce(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  for (let i = 0; i < 16; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+function buildCsp(nonce: string, isDev: boolean): string {
+  const scriptSrc = isDev
+    ? `'self' 'unsafe-eval' 'unsafe-inline'`
+    : `'self' 'strict-dynamic' 'nonce-${nonce}' 'unsafe-inline'`;
+
+  return [
+    "default-src 'self'",
+    `script-src ${scriptSrc}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https://*.supabase.co blob:",
+    "connect-src 'self' https://*.supabase.co",
+    "font-src 'self' data:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests",
+  ].join("; ");
+}
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request);
+  const response = await updateSession(request);
+
+  const isDev = process.env.NODE_ENV === "development";
+  const nonce = generateNonce();
+  const csp = buildCsp(nonce, isDev);
+  response.headers.set("Content-Security-Policy", csp);
+  response.headers.set("x-nonce", nonce);
+
+  return response;
 }
 
 export const config = {
