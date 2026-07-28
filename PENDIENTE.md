@@ -1,13 +1,13 @@
 # PENDIENTE.md - Todo lo que falta y lo que se hizo
 
-> Generado el 25/Jul/2026. Ultima actualizacion: 26/Jul/2026. Proyecto: Amazon FBA Manager v2
+> Generado el 25/Jul/2026. Ultima actualizacion: 28/Jul/2026. Proyecto: Amazon FBA Manager v2
 > URL: https://amazon-fba-manager-virid.vercel.app
 
 ---
 
 ## 1. LO QUE YA SE HIZO (Resumen)
 
-### Seguridad y Deuda Tecnica
+### Seguridad y Deuda Tecnica (Fixes batch 1)
 | Item | Archivos | Commit |
 |------|----------|--------|
 | Eliminar 3 violaciones `any` en team/page.tsx | `src/app/(dashboard)/team/page.tsx` | `8f3d6eb` |
@@ -18,106 +18,109 @@
 | Fix 14 catch blocks restantes en componentes | barcode-scanner, drive, notifications, hooks, etc. | `14e4e96` |
 | Agregar loading.tsx a 11 paginas | ads, alerts, analytics, finances, forecasting, import, research, returns, shipments, sp-api, team | `14e4e96` |
 
-### Fase 5: Server Components (4 paginas migradas)
+### Fase 5: Server Components
 | Pagina | Antes | Despues |
 |--------|:-----:|:-------:|
-| forecasting/page.tsx | ❌ Client | ✅ **Server** + `ForecastingClient` |
-| ads/page.tsx | ❌ Client | ✅ **Server** + `AdsClient` |
-| finances/page.tsx | ❌ Client | ✅ **Server** + `FinancesClient` |
-| analytics/page.tsx | ❌ Client | ✅ **Server** + `AnalyticsClient` |
-| team/page.tsx | ❌ Client | ❌ Client (saltado, 98% interactivo) |
+| forecasting, ads, finances, analytics | Client | **Server** + Client Component |
 
-Nuevos archivos: `forecasting-client.tsx`, `ads-client.tsx`, `finances-client.tsx`, `analytics-client.tsx`
-
-### UI Optimization (Jul 26): Navegación, Mobile UX, Animaciones
+### UI Optimization (Jul 26)
 | Item | Archivos |
 |------|----------|
-| Nav categories: sidebar agrupado con headers + "More" sheet agrupado | `navigation.ts`, `sidebar.tsx`, `mobile-bottom-nav.tsx` |
-| Search + Notifications en mobile top bar | `mobile-search-toggle.tsx` (nuevo), `layout.tsx` |
-| Safe area insets en mobile header | `layout.tsx` |
+| Sidebar con categorias + "More" sheet agrupado | `navigation.ts`, `sidebar.tsx`, `mobile-bottom-nav.tsx` |
+| Search + Notifications en mobile top bar | `mobile-search-toggle.tsx`, `layout.tsx` |
 | KPI grids `grid-cols-2` en mobile (7 archivos) | dashboard, finances, ads, forecasting, returns, page-skeleton, loading |
-| Table padding estandarizado `px-4 py-3` (10 archivos) | data-table-wrapper, orders, suppliers/compare, team, import, sp-api, dashboard-client, members-table, revenue-projection, profitability-heatmap |
-| Page transitions con Framer Motion (fade + slide-up 300ms) | `animated-page.tsx` + `layout.tsx` |
+| Table padding `px-4 py-3` estandarizado (10 archivos) | data-table-wrapper, orders, suppliers/compare, team, import, sp-api, dashboard-client, members-table, revenue-projection, profitability-heatmap |
+| Page transitions Framer Motion | `animated-page.tsx` + `layout.tsx` |
 
-### URL Auto-Fill (15 tareas completadas)
-Backend: `src/lib/scraping/` (amazon.ts, alibaba.ts, index.ts, types.ts, selectors.ts), `POST /api/scrape`
-Frontend: `useUrlScrape` hook, `UrlImportDialog`, campo URL en forms de producto/supplier, boton Import en Dashboard
+### URL Auto-Fill
+Backend: `src/lib/scraping/`, `POST /api/scrape`
+Frontend: `useUrlScrape`, `UrlImportDialog`, URL field en forms, Import button
 
-### Research Bot (nuevo)
-| Archivo | Proposito |
-|---------|-----------|
-| `src/lib/ai/client.ts` | Cliente OpenAI lazy singleton |
-| `src/lib/ai/types.ts` | Tipos ListingData + AnalyzeProductResponse |
-| `src/lib/ai/prompts.ts` | Prompt engineering GPT-4o |
-| `src/app/api/research/analyze/route.ts` | Orquesta SP-API getCatalogItem + OpenAI |
-| `src/components/research/product-analyzer.tsx` | Modal con preview de analisis |
-| `src/app/(dashboard)/research/page.tsx` | Barra ASIN + integracion |
+### Research Bot
+`src/lib/ai/client.ts`, `src/lib/ai/types.ts`, `src/lib/ai/prompts.ts`, `POST /api/research/analyze`, `product-analyzer.tsx`, `research/page.tsx`
+
+### Auth Security (Jul 28 - NUEVO)
+| Item | Commit |
+|------|--------|
+| Login/Register proxeados por API routes (ya no llaman directo a Supabase) | `4864e85` |
+| Rate limiting con Upstash (login 5/min, register 3/hora, reset 3/hora) | `4864e85` |
+| Password reset flow completo + pagina standalone `/reset-password` | `4864e85` |
+| Zod validation server-side (8-16 chars, mayuscula, minuscula, numero) | `4864e85` |
+| CSP hardening: nonce por request + strict-dynamic via middleware | `4864e85` |
+| SUPABASE_SERVICE_ROLE_KEY movida de `.env` a `.env.local` | `4864e85` |
+| Error messages seguros (nunca expone err.message al usuario) | `4864e85` |
 
 ---
 
-## 2. LO QUE VOS TENES QUE HACER
+## 2. LO QUE VOS TENES QUE HACER (PASO A PASO)
 
-### 2.1 Configurar OPENAI_API_KEY en Vercel (OBLIGATORIO para Research Bot)
+### PASO 1: Configurar Upstash ✅ (Completado)
 
-**Donde:** Vercel Dashboard > Project > Settings > Environment Variables
+Upstash Redis ya esta configurado en `.env.local` y en Vercel (Production, Preview, Development).
 
-**Variable:**
+**Verificacion post-deploy:** Despues de deployar, intenta login 6 veces seguidas con una contraseña incorrecta. La 6ta vez debe decir "Demasiados intentos. Intentá de nuevo en 60 segundos."
+
+---
+
+### PASO 2: Configurar OPENAI_API_KEY ✅ (Completado)
+
+OpenAI API Key ya esta configurada en Vercel (Production + Preview, encriptada).
+
+**Verificacion post-deploy:** Una vez deployado, anda a Research > pega un ASIN > "Analizar con IA".
+
+---
+
+### PASO 3: NEXT_PUBLIC_APP_URL en Vercel (RECOMENDADO)
+
+El proyecto ya usa `NEXT_PUBLIC_APP_URL` como variable. Seteala para que los links de password reset y Drive funcionen en prod.
+
+Anda a: Vercel Dashboard > Project > Settings > Environment Variables
+
+| Nombre | Valor | Entorno |
+|--------|-------|---------|
+| `NEXT_PUBLIC_APP_URL` | `https://amazon-fba-manager-virid.vercel.app` | Production, Preview |
+
+**En `.env.local`** ya tenes `NEXT_PUBLIC_APP_URL=http://localhost:3000` para desarrollo. No la cambies.
+
+---
+
+### PASO 4: Google Drive Redirect URI (solo si usas Drive)
+
+**4a. En el codigo** - El redirect URI ya usa `NEXT_PUBLIC_APP_URL` (linea 17 de `src/lib/drive/client.ts`). Si seteas `NEXT_PUBLIC_APP_URL` en Vercel (Paso 3), funciona automaticamente. No necesitas cambiar nada en el codigo.
+
+**4b. En Google Cloud Console** - Anda a Google Cloud Console > Credenciales > URI de redireccionamiento OAuth. Agrega:
 ```
-Nombre: OPENAI_API_KEY
-Valor: sk-proj-tu-api-key-de-openai
-Entorno: Production (y Preview si queres probar)
+https://amazon-fba-manager-virid.vercel.app/api/drive/auth/callback
 ```
 
-**Como conseguirla:**
-1. Andá a https://platform.openai.com/api-keys
-2. Crea una API Key (tipo `sk-proj-...`)
-3. Pegala en Vercel
+---
 
-**Verificacion:** Una vez seteada, entra a Research > pega un ASIN > Analizar con IA. Si no la seteas, te va a dar error 500.
+### PASO 5: Deployar a Vercel
+
+Una vez que seteas todas las variables de los Pasos 1-3, hace deploy:
+
+```bash
+git push origin main
+```
+
+Vercel hace deploy automatico. Verificar:
+- ✅ Login funciona (proxy por API route)
+- ✅ Register funciona (proxy por API route)
+- ✅ Password reset: anda a `/reset-password`
+- ✅ Rate limiting: 5 intentos fallidos de login → bloqueo 60s
+- ✅ Research Bot: pegar ASIN > analizar
 
 ---
 
-### ~~2.2 Agregar .superpowers/ y "esto es" a .gitignore~~ ✅ YA HECHO
+### OPCIONAL: SP-API Sync
 
-Ya se agrego al `.gitignore` y se ejecuto `git rm --cached`. No necesitas hacer nada.
+Si usas Amazon SP-API (Selling Partner API) para sincronizar productos/ordenes/inventario:
 
----
+**Codigo para pegaren `src/app/api/cron/sync/route.ts`:**
 
-### 2.3 Configurar Google Drive Redirect URI para produccion (si usas Drive)
+Reemplazar TODO el bloque `try { ... }` actual con esto:
 
-**Archivo:** Buscar en el codigo donde esta hardcodeado `localhost` para Drive.
-
-Encontrar y reemplazar en **`src/lib/drive/client.ts`** (linea aproximada de redirect URI):
 ```typescript
-// DONDE ANTES DECIA (ejemplo):
-const REDIRECT_URI = "http://localhost:3000/api/drive/auth/callback";
-
-// CAMBIAR A:
-const REDIRECT_URI = "https://amazon-fba-manager-virid.vercel.app/api/drive/auth/callback";
-```
-
-Tambien actualizar en Google Cloud Console > Credenciales > URI de redireccionamiento OAuth.
-
----
-
-### 2.4 SP-API Sync real (si queres que el CRON sincronice de verdad)
-
-**Archivo:** `src/app/api/cron/sync/route.ts`
-
-El cron actual marca "completed" sin sincronizar nada. Para implementarlo:
-
-1. Importar las funciones de sync desde `src/app/api/sp-api/sync/route.ts`
-2. Dentro de `executeSync()`, segun el `syncType`, llamar a las funciones correspondientes:
-   - `"products"` -> `getListings(client, sellerId)`
-   - `"orders"` -> `getOrders(client, createdAfter)`
-   - `"inventory"` -> `getInventory(client, marketplaceId)`
-   - `"fees"` -> `getFeeEstimate(client, ...)`
-3. Guardar los resultados en las tablas correspondientes
-4. Actualizar `items_processed` e `items_failed` en `sync_logs`
-
-**Codigo de ejemplo para el cuerpo de executeSync() - PEGAR entre el throw new Error() y el await supabase.from("sync_logs").update({ status...:**
-```typescript
-// Reemplazar TODO el bloque try { ... } actual con esto:
 try {
   if (!process.env.SP_API_CLIENT_ID || !process.env.SP_API_CLIENT_SECRET) {
     throw new Error("SP_API_CLIENT_ID y SP_API_CLIENT_SECRET no configurados");
@@ -151,8 +154,6 @@ try {
     }
   }
 
-  // Agregar aca los otros syncTypes...
-
   await supabase.from("sync_logs").update({
     status: "completed",
     items_processed: processed,
@@ -171,88 +172,54 @@ try {
 }
 ```
 
-**Nota:** Esto require que SP-API este configurado y funcionando en tu cuenta de Amazon Seller Central.
+**Nota:** Requiere SP-API configurado en tu cuenta de Amazon Seller Central.
 
 ---
 
-### 2.5 Fix SP-API headers incorrectos (si usas SP-API)
+### OPCIONAL: SP-API Headers Fix
 
-**Archivo:** `src/lib/sp-api/client.ts`
-
-Buscar donde se setean los headers `Amazon-Advertising-API-*`. Esos headers son para la API de Ads (PPC), NO para SP-API. Si estas usando SP-API de listings/orders/inventory, deberian eliminarse.
-
-**Lineas a buscar:** (no encontre exactamente donde estan, revisar en `client.ts`):
+Si ves errores en llamadas SP-API, revisa `src/lib/sp-api/client.ts` y elimina estos headers si existen:
 ```typescript
-// Si encontras esto en client.ts, ELIMINARLO:
 "Amazon-Advertising-API-Scope": ...
 "Amazon-Advertising-API-ClientId": ...
 ```
-
----
-
-### ~~2.6.1 Centralizar navItems~~ ✅ YA EXISTE
-
-`src/lib/navigation.ts` ya existe y es la unica fuente de verdad. Tanto `sidebar.tsx` como `mobile-bottom-nav.tsx` importan desde ahi. No hay duplicacion.
-
-### 2.7 Tests agregados (182 tests)
-
-Se agregaron tests para la infraestructura AI:
-- `src/lib/ai/types.test.ts` - 6 tests (estructura de tipos)
-- `src/lib/ai/prompts.test.ts` - 8 tests (generacion de prompts)
-
-**Tests que faltarian (opcional):**
-- Componentes: dashboard-client, sidebar, product-form, tables
-- Hooks: use-url-scrape
-- API routes: research/analyze, scrape
+Esos headers son para la API de Ads (PPC), no para SP-API.
 
 ---
 
 ## 3. ACLARACIONES IMPORTANTES
 
 ### 3.1 Research Bot - Limitacion SP-API
+El Research Bot usa `getCatalogItem()` que **SOLO trae** titulo, marca, categoria, imagen. NO trae precio, bullet points, descripcion, reviews. GPT-4o **estima** esos campos. Si queres datos reales, necesitas PA-API o Keepa.
 
-El Research Bot usa `getCatalogItem()` de SP-API que **SOLO trae datos basicos** (titulo, marca, categoria, imagen). NO trae:
-- Precio de venta
-- Bullet points
-- Descripcion completa
-- Reviews
+### 3.2 Rate Limit ✅
+Upstash Redis ya esta configurado. El rate limiter protege login (5/min), register (3/hora) y password reset (3/hora).
 
-Por eso el prompt de GPT-4o recibe datos limitados. El AI estima los campos faltantes basado en su conocimiento del mercado. Es una **estimacion**, no datos reales de Amazon.
+### 3.3 Password Reset - Supabase Emails
+El reset de password usa `supabase.auth.resetPasswordForEmail()`. Los emails los envia Supabase Auth (plan Free: 50 emails/dia). El link de reset apunta a `NEXT_PUBLIC_APP_URL/reset-password`. Si no seteas `NEXT_PUBLIC_APP_URL` en Vercel (Paso 3), va a usar `http://localhost:3000/reset-password` en produccion (roto).
 
-**Si queres datos reales:** Necesitas usar la API de Product Advertising (PA-API) que es distinta a SP-API. O bien usar un servicio de scraping como Keepa.
-
-### 3.2 Cron Sync - No implementado a proposito
-
-El cron sync queda como stub porque la implementacion real requiere:
-1. SP-API conectado y funcionando
-2. Mapear cada syncType a endpoints especificos de SP-API
-3. Logica de upsert en cada tabla
-4. Manejo de rate limiting de SP-API
-
-Si no usas SP-API, el stub no afecta nada. Si lo usas, implementar con el codigo del punto 2.4.
-
-### 3.3 Catch blocks - Por que algunos quedaron sin fix
-
-De los ~93 catch blocks originales, ~30 tenian `toast.error()` o `router.push()` o `setError()` que es manejo de error aceptable. Solo los completamente vacios fueron fixeados. Si en el futuro ves un catch block que no hace nada, agregale un `console.error`.
-
-### 3.4 OpenAI SDK - Version instalada
-
-Se instalo `openai` v4.x. Si queres cambiar a otro proveedor de AI (Anthropic Claude, Google Gemini, etc), solo necesitas cambiar `src/lib/ai/client.ts` y `src/lib/ai/prompts.ts`.
+### 3.4 CSP y Nonces
+El CSP se setea via middleware con un nonze aleatorio por request. En produccion usa `strict-dynamic` para scripts. Si ves errores de CSP en consola, avisame para ajustar.
 
 ---
 
-## 4. RESUMEN EJECUTIVO
+## 4. RESUMEN EJECUTIVO (POR ORDEN)
 
-| Item | Quien lo hace | Tiempo estimado |
-|------|---------------|-----------------|
-| Setear OPENAI_API_KEY en Vercel | **Vos** | 2 min |
-| ~~Agregar .gitignore + rm --cached~~ | ✅ YA HECHO | - |
-| Google Drive redirect URI prod (usar NEXT_PUBLIC_APP_URL) | **Vos** (ver nota) | 5 min |
-| SP-API sync real | **Vos** si usas SP-API | 30-60 min |
-| SP-API headers fix | **Vos** si usas SP-API | 5 min |
-| ~~Refactor navItems~~ | ✅ YA EXISTE | - |
-| Tests coverage adicional | **Vos** (opcional) | 30 min |
-| **Todo lo demas (Fases 1-5)** | **YA ESTA HECHO** | - |
+| # | Paso | Donde | Tiempo | Estado |
+|:-:|------|-------|--------|:------:|
+| 1 | Crear Upstash Redis | https://console.upstash.com | 3 min | ✅ Hecho |
+| 2 | Pegar `UPSTASH_REDIS_REST_URL` + `TOKEN` | `.env.local` + Vercel | 2 min | ✅ Hecho |
+| 3 | Crear OpenAI API Key | https://platform.openai.com/api-keys | 2 min | ✅ Hecho |
+| 4 | Pegar `OPENAI_API_KEY` | Vercel Environment Variables | 1 min | ✅ Hecho |
+| 5 | Pegar `NEXT_PUBLIC_APP_URL` | Vercel Environment Variables | 1 min | 🔲 Pendiente |
+| 6 | Agregar redirect URI Drive | Google Cloud Console | 2 min | 🔲 Pendiente |
+| 7 | `git push origin main` | Terminal | 1 min | 🔲 Pendiente |
+| 8 | SP-API sync code (opcional) | `src/app/api/cron/sync/route.ts` | 15 min | 🔲 Pendiente |
+| 9 | SP-API headers fix (opcional) | `src/lib/sp-api/client.ts` | 2 min | 🔲 Pendiente |
+
+**Pasos 3-4-5-7** son los minimos que faltan para que todo funcione. Los podes hacer en ~5 minutos.
+
+---
 
 ## 5. ESTADO FINAL DEL PROYECTO
 
@@ -260,18 +227,13 @@ Se instalo `openai` v4.x. Si queres cambiar a otro proveedor de AI (Anthropic Cl
 |:-----:|------|
 | ✅ | Fase 1: Limpieza segura (deps fantasma, dead code, fmtMoney, SWR_CONFIG) |
 | ✅ | Fase 2: Unificar codigo duplicado (getOrgId, Zod schemas, tipos, constantes) |
-| ✅ | Fase 3: Extraer componentes compartidos (FormDialogLayout, form constants, new/edit forms) |
-| ✅ | Fase 4: Optimizar fetching y memoizacion (orders SWR, global-search, lazy loading) |
+| ✅ | Fase 3: Extraer componentes compartidos (FormDialogLayout, form constants) |
+| ✅ | Fase 4: Optimizar fetching y memoizacion (orders SWR, global-search, lazy) |
 | ✅ | Fase 5: Server Components (forecasting, ads, finances, analytics) |
-| ✅ | UI Optimization: Navegación por categorías, search/notifs mobile, KPI grids, table padding, page transitions |
+| ✅ | UI Optimization: Categorias, search mobile, KPI grids, padding, transiciones |
 | ✅ | URL Auto-Fill + Research Bot + IA |
+| ✅ | Auth Security: Rate limiting, password reset, CSP, service role key |
 | ✅ | Security: `any` violations, catch blocks, logging |
 | ✅ | Tests: 182 passing, 19 suites |
 | ✅ | Build: 0 errores |
 | ✅ | Deploy: https://amazon-fba-manager-virid.vercel.app |
-
-**Nota Drive:** El redirect URI usa `NEXT_PUBLIC_APP_URL` (linea 17 de `src/lib/drive/client.ts`). Si seteas esa variable en Vercel como `https://amazon-fba-manager-virid.vercel.app`, funciona automaticamente. Tambien agregar esa URL + `/api/drive/auth/callback` en Google Cloud Console.
-
-**Build:** 0 errores ✅ (Fases 1-5 completadas)
-**Tests:** 182 pasando, 19 suites ✅
-**Deploy:** https://amazon-fba-manager-virid.vercel.app ✅
