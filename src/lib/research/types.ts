@@ -27,15 +27,15 @@ export interface CapturePayload {
 }
 
 export interface ScoringInput {
-  estimated_monthly_sales: number | null;
-  estimated_monthly_revenue: number | null;
-  bsr: number | null;
-  review_count: number | null;
-  average_rating: number | null;
-  seller_count_fba: number | null;
-  price: number | null;
-  estimated_fba_fee: number | null;
-  estimated_cogs: number | null;
+  estimated_monthly_sales?: number | null;
+  estimated_monthly_revenue?: number | null;
+  bsr?: number | null;
+  review_count?: number | null;
+  average_rating?: number | null;
+  seller_count_fba?: number | null;
+  price?: number | null;
+  estimated_fba_fee?: number | null;
+  estimated_cogs?: number | null;
 }
 
 export interface DimensionScore {
