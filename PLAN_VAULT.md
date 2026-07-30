@@ -2,7 +2,7 @@
 
 ## Reglas
 - Todo en español, simple y claro
-- Formato Obsidian: markdown, [[wikilinks]], frontmatter, MOCs, etiquetas
+- Formato Obsidian: markdown, `[[wikilinks]]`, frontmatter, MOCs, etiquetas
 - NO archivos vacios: cada uno con contenido inicial
 - Esconder node_modules, src, public, .next, etc.
 
