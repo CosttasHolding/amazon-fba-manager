@@ -1,5 +1,6 @@
 ---
 ultima_actualizacion: 2026-07-30
+estado: estable, working tree clean
 version: 2.0.0
 branch: main
 deploy: https://amazon-fba-manager-virid.vercel.app
@@ -51,13 +52,11 @@ db_migrations: presente (Supabase)
 
 ## Features en progreso
 
-- Zod validation para comments/audit-log/settings (MEDIUM)
-- Dead code cleanup (MEDIUM)
+- Zod validation en SP-API / Drive / Cron routes (MEDIUM)
 - N+1 queries fix + dashboard limits (MEDIUM)
-- i18n missing keys ~93 EN ~134 AR (MEDIUM)
 - Accessibility fixes (MEDIUM)
 - Package cleanup (LOW)
-- Nuevos tests suppliers/sales API (LOW)
+- Unificar numeros duplicados de migraciones 014/015 (LOW)
 
 ## Enlaces utiles
 
