@@ -311,7 +311,7 @@ export default function ResearchPage() {
           </div>
           <div className="flex gap-2 shrink-0">
             <Button variant="outline" size="sm" asChild>
-              <a href="/api/research/extension.zip" download>
+              <a href="/research/extension.zip" download>
                 <Download className="h-3.5 w-3.5 me-1.5" />
                 Descargar .zip
               </a>

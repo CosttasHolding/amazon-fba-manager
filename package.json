@@ -19,7 +19,8 @@
     "cap:open:ios": "npx cap open ios",
     "cap:open:android": "npx cap open android",
     "mobile:build": "next build && npx cap sync && npx cap open ios",
-    "mobile:build:android": "next build && npx cap sync && npx cap open android"
+    "mobile:build:android": "next build && npx cap sync && npx cap open android",
+    "build:extension": "tsx src/scripts/build-extension.ts"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",

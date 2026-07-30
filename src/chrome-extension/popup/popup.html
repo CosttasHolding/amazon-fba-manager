@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="popup.css">
+  <title>FBA Research Agent</title>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <span class="logo">&#x1F52C;</span>
+      <h1>FBA Research Agent</h1>
+      <span class="badge" id="mode-badge">Scraper</span>
+    </header>
+
+    <div id="loading" class="hidden">
+      <div class="spinner"></div>
+      <p>Capturando datos...</p>
+    </div>
+
+    <div id="no-data" class="hidden">
+      <p class="empty-icon">&#x1F4ED;</p>
+      <p class="empty-title">No hay datos capturados</p>
+      <p class="empty-subtitle">Naveg&aacute; a una p&aacute;gina de Amazon y recarg&aacute; la extensi&oacute;n</p>
+    </div>
+
+    <div id="results" class="hidden">
+      <div class="info-bar">
+        <span id="product-count"></span>
+        <span id="page-type" class="tag"></span>
+        <span id="source-badge" class="tag"></span>
+      </div>
+
+      <div id="product-list"></div>
+
+      <div class="actions">
+        <button id="send-btn" class="btn btn-primary">&#x1F4E4; Enviar a la web</button>
+      </div>
+    </div>
+
+    <div id="sent" class="hidden">
+      <p class="success-icon">&#x2705;</p>
+      <p class="success-title">Datos enviados</p>
+      <p class="success-subtitle" id="sent-count"></p>
+      <button id="done-btn" class="btn btn-primary">OK</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
