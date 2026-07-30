@@ -402,6 +402,7 @@ export interface ProductResearch {
   status: ResearchStatus;
   priority: number;
   source: string | null;
+  source_data?: Record<string, unknown> | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
