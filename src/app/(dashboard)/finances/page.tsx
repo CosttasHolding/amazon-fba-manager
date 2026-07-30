@@ -21,10 +21,12 @@ export default async function FinancesPage() {
       .order("payout_period_start", { ascending: false }),
   ]);
 
+  interface Expense { id: string; category: string; description: string; amount: number; currency: string; expense_date: string; recurring: boolean; vendor: string | null; }
+  interface Payout { id: string; payout_period_start: string; payout_period_end: string; amount: number; status: string; marketplace: string; }
   return (
     <FinancesClient
-      initialExpenses={(expenses || []) as any[]}
-      initialPayouts={(payouts || []) as any[]}
+      initialExpenses={(expenses || []) as Expense[]}
+      initialPayouts={(payouts || []) as Payout[]}
     />
   );
 }

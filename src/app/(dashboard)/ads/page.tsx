@@ -14,5 +14,6 @@ export default async function AdsPage() {
     .eq("org_id", orgId)
     .order("created_at", { ascending: false });
 
-  return <AdsClient initialCampaigns={(campaigns || []) as any[]} />;
+  interface Campaign { id: string; campaign_name: string; campaign_type: string; status: string; daily_budget: number; marketplace: string; }
+  return <AdsClient initialCampaigns={(campaigns || []) as Campaign[]} />;
 }

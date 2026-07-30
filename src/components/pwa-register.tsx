@@ -7,7 +7,7 @@ export function PWARegister() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js")
-        .catch(() => {});
+        .catch((err) => console.error("ERROR registering service worker", err));
     }
   }, []);
 

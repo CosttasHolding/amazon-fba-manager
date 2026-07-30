@@ -82,7 +82,8 @@ Este proyecto usa **Superpowers** para desarrollo de software. El agente debe se
 
 ## Reglas del Proyecto
 
-- **Idioma**: Siempre responder y comunicarse en **español**
+- **Idioma**: Siempre responder y comunicarse en **español**. Mensajes al usuario siempre en español.
+- **Markdown**: Todo código, texto técnico y mensajes usar formato Markdown.
 - **TypeScript strict**: Nunca usar `any`
 - **CSS variables**: Siempre `bg-background`, nunca `bg-white`
 - **snake_case** en DB/API, **camelCase** en frontend

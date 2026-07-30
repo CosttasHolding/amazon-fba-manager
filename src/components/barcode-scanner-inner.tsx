@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Scan, X, Loader2, Smartphone } from "lucide-react";
-import { Html5Qrcode } from "html5-qrcode";
+import type { Html5Qrcode as Html5QrcodeType } from "html5-qrcode";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 
@@ -15,7 +15,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const { locale } = useLocale();
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scannerRef = useRef<Html5QrcodeType | null>(null);
   const containerId = "barcode-scanner-container";
 
   const stopScanner = useCallback(async () => {
@@ -32,10 +32,11 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     setError(null);
     setScanning(true);
 
-    const scanner = new Html5Qrcode(containerId);
-    scannerRef.current = scanner;
-
     try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+      const scanner = new Html5Qrcode(containerId);
+      scannerRef.current = scanner;
+
       await scanner.start(
         { facingMode: "environment" },
         {

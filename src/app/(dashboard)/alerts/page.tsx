@@ -887,7 +887,7 @@ function ProductSelect({ value, onChange, id }: { value: string; onChange: (v: s
     fetch("/api/products?limit=200")
       .then((r) => r.json())
       .then((d) => setProducts(d.data || []))
-      .catch(() => {});
+      .catch((err) => console.error("ERROR fetching products for alert select", err));
   }, []);
 
   const filtered = products.filter(
@@ -930,7 +930,7 @@ function SupplierSelect({ value, onChange, id }: { value: string; onChange: (v: 
     fetch("/api/suppliers?limit=200")
       .then((r) => r.json())
       .then((d) => setSuppliers(d.data || []))
-      .catch(() => {});
+      .catch((err) => console.error("ERROR fetching suppliers for alert select", err));
   }, []);
 
   const filtered = suppliers.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));

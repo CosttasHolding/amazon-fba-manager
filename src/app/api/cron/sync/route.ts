@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { refreshAccessToken } from "@/lib/sp-api";
+import { runSync, ensureClient, isTokenExpired } from "@/lib/sp-api/sync-runner";
+import type { SyncResult, ConnRow } from "@/lib/sp-api/sync-runner";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
-
-interface SyncResult {
-  syncType: string;
-  status: "completed" | "failed";
-  processed: number;
-  failed: number;
-  error?: string;
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,7 +18,7 @@ export async function GET(req: NextRequest) {
 
     const { data: connections, error: connError } = await supabase
       .from("sp_api_connections")
-      .select("id, user_id, marketplace, refresh_token, access_token, token_expires_at")
+      .select("id, user_id, marketplace, refresh_token, access_token, token_expires_at, seller_id")
       .eq("status", "active");
 
     if (connError) throw connError;
@@ -32,7 +26,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: "No active connections", results: [] });
     }
 
-    const results: SyncResult[] = [];
+    interface ResultItem extends SyncResult { syncType: string; }
+    const results: ResultItem[] = [];
+    const syncTypes = ["products", "orders", "inventory", "fees", "returns", "payouts"];
 
     for (const connection of connections) {
       try {
@@ -48,16 +44,55 @@ export async function GET(req: NextRequest) {
           connection.access_token = tokens.access_token;
         }
 
-        const syncTypes = ["products", "orders", "inventory", "fees"];
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("org_id")
+          .eq("id", connection.user_id)
+          .single();
+        const orgId = profile?.org_id || "";
 
         for (const syncType of syncTypes) {
-          const result = await executeSync(supabase, connection, syncType);
-          results.push(result);
+          const { data: log } = await supabase
+            .from("sync_logs")
+            .insert({
+              user_id: connection.user_id,
+              connection_id: connection.id,
+              sync_type: syncType,
+              status: "running",
+              started_at: new Date().toISOString(),
+            })
+            .select()
+            .single();
+
+          let result: SyncResult;
+          try {
+            result = await runSync(supabase, connection, syncType, connection.user_id, orgId);
+          } catch (error) {
+            result = {
+              success: false,
+              processed: 0,
+              failed: 0,
+              error: error instanceof Error ? error.message : "Sync error",
+            };
+          }
+
+          await supabase
+            .from("sync_logs")
+            .update({
+              status: result.success ? "completed" : "failed",
+              items_processed: result.processed,
+              items_failed: result.failed,
+              error_message: result.error || null,
+              completed_at: new Date().toISOString(),
+            })
+            .eq("id", log.id);
+
+          results.push({ syncType, ...result });
         }
       } catch (error) {
         results.push({
           syncType: "all",
-          status: "failed",
+          success: false,
           processed: 0,
           failed: 0,
           error: error instanceof Error ? error.message : "Connection error",
@@ -72,73 +107,5 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Cron sync failed";
     return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
-
-function isTokenExpired(expiresAt: string | null): boolean {
-  if (!expiresAt) return true;
-  return new Date(expiresAt).getTime() <= Date.now() + 60000;
-}
-
-interface ConnectionRow {
-  id: string;
-  user_id: string;
-  marketplace: string;
-  refresh_token: string;
-  access_token: string | null;
-  token_expires_at: string | null;
-}
-
-async function executeSync(
-  supabase: ReturnType<typeof createServiceRoleClient>,
-  connection: ConnectionRow,
-  syncType: string
-): Promise<SyncResult> {
-  const { data: log } = await supabase
-    .from("sync_logs")
-    .insert({
-      user_id: connection.user_id,
-      connection_id: connection.id,
-      sync_type: syncType,
-      status: "running",
-      started_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
-
-  try {
-    if (!process.env.SP_API_CLIENT_ID || !process.env.SP_API_CLIENT_SECRET) {
-      throw new Error("SP_API_CLIENT_ID y SP_API_CLIENT_SECRET no configurados");
-    }
-
-    console.warn("CRON sync stub: SP-API sync no implementado aun. Marcar como completado sin datos.");
-    await supabase
-      .from("sync_logs")
-      .update({
-        status: "completed",
-        items_processed: 0,
-        items_failed: 0,
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", log.id);
-
-    return { syncType, status: "completed", processed: 0, failed: 0 };
-  } catch (error) {
-    await supabase
-      .from("sync_logs")
-      .update({
-        status: "failed",
-        error_message: error instanceof Error ? error.message : "Sync error",
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", log.id);
-
-    return {
-      syncType,
-      status: "failed",
-      processed: 0,
-      failed: 0,
-      error: error instanceof Error ? error.message : "Sync error",
-    };
   }
 }

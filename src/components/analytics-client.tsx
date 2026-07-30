@@ -16,6 +16,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
+import type { ProductWithInventory, Sale } from "@/types";
 
 const ComparisonChart = dynamic(() => import("@/components/charts/comparison-chart").then((m) => m.ComparisonChart), {
   loading: () => <div className="h-[280px] rounded-xl bg-muted/30 animate-pulse" />,
@@ -97,7 +98,7 @@ export function AnalyticsClient() {
         <div>
           <DataTableWrapper title={t("analytics.heatmap_title", locale)} icon={BarChart3}>
             <div className="p-4">
-              <ProfitabilityHeatmap products={activeProducts as any[]} />
+              <ProfitabilityHeatmap products={activeProducts as ProductWithInventory[]} />
             </div>
           </DataTableWrapper>
         </div>
@@ -133,7 +134,7 @@ export function AnalyticsClient() {
           {comparisonLoading ? (
             <div className="h-[280px] rounded-xl bg-muted/30 animate-pulse" />
           ) : comparisonData ? (
-            <ComparisonChart data={comparisonData as any} />
+            <ComparisonChart data={comparisonData as { daily: { date: string; current: number; previous: number }[]; totalCurrent: number; totalPrevious: number }} />
           ) : (
             <div className="rounded-xl border border-border bg-card p-6 text-center">
               <TrendingUp className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
@@ -148,8 +149,8 @@ export function AnalyticsClient() {
           <DataTableWrapper title={t("analytics.projections_title", locale)} icon={TrendingUp}>
             <div className="p-4">
               <RevenueProjection
-                salesData={sales as any[]}
-                products={activeProducts as any[]}
+                salesData={sales as Sale[]}
+                products={activeProducts as ProductWithInventory[]}
               />
             </div>
           </DataTableWrapper>
@@ -161,8 +162,8 @@ export function AnalyticsClient() {
           <DataTableWrapper title={t("analytics.reports_title", locale)} icon={FileText}>
             <div className="p-4">
               <ReportGenerator
-                products={activeProducts as any[]}
-                sales={sales as any[]}
+                products={activeProducts as unknown as { id: string; name: string; sku: string; category: string | null; status: string; sale_price: number | null; buy_cost: number | null; net_profit: number | null; roi: number | null; stock_available: number | null; sales_velocity_30d: number | null }[]}
+                sales={sales as unknown as { id: string; sale_date: string; revenue: number | null; units_sold: number | null; product_id?: string }[]}
               />
             </div>
           </DataTableWrapper>
