@@ -17,10 +17,12 @@ import {
   DollarSign,
   Trash2,
   Sparkles,
+  Download,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProductAnalyzer } from "@/components/research/product-analyzer";
+import { DeepDivePanel } from "@/components/research/deep-dive-panel";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -84,6 +86,7 @@ export default function ResearchPage() {
   const [editingItem, setEditingItem] = useState<ProductResearch | null>(null);
   const [showAnalyzer, setShowAnalyzer] = useState(false);
   const [analyzerInput, setAnalyzerInput] = useState("");
+  const [deepDiveProduct, setDeepDiveProduct] = useState<ProductResearch | null>(null);
 
   const {
     register,
@@ -295,6 +298,28 @@ export default function ResearchPage() {
         </div>
       </PageHeader>
 
+      <div className="rounded-2xl border border-border bg-gradient-to-r from-primary/5 to-transparent p-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              FBA Research Agent
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1 max-w-xl">
+              Descargá la Chrome Extension para capturar productos directamente desde Amazon con datos de H10 Xray o scraper automático.
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Button variant="outline" size="sm" asChild>
+              <a href="/api/research/extension.zip" download>
+                <Download className="h-3.5 w-3.5 me-1.5" />
+                Descargar .zip
+              </a>
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4 p-3 rounded-xl bg-muted/20 border border-border">
         <div className="flex items-center gap-2 flex-1">
           <Sparkles className="h-4 w-4 text-primary shrink-0" />
@@ -435,9 +460,14 @@ export default function ResearchPage() {
                         <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium border", PRIORITY_COLORS[item.priority])}>P{item.priority}</span>
                       </td>
                       <td className="p-4 text-center">
-                        <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="min-w-[44px] min-h-[44px]">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-center gap-1">
+                          <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setDeepDiveProduct(item); }} className="min-w-[44px] min-h-[44px]">
+                            <Sparkles className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="min-w-[44px] min-h-[44px]">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -587,6 +617,26 @@ export default function ResearchPage() {
         onOpenChange={setShowAnalyzer}
         onSave={handleAnalyzeSave}
       />
+
+      {deepDiveProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4" onClick={() => setDeepDiveProduct(null)}>
+          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <DeepDivePanel
+              asin={deepDiveProduct.asin_reference ?? ""}
+              title={deepDiveProduct.name}
+              price={deepDiveProduct.average_price}
+              bsr={deepDiveProduct.bsr}
+              reviewCount={deepDiveProduct.review_count_competitor}
+              averageRating={deepDiveProduct.average_rating}
+              estimatedMonthlySales={deepDiveProduct.estimated_monthly_sales}
+              category={deepDiveProduct.amazon_category}
+              brand={null}
+              onSave={(data) => { handleAnalyzeSave({ ...data }); setDeepDiveProduct(null); }}
+              onClose={() => setDeepDiveProduct(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
