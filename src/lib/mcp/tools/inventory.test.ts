@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { handleMcpRequest, getToolDefinitions } from "@/lib/mcp/server";
 
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn(() => Promise.resolve({})),
+}));
+
 const mockEq = vi.fn();
 const mockSelect = vi.fn();
 const mockFrom = vi.fn();

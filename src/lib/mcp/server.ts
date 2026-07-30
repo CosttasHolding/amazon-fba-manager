@@ -70,7 +70,7 @@ export async function handleMcpRequest(
   }
 
   if (method === "ping") {
-    return respond({});
+    return respond("pong");
   }
 
   if (method === "tools/list") {

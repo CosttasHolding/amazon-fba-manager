@@ -16,7 +16,7 @@ const dashboardTool: ToolModule = {
     const [productResult, salesResult] = await Promise.all([
       supabase
         .from("products_with_inventory")
-        .select("id,sku,name,status,sale_price,net_profit,roi,stock_available,sales_velocity_30d,reorder_point,unit_cost,category,revenue_last_30d")
+        .select("id,sku,name,status,sale_price,net_profit,roi,stock_available,sales_velocity_30d,reorder_point,unit_cost,category,revenue_last_30d,fba_fee,referral_fee,storage_fee")
         .eq("org_id", orgId)
         .order("net_profit", { ascending: false })
         .limit(500),
@@ -34,6 +34,13 @@ const dashboardTool: ToolModule = {
     const sales = (salesResult.data || []) as Record<string, unknown>[];
 
     const activeProducts = allProducts.filter((p) => p.status === "active");
+
+    const totalFees = activeProducts.reduce((sum, p) => {
+      const fba = Number((p as Record<string, unknown>).fba_fee || 0);
+      const referral = Number((p as Record<string, unknown>).referral_fee || 0);
+      const storage = Number((p as Record<string, unknown>).storage_fee || 0);
+      return sum + fba + referral + storage;
+    }, 0);
 
     const sixtyDaysAgo = new Date(Date.now() - 60 * 86400000).toISOString().split("T")[0];
     const recentSales = sales.filter((s) => String(s.sale_date) >= sixtyDaysAgo);
@@ -58,6 +65,7 @@ const dashboardTool: ToolModule = {
       revenue_30d: revenue30d,
       units_sold_30d: unitsSold30d,
       active_products: activeProducts.length,
+      total_fees: totalFees,
       top_products: topProducts,
     };
   },
