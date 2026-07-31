@@ -2,10 +2,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/research/capture/route";
 import { createMockRequest } from "@/lib/test-utils/mock-request";
 
-const mockInsert = vi.fn();
-const mockSelect = vi.fn();
-const mockFrom = vi.fn();
 const mockGetUser = vi.fn();
+const mockFrom = vi.fn();
+const mockSelectIds = vi.fn();
+const mockEqOrg = vi.fn();
+const mockEqAsin = vi.fn();
+const mockMaybeSingle = vi.fn();
+const mockInsert = vi.fn();
+const mockInsertSelect = vi.fn();
+const mockUpdate = vi.fn();
+const mockUpdateEq = vi.fn();
+const mockUpdateSelect = vi.fn();
 
 const mockSupabase = {
   auth: { getUser: mockGetUser },
@@ -20,12 +27,44 @@ vi.mock("@/lib/api-handler", () => ({
   getOrgId: vi.fn(() => Promise.resolve("org-1")),
 }));
 
-function buildInsertQuery(data: unknown) {
-  return {
-    insert: mockInsert.mockReturnThis(),
-    select: mockSelect.mockResolvedValue({ data, error: null }),
-  };
+function setupDbMocks({ existing = null, resultData = [] }: { existing?: { id: string } | null; resultData?: unknown[] }) {
+  mockMaybeSingle.mockResolvedValue({ data: existing, error: null });
+  mockEqAsin.mockReturnValue({ maybeSingle: mockMaybeSingle });
+  mockEqOrg.mockReturnValue({ eq: mockEqAsin });
+  mockSelectIds.mockReturnValue({ eq: mockEqOrg });
+  mockInsertSelect.mockResolvedValue({ data: resultData, error: null });
+  mockInsert.mockReturnValue({ select: mockInsertSelect });
+  mockUpdateSelect.mockResolvedValue({ data: resultData, error: null });
+  mockUpdateEq.mockReturnValue({ select: mockUpdateSelect });
+  mockUpdate.mockReturnValue({ eq: mockUpdateEq });
+  mockFrom.mockReturnValue({ select: mockSelectIds, insert: mockInsert, update: mockUpdate });
 }
+
+const validPayload = {
+  products: [{
+    asin: "B0TEST1234",
+    title: "Test Product",
+    price: 29.99,
+    currency: "USD",
+    bsr: 1234,
+    review_count: 567,
+    average_rating: 4.2,
+    estimated_monthly_sales: 1200,
+    estimated_monthly_revenue: 35988,
+    estimated_fba_fee: 8.5,
+    seller_count_fba: 3,
+    seller_count_fbm: 2,
+    category: "Sports & Fitness",
+    brand: "TestBrand",
+    image_url: null,
+    source: "scraper",
+    capture_url: "https://amazon.com/dp/B0TEST1234",
+    capture_timestamp: new Date().toISOString(),
+  }],
+  mode: "scraper",
+  page_type: "search",
+  search_keyword: "yoga mat",
+};
 
 describe("POST /api/research/capture", () => {
   beforeEach(() => {
@@ -45,46 +84,35 @@ describe("POST /api/research/capture", () => {
 
   it("guarda productos correctamente", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
-    mockFrom.mockReturnValue(buildInsertQuery([{ id: "new-id", name: "Test Product" }]));
-
-    const payload = {
-      products: [{
-        asin: "B0TEST1234",
-        title: "Test Product",
-        price: 29.99,
-        currency: "USD",
-        bsr: 1234,
-        review_count: 567,
-        average_rating: 4.2,
-        estimated_monthly_sales: 1200,
-        estimated_monthly_revenue: 35988,
-        estimated_fba_fee: 8.5,
-        seller_count_fba: 3,
-        seller_count_fbm: 2,
-        category: "Sports & Fitness",
-        brand: "TestBrand",
-        image_url: null,
-        source: "scraper",
-        capture_url: "https://amazon.com/dp/B0TEST1234",
-        capture_timestamp: new Date().toISOString(),
-      }],
-      mode: "scraper",
-      page_type: "search",
-      search_keyword: "yoga mat",
-    };
+    setupDbMocks({ resultData: [{ id: "new-id", name: "Test Product" }] });
 
     const req = createMockRequest("http://localhost/api/research/capture", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(validPayload),
     });
     const res = await POST(req as never);
     expect(res.status).toBe(201);
     expect(mockInsert).toHaveBeenCalled();
     const inserted = mockInsert.mock.calls[0][0];
-    expect(inserted[0].asin_reference).toBe("B0TEST1234");
-    expect(inserted[0].name).toBe("Test Product");
-    expect(inserted[0].source).toBe("capture");
-    expect(inserted[0].source_data.capture_mode).toBe("scraper");
+    expect(inserted.asin_reference).toBe("B0TEST1234");
+    expect(inserted.name).toBe("Test Product");
+    expect(inserted.source).toBe("capture");
+    expect(inserted.source_data.capture_mode).toBe("scraper");
+  });
+
+  it("actualiza producto existente con el mismo ASIN (dedupe)", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({ existing: { id: "existing-id" }, resultData: [{ id: "existing-id", name: "Test Product" }] });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify(validPayload),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(201);
+    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockUpdateEq).toHaveBeenCalledWith("id", "existing-id");
   });
 
   it("valida que products sea array", async () => {
@@ -104,6 +132,29 @@ describe("POST /api/research/capture", () => {
     const req = createMockRequest("http://localhost/api/research/capture", {
       method: "POST",
       body: JSON.stringify({ products: [], mode: "scraper", page_type: "search" }),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(400);
+  });
+
+  it("rechaza producto sin asin", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify({ products: [{ title: "Sin ASIN" }], mode: "scraper" }),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(400);
+  });
+
+  it("rechaza más de 100 productos", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+
+    const products = Array.from({ length: 101 }, (_, i) => ({ asin: `B0TEST${i}`, title: `P${i}` }));
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify({ products, mode: "scraper" }),
     });
     const res = await POST(req as never);
     expect(res.status).toBe(400);

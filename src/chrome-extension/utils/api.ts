@@ -1,6 +1,6 @@
 export async function sendToWebApp(payload: Record<string, unknown>): Promise<{ ok: boolean; error?: string }> {
   try {
-    const res = await fetch("https://fba-manager.vercel.app/api/research/capture", {
+    const res = await fetch("https://amazon-fba-manager-virid.vercel.app/api/research/capture", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

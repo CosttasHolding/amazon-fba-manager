@@ -1,6 +1,12 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/research/analyze-deep/route";
 import { createMockRequest } from "@/lib/test-utils/mock-request";
+
+const mockGetUser = vi.fn();
+
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn(() => Promise.resolve({ auth: { getUser: mockGetUser } })),
+}));
 
 vi.mock("@/lib/ai/client", () => ({
   getOpenAI: vi.fn(() => ({
@@ -28,6 +34,22 @@ vi.mock("@/lib/ai/client", () => ({
 }));
 
 describe("POST /api/research/analyze-deep", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+  });
+
+  it("devuelve 401 sin autenticación", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null }, error: { message: "No auth" } });
+
+    const req = createMockRequest("http://localhost/api/research/analyze-deep", {
+      method: "POST",
+      body: JSON.stringify({ asin: "B0TEST1234", title: "Test Product" }),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(401);
+  });
+
   it("realiza deep dive correctamente", async () => {
     const req = createMockRequest("http://localhost/api/research/analyze-deep", {
       method: "POST",

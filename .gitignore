@@ -48,5 +48,8 @@ Obsidian/
 # Superpowers internal tooling
 .superpowers/
 
+# Extension build output (el zip versionado vive en public/research/)
+public/extension-dist/
+
 # Misc
 esto es

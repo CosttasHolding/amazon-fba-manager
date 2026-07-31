@@ -21,7 +21,7 @@ export interface CapturedProduct {
 
 export interface CapturePayload {
   products: CapturedProduct[];
-  mode: "h10" | "scraper";
+  mode: "h10" | "h10_xray" | "scraper";
   page_type: "search" | "product" | "unknown";
   search_keyword?: string;
 }

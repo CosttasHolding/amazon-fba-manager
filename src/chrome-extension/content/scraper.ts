@@ -15,16 +15,29 @@ function extractAsin(url: string): string | null {
   return match?.[1] ?? null;
 }
 
-function parsePrice(text: string): number | null {
-  const cleaned = text.replace(/[^0-9.,]/g, "").replace(",", ".");
-  const num = parseFloat(cleaned);
+function parseLocalizedNumber(text: string): number | null {
+  const cleaned = text.replace(/[^0-9.,]/g, "");
+  if (!cleaned) return null;
+  const lastComma = cleaned.lastIndexOf(",");
+  const lastDot = cleaned.lastIndexOf(".");
+  let normalized: string;
+  if (lastComma > lastDot) {
+    normalized = cleaned.replace(/\./g, "").replace(",", ".");
+  } else if (lastDot > lastComma) {
+    normalized = cleaned.replace(/,/g, "");
+  } else {
+    normalized = cleaned.replace(/,/g, "");
+  }
+  const num = parseFloat(normalized);
   return isNaN(num) ? null : num;
 }
 
+function parsePrice(text: string): number | null {
+  return parseLocalizedNumber(text);
+}
+
 function parseBsr(text: string): number | null {
-  const cleaned = text.replace(/[^0-9]/g, "");
-  const num = parseInt(cleaned, 10);
-  return isNaN(num) ? null : num;
+  return parseLocalizedNumber(text);
 }
 
 export function scrapeCurrentPage(): ScrapedProduct[] {

@@ -83,6 +83,8 @@ async function init() {
         mode: response.mode,
         page_type: response.page_type,
         search_keyword: getSearchKeyword(response.capture_url),
+        capture_url: response.capture_url,
+        capture_timestamp: response.capture_timestamp,
       });
 
       results.classList.add("hidden");

@@ -1,9 +1,38 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrgId } from "@/lib/api-handler";
 import { apiErrorResponse } from "@/lib/api-utils";
+
+const capturedProductSchema = z.object({
+  asin: z.string().max(20),
+  title: z.string().max(500),
+  price: z.number().nullable().optional(),
+  currency: z.string().max(10).optional(),
+  bsr: z.number().nullable().optional(),
+  review_count: z.number().nullable().optional(),
+  average_rating: z.number().nullable().optional(),
+  estimated_monthly_sales: z.number().nullable().optional(),
+  estimated_monthly_revenue: z.number().nullable().optional(),
+  estimated_fba_fee: z.number().nullable().optional(),
+  seller_count_fba: z.number().nullable().optional(),
+  seller_count_fbm: z.number().nullable().optional(),
+  category: z.string().max(200).nullable().optional(),
+  brand: z.string().max(200).nullable().optional(),
+  image_url: z.string().max(1000).nullable().optional(),
+  source: z.string().optional(),
+  capture_url: z.string().max(2000).optional(),
+  capture_timestamp: z.string().max(50).optional(),
+}).passthrough();
+
+const captureSchema = z.object({
+  products: z.array(capturedProductSchema).min(1).max(100),
+  mode: z.enum(["h10", "h10_xray", "scraper"]).optional(),
+  page_type: z.enum(["search", "product", "unknown"]).optional(),
+  search_keyword: z.string().max(300).optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,24 +43,27 @@ export async function POST(req: NextRequest) {
     const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
-    const body = await req.json();
-    const { products, mode, page_type, search_keyword } = body;
+    const body = await req.json().catch(() => null);
+    if (!body) return NextResponse.json({ error: "Body inválido" }, { status: 400 });
 
-    if (!Array.isArray(products) || products.length === 0) {
-      return NextResponse.json({ error: "Se requiere un array de productos" }, { status: 400 });
+    const parsed = captureSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Payload inválido", details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const records = products.map((p: Record<string, unknown>) => ({
+    const { products, mode, page_type, search_keyword } = parsed.data;
+
+    const records = products.map((p) => ({
       user_id: user.id,
       org_id: orgId,
-      name: String(p.title ?? "Unknown"),
-      asin_reference: String(p.asin ?? ""),
-      amazon_category: String(p.category ?? ""),
-      estimated_monthly_sales: p.estimated_monthly_sales != null ? Number(p.estimated_monthly_sales) : null,
-      average_price: p.price != null ? Number(p.price) : null,
-      review_count_competitor: p.review_count != null ? Number(p.review_count) : null,
-      average_rating: p.average_rating != null ? Number(p.average_rating) : null,
-      bsr: p.bsr != null ? Number(p.bsr) : null,
+      name: p.title || "Unknown",
+      asin_reference: p.asin,
+      amazon_category: p.category ?? "",
+      estimated_monthly_sales: p.estimated_monthly_sales ?? null,
+      average_price: p.price ?? null,
+      review_count_competitor: p.review_count ?? null,
+      average_rating: p.average_rating ?? null,
+      bsr: p.bsr ?? null,
       source: "capture",
       status: "idea",
       priority: 3,
@@ -44,16 +76,41 @@ export async function POST(req: NextRequest) {
       },
     }));
 
-    const { data, error } = await supabase
-      .from("product_research")
-      .insert(records)
-      .select();
+    const saved: unknown[] = [];
 
-    if (error) {
-      return NextResponse.json({ error: "Error al guardar", details: error.message }, { status: 500 });
+    for (const record of records) {
+      const { data: existing } = await supabase
+        .from("product_research")
+        .select("id")
+        .eq("org_id", orgId)
+        .eq("asin_reference", record.asin_reference)
+        .maybeSingle();
+
+      if (existing) {
+        const { data, error } = await supabase
+          .from("product_research")
+          .update(record)
+          .eq("id", existing.id)
+          .select();
+
+        if (error) {
+          return NextResponse.json({ error: "Error al guardar", details: error.message }, { status: 500 });
+        }
+        saved.push(...(data ?? []));
+      } else {
+        const { data, error } = await supabase
+          .from("product_research")
+          .insert(record)
+          .select();
+
+        if (error) {
+          return NextResponse.json({ error: "Error al guardar", details: error.message }, { status: 500 });
+        }
+        saved.push(...(data ?? []));
+      }
     }
 
-    return NextResponse.json({ data, count: data?.length ?? 0 }, { status: 201 });
+    return NextResponse.json({ data: saved, count: saved.length }, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error, 500, "POST /api/research/capture");
   }

@@ -43,12 +43,27 @@ function extractText(parent: Element, selector: string): string {
   return el?.textContent?.trim() || "";
 }
 
+function parseLocalizedNumber(text: string): number | null {
+  const cleaned = text.replace(/[^0-9.,]/g, "");
+  if (!cleaned) return null;
+  const lastComma = cleaned.lastIndexOf(",");
+  const lastDot = cleaned.lastIndexOf(".");
+  let normalized: string;
+  if (lastComma > lastDot) {
+    normalized = cleaned.replace(/\./g, "").replace(",", ".");
+  } else if (lastDot > lastComma) {
+    normalized = cleaned.replace(/,/g, "");
+  } else {
+    normalized = cleaned.replace(/,/g, "");
+  }
+  const num = parseFloat(normalized);
+  return isNaN(num) ? null : num;
+}
+
 function extractNumber(parent: Element, selector: string): number | null {
   const el = parent.querySelector(selector);
   if (!el?.textContent) return null;
-  const cleaned = el.textContent.replace(/[^0-9.,]/g, "").replace(",", ".");
-  const num = parseFloat(cleaned);
-  return isNaN(num) ? null : num;
+  return parseLocalizedNumber(el.textContent);
 }
 
 function extractAsinFromRow(row: Element): string | null {
