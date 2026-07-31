@@ -1,7 +1,7 @@
 ---
 tipo: tracking
 tags: [bug, problemas]
-ultima_actualizacion: 2026-07-22
+ultima_actualizacion: 2026-07-31
 ---
 
 # Bugs Conocidos
@@ -12,9 +12,17 @@ ultima_actualizacion: 2026-07-22
 
 ## Activos
 
-### 
-
-_No hay bugs activos reportados actualmente._
+### Extension no aparece en Chrome del usuario (PENDIENTE DIAGNOSTICO)
+- **Fecha**: 2026-07-31
+- **Sintoma**: El usuario instala la extension pero no aparece ni en la barra ni en el menu del puzzle
+- **Verificado**: El zip `public/research/extension.zip` carga PERFECTO en Playwright/Chromium (enabled, sin errores, ID asignado) — el paquete es valido
+- **Hipotesis**: 
+  1. Usuario tiene zip viejo (de antes del fix de iconos que Chrome rechazaba)
+  2. Carpeta anidada al descomprimir (selecciono la carpeta padre)
+  3. Multiples perfiles de Chrome (instalo en uno, mira en otro)
+  4. Politica de empresa que bloquea extensiones unpacked
+- **Proximo paso**: Pedir al usuario que abra `chrome://extensions` y reporte: si aparece en la lista, si hay boton rojo "Errors", si el toggle esta ON
+- **Contexto**: Ver `Daily Notes/2026-07-31.md`
 
 ---
 

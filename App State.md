@@ -1,12 +1,12 @@
 ---
-ultima_actualizacion: 2026-07-30
-estado: estable, working tree clean
+ultima_actualizacion: 2026-07-31
+estado: estable, pusheado a origin main
 version: 2.0.0
 branch: main
 deploy: https://amazon-fba-manager-virid.vercel.app
 build: 0 errores, warnings no bloqueantes
-tests: vitest (check con npm run test)
-db_migrations: presente (Supabase)
+tests: 211 pasando (vitest)
+db_migrations: 1 pendiente de aplicar (source_data)
 ---
 
 # App State
@@ -49,9 +49,12 @@ db_migrations: presente (Supabase)
 - Modo offline
 - UI Optimization: navegacion categorias, mobile UX, KPI grids, transiciones
 - Capacitor para mobile (iOS/Android)
+- Motor de Investigacion de Productos: Chrome Extension + scoring engine + deep dive GPT-4o (2026-07-31)
 
 ## Features en progreso
 
+- Extension Chrome no aparece en el navegador del usuario (paquete verificado OK en Playwright — diagnostico pendiente)
+- Migration `source_data` pendiente de aplicar en Supabase prod
 - Zod validation en SP-API / Drive / Cron routes (MEDIUM)
 - N+1 queries fix + dashboard limits (MEDIUM)
 - Accessibility fixes (MEDIUM)
