@@ -1,12 +1,13 @@
 import OpenAI from "openai";
 
-let _openai: OpenAI | null = null;
+let _xai: OpenAI | null = null;
 
-export function getOpenAI(): OpenAI {
-  if (!_openai) {
-    _openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+export function getXAIClient(): OpenAI {
+  if (!_xai) {
+    _xai = new OpenAI({
+      apiKey: process.env.XAI_API_KEY,
+      baseURL: "https://api.x.ai/v1",
     });
   }
-  return _openai;
+  return _xai;
 }

@@ -1,7 +1,7 @@
 ---
 tipo: tracking
 tags: [bug, problemas]
-ultima_actualizacion: 2026-07-31
+ultima_actualizacion: 2026-08-01
 ---
 
 # Bugs Conocidos
@@ -23,6 +23,14 @@ ultima_actualizacion: 2026-07-31
   4. Politica de empresa que bloquea extensiones unpacked
 - **Proximo paso**: Pedir al usuario que abra `chrome://extensions` y reporte: si aparece en la lista, si hay boton rojo "Errors", si el toggle esta ON
 - **Contexto**: Ver `Daily Notes/2026-07-31.md`
+
+### Deep dive falla por falta de creditos/licencias en xAI (BLOQUEADO)
+- **Fecha**: 2026-08-01
+- **Sintoma**: `/api/research/analyze-deep` y `/api/research/analyze` devuelven `403 Your newly created team doesn't have any credits or licenses yet`
+- **Causa**: la key `XAI_API_KEY` es VALIDA (autenticacion OK, llega a api.x.ai) pero el team no tiene creditos/licencias cargadas
+- **Solucion**: comprar creditos en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c
+- **Adicional**: XAI_API_KEY solo esta en `.env.local` — falta agregarla en Vercel (prod) o el deep dive fallara en produccion
+- **Seguridad**: las keys de OpenAI y xAI quedaron expuestas en el chat del 2026-08-01. **DECISION**: riesgo bajo (sin creditos hoy), rotar cuando el usuario cargue creditos — ahi generar key nueva en vez de usar la expuesta
 
 ---
 

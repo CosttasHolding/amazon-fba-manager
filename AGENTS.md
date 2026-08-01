@@ -91,6 +91,11 @@ Este proyecto usa **Superpowers** para desarrollo de software. El agente debe se
 - **sonner** para toast, nunca alerts nativos
 - **calculations.ts** es inmutable
 - **Sin comentarios** en el codigo a menos que se pidan
+- **Dividir el trabajo en fases**: Siempre dividir el trabajo en fases chicas (2-5 min cada una). Nunca encarar el trabajo completo de una sola vez.
+- **Verificar cada fase**: Al terminar cada fase, correr la verificacion completa — `npx tsc --noEmit`, `npm run lint`, `npm run test:run`, `npm run build` — para asegurar que no haya bugs ni nada roto antes de seguir.
+- **Seguridad > todo**: Nunca escribir API keys, tokens, secrets o passwords en archivos del repo (ni en codigo, ni en docs, ni en commit messages). Las keys van SOLO en `.env.local` (gitignored). Si un secreto se expone en chat o repo, rotarlo inmediatamente y avisar al usuario.
+- **Nunca commitear sin verificar**: el pre-commit hook `scripts/check-secrets.js` bloquea commits con patrones de keys. No usar `--no-verify` salvo orden explicita.
+- **No compartir secrets en el chat**: si el usuario pega una key en el chat, recordarle que quedo expuesta y debe rotarla.
 
 ## Comandos Utiles
 

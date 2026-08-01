@@ -9,7 +9,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 vi.mock("@/lib/ai/client", () => ({
-  getOpenAI: vi.fn(() => ({
+  getXAIClient: vi.fn(() => ({
     chat: {
       completions: {
         create: vi.fn().mockResolvedValue({

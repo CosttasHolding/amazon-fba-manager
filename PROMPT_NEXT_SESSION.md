@@ -4,54 +4,59 @@
 
 ## Ultima sesion
 
-- **Fecha**: 2026-07-31
-- **Resumen**: Motor de Investigacion de Productos implementado completo (14 tareas via subagent-driven-development). Chrome Extension + scoring engine + deep dive GPT-4o + 3 API endpoints + UI en /research. Review final encontro 4 criticos (extension sin host_permissions, endpoints publicos, zip untracked, dominio inventado) — todos fixeados. Push a main: 10 commits.
-- **Build**: 0 errores, 211 tests pasando
-- **Branch**: main, pusheado (`98df256..40109af`)
+- **Fecha**: 2026-08-01
+- **Resumen**: Sesion de consolidacion y hardening:
+  - **Verificado en prod**: migration `source_data` YA estaba aplicada (vault estaba desactualizado); payload del capture endpoint 100% compatible con schema real (probe insert/delete)
+  - **Deep dive migrado a xAI Grok**: `getOpenAI` → `getXAIClient` (OpenAI SDK + `baseURL: https://api.x.ai/v1` + `XAI_API_KEY`), modelo `grok-4.5`. Key VALIDA pero team SIN CREDITOS (403)
+  - **Minor findings del research engine resueltos**: fallback enums GPT (Zod `.catch()` en analyzer), deep dive en kanban, i18n es/en/ar en componentes nuevos, build-extension cross-platform (adm-zip), migration renombrada a `029_`
+- **41 errores tsc pre-existentes eliminados** — tsc a 0 errores
+- **Deps declaradas**: tsx, esbuild, adm-zip en devDependencies
+- **Seguridad**: pre-commit hook anti-secretos (Husky + scripts/check-secrets.js), .gitignore reforzado, regla en AGENTS.md. Auditoria: repo limpio de secretos
+- **Build**: 0 errores, tsc 0 errores, 217 tests pasando
+- **Branch**: main — NO commiteado (hay cambios sin commit, verificar git status). Al commitear, el hook check-secrets correra
 
 ## Estado actual
 
 Leer `App State.md` para el snapshot completo. Puntos clave:
-- Motor de Investigacion funcional en codigo: extension -> capture -> scoring -> deep dive
-- Migration `20260730_add_source_data.sql` creada pero NO aplicada en Supabase prod
-- Extension empaquetada en `public/research/extension.zip` (commiteada)
-- **PENDIENTE**: usuario reporta que la extension no aparece en SU Chrome (verificada funcional en Playwright — ver [[Bugs Conocidos]])
+- Motor de Investigacion funcional: extension -> capture -> scoring -> deep dive (LLM = xAI Grok `grok-4.5`)
+- `source_data` JSONB confirmado en prod (column existe)
+- **Bloqueante deep dive**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c
+- **XAI_API_KEY solo en .env.local** — falta agregarla en Vercel (prod) o el deep dive fallara en produccion
+- Extension Chrome del usuario sigue sin diagnosticar (paquete verificado OK en Playwright)
 
 ## Proximos pasos
 
-### 1. Diagnosticar extension en Chrome del usuario (ALTA — bloquea testing)
-- Pedir output de `chrome://extensions`: aparece? boton Errors? toggle ON?
-- Hipotesis documentadas en [[Bugs Conocidos]]
-- El paquete esta verificado OK — es problema de instalacion/entorno
+### 1. Usuario debe resolver (ALTA)
+- **Cargar creditos/licencias xAI** — sin esto el deep dive tira 403 (https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c)
+- **Agregar XAI_API_KEY en Vercel** (Settings → Environment Variables) — solo existe en .env.local
+- **Rotar las API keys AL CARGAR CREDITOS** — decision tomada (riesgo bajo hoy, keys sin creditos). Al rotar: generar key nueva y guardarla en `.env.local`
+- **Diagnostico extension Chrome**: abrir `chrome://extensions`, reportar si aparece, si hay boton "Errors", si el toggle esta ON (ver [[Bugs Conocidos]])
+- Al rotar keys: guardar las NUEVAS en `.env.local` (el pre-commit hook las bloquea en git)
 
-### 2. Aplicar migration source_data en Supabase prod (ALTA)
-- `supabase/migrations/20260730_add_source_data.sql`
-- Sin esto, el capture endpoint falla al insertar
+### 2. Commit de esta sesion (ALTA)
+- Working tree tiene cambios sin commit. Revisar `git status`/`git diff` y commitear: analyzer Zod, i18n, kanban deep dive, fix 41 errores tsc, build-extension adm-zip, migration rename, deps
 
-### 3. Probar flujo E2E del Motor de Investigacion (ALTA)
-- Extension en amazon.com -> capturar -> enviar a web -> scoring -> deep dive GPT-4o
-- Verificar que H10 Xray detection funciona con la extension de H10 activa
-
-### 4. Minor findings diferidos (MEDIUM/LOW)
-- Fallback de enums GPT en DeepDivePanel (`?? moderate`, `?? []`)
-- Deep dive accesible desde kanban (hoy solo vista lista)
-- i18n en componentes nuevos (strings hardcodeadas en espanol)
-- build-extension.ts es Windows-only (PowerShell Compress-Archive)
-- Migration filename rompe convencion NNN_ del repo
-
-### 5. Backlog previo (de 2026-07-30)
-- Zod validation en SP-API / Drive / Cron routes (MEDIUM)
-- N+1 queries fix + dashboard limits (MEDIUM)
-- Accessibility fixes (MEDIUM)
+### 3. Backlog previo (MEDIUM)
+- Zod validation en SP-API / Drive / Cron routes
+- N+1 queries fix + dashboard limits
+- Accessibility fixes
+- Deuda i18n: `product-analyzer.tsx` (Research Bot, strings hardcodeadas)
 - Unificar numeros duplicados de migraciones 014/015 (LOW)
+
+### 4. Post-creditos (cuando el usuario cargue)
+- Re-test del deep dive real (Grok `grok-4.5`) end-to-end — verificar que `response_format: json_object` funcione y el modelo devuelva JSON valido (los fallbacks Zod ahora protegen)
+- Probar flujo E2E completo: extension en Amazon -> capture -> scoring -> deep dive
+- Verificar que H10 Xray detection funciona con la extension de H10 activa
 
 ## Archivos clave
 
-- `src/lib/research/` — types, scoring, analyzer (GPT-4o)
-- `src/app/api/research/capture|scoring|analyze-deep/` — endpoints del motor
-- `src/chrome-extension/` — fuente de la extension (editar aca, NO en public/)
-- `src/scripts/build-extension.ts` — `npm run build:extension` regenera el zip
-- `.superpowers/sdd/progress.md` — ledger SDD con minor findings completos
+- `src/lib/ai/client.ts` — `getXAIClient()` (OpenAI SDK → xAI baseURL)
+- `src/lib/research/analyzer.ts` — Grok `grok-4.5` + Zod schema con fallbacks (`.catch()`)
+- `src/lib/test-utils/mock-request.ts` — `createMockRequest` retorna `NextRequest`
+- `src/scripts/build-extension.ts` — build cross-platform con adm-zip
+- `supabase/migrations/029_add_source_data.sql` — migration renombrada
+- `.env.local` — XAI_API_KEY (gitignored)
+- `.superpowers/sdd/progress.md` — ledger SDD actualizado
 
 ## Comandos
 
@@ -59,13 +64,15 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 npm run dev              # Desarrollo
 npm run build            # Build produccion
 npm run lint             # Linting
-npm run test:run         # Tests (211)
-npm run build:extension  # Regenerar zip de la extension
+npm run test:run         # Tests (217)
+npm run build:extension  # Regenerar zip de la extension (adm-zip, cross-platform)
+npx tsc --noEmit         # Typecheck (0 errores esperados)
 ```
 
 ## Vault
 
 - [[00 - Dashboard]] — entry point del segundo cerebro
 - [[App State]] — snapshot del proyecto
-- [[Bugs Conocidos]] — extension pendiente de diagnostico
+- [[Bugs Conocidos]] — extension pendiente + credito OpenAI
 - [[Decisiones Tecnicas]] — ADRs
+- [[Learning Log]] — Zod .catch(), adm-zip, patron NextRequest en mocks

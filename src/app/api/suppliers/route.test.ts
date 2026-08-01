@@ -7,7 +7,7 @@ const mockSupabase = {
   from: vi.fn(),
 };
 
-function buildQueryChain(returnValue: unknown) {
+function buildQueryChain(returnValue: unknown): Record<string, unknown> {
   const chain: Record<string, unknown> = {};
   const terminal = Promise.resolve(returnValue);
   chain.select = vi.fn().mockReturnValue(chain);
@@ -20,7 +20,7 @@ function buildQueryChain(returnValue: unknown) {
   chain.then = terminal.then.bind(terminal);
   chain.catch = terminal.catch.bind(terminal);
   chain.finally = terminal.finally.bind(terminal);
-  return chain as unknown as ReturnType<typeof buildQueryChain>;
+  return chain;
 }
 
 vi.mock("@/lib/supabase/server", () => ({

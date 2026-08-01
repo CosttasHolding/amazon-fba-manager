@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { SpApiClient, getCatalogItem, refreshAccessToken } from "@/lib/sp-api";
-import { getOpenAI } from "@/lib/ai/client";
+import { getXAIClient } from "@/lib/ai/client";
 import { buildAnalyzeProductPrompt } from "@/lib/ai/prompts";
 import type { AnalyzeProductResponse } from "@/lib/ai/types";
 import { apiErrorResponse } from "@/lib/api-utils";
@@ -83,8 +83,8 @@ export async function POST(req: NextRequest) {
 
     const prompt = buildAnalyzeProductPrompt(listingData);
 
-    const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o",
+    const completion = await getXAIClient().chat.completions.create({
+      model: "grok-4.5",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
       response_format: { type: "json_object" },

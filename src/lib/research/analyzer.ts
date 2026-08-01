@@ -1,5 +1,17 @@
+import { z } from "zod";
 import type { DeepDiveResult } from "./types";
-import { getOpenAI } from "@/lib/ai/client";
+import { getXAIClient } from "@/lib/ai/client";
+
+const deepDiveAnalysisSchema = z.object({
+  summary: z.string().catch(""),
+  pain_points: z.array(z.string()).catch([]),
+  differentiation_opportunities: z.array(z.string()).catch([]),
+  market_fit: z.enum(["high", "medium", "low"]).catch("medium"),
+  market_fit_reason: z.string().catch(""),
+  risk_factors: z.array(z.string()).catch([]),
+  recommended_actions: z.array(z.string()).catch([]),
+  estimated_difficulty: z.enum(["easy", "moderate", "hard"]).catch("moderate"),
+});
 
 interface DeepDiveInput {
   asin: string;
@@ -43,8 +55,8 @@ Enfocate en datos, no generalidades. Si no hay datos suficientes, sé conservado
 export async function analyzeProductDeep(input: DeepDiveInput): Promise<DeepDiveResult> {
   const prompt = buildDeepDivePrompt(input);
 
-  const completion = await getOpenAI().chat.completions.create({
-    model: "gpt-4o",
+  const completion = await getXAIClient().chat.completions.create({
+    model: "grok-4.5",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.3,
     response_format: { type: "json_object" },
@@ -55,7 +67,7 @@ export async function analyzeProductDeep(input: DeepDiveInput): Promise<DeepDive
     throw new Error("GPT-4o no devolvió contenido");
   }
 
-  const parsed = JSON.parse(content) as DeepDiveResult["analysis"];
+  const parsed = deepDiveAnalysisSchema.parse(JSON.parse(content));
 
   return {
     asin: input.asin,

@@ -14,6 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n/translations";
+import { useLocale } from "@/lib/i18n/locale-context";
 
 interface DeepDiveAnalysis {
   summary: string;
@@ -70,16 +72,16 @@ function scoreBarColor(score: number): string {
   return "bg-rose-500";
 }
 
-const difficultyConfig: Record<DeepDiveAnalysis["estimated_difficulty"], { label: string; className: string }> = {
-  easy: { label: "Fácil", className: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
-  moderate: { label: "Moderada", className: "text-amber-500 bg-amber-500/10 border-amber-500/20" },
-  hard: { label: "Difícil", className: "text-rose-500 bg-rose-500/10 border-rose-500/20" },
+const difficultyConfig: Record<DeepDiveAnalysis["estimated_difficulty"], { className: string }> = {
+  easy: { className: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
+  moderate: { className: "text-amber-500 bg-amber-500/10 border-amber-500/20" },
+  hard: { className: "text-rose-500 bg-rose-500/10 border-rose-500/20" },
 };
 
-const marketFitConfig: Record<DeepDiveAnalysis["market_fit"], { label: string; className: string }> = {
-  high: { label: "Alto", className: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
-  medium: { label: "Medio", className: "text-amber-500 bg-amber-500/10 border-amber-500/20" },
-  low: { label: "Bajo", className: "text-rose-500 bg-rose-500/10 border-rose-500/20" },
+const marketFitConfig: Record<DeepDiveAnalysis["market_fit"], { className: string }> = {
+  high: { className: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
+  medium: { className: "text-amber-500 bg-amber-500/10 border-amber-500/20" },
+  low: { className: "text-rose-500 bg-rose-500/10 border-rose-500/20" },
 };
 
 export function DeepDivePanel({
@@ -95,6 +97,7 @@ export function DeepDivePanel({
   onSave,
   onClose,
 }: DeepDivePanelProps) {
+  const { locale } = useLocale();
   const [scoring, setScoring] = useState<ScoringData | null>(null);
   const [analysis, setAnalysis] = useState<DeepDiveAnalysis | null>(null);
   const [loadingScoring, setLoadingScoring] = useState(false);
@@ -118,13 +121,13 @@ export function DeepDivePanel({
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Error al calcular el scoring");
+        toast.error(data.error || t("research.deepdive.error_scoring", locale));
         return;
       }
 
       setScoring(data as ScoringData);
     } catch {
-      toast.error("Error de conexión al calcular el scoring");
+      toast.error(t("research.deepdive.error_scoring_conn", locale));
     } finally {
       setLoadingScoring(false);
     }
@@ -152,13 +155,13 @@ export function DeepDivePanel({
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Error en el análisis deep dive");
+        toast.error(data.error || t("research.deepdive.error_deep", locale));
         return;
       }
 
       setAnalysis(data.analysis as DeepDiveAnalysis);
     } catch {
-      toast.error("Error de conexión en el análisis deep dive");
+      toast.error(t("research.deepdive.error_deep_conn", locale));
     } finally {
       setLoadingDeep(false);
     }
@@ -189,11 +192,11 @@ export function DeepDivePanel({
         <div className="flex gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={handleScoring} disabled={loadingScoring || loadingDeep}>
             {loadingScoring ? <Loader2 className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
-            {loadingScoring ? "Calculando..." : "Scoring"}
+            {loadingScoring ? t("research.deepdive.calculating", locale) : t("research.deepdive.scoring", locale)}
           </Button>
           <Button size="sm" onClick={handleDeepDive} disabled={loadingDeep || loadingScoring}>
             {loadingDeep ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {loadingDeep ? "Analizando..." : "Deep Dive IA"}
+            {loadingDeep ? t("research.deepdive.analyzing", locale) : t("research.deepdive.deep_dive", locale)}
           </Button>
         </div>
       </div>
@@ -201,7 +204,7 @@ export function DeepDivePanel({
       {scoring && (
         <div className="rounded-xl bg-muted/20 border border-border p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground">Score total</p>
+            <p className="text-xs font-medium text-muted-foreground">{t("research.deepdive.score_total", locale)}</p>
             <p className={cn("text-2xl font-bold", scoreTextColor(scoring.total))}>{scoring.total}</p>
           </div>
           <div className="space-y-3">
@@ -238,7 +241,7 @@ export function DeepDivePanel({
                   difficultyConfig[analysis.estimated_difficulty].className
                 )}
               >
-                Dificultad: {difficultyConfig[analysis.estimated_difficulty].label}
+                {t("research.deepdive.difficulty", locale)}: {t("research.deepdive.difficulty." + analysis.estimated_difficulty, locale)}
               </span>
               <span
                 className={cn(
@@ -246,7 +249,7 @@ export function DeepDivePanel({
                   marketFitConfig[analysis.market_fit].className
                 )}
               >
-                Market fit: {marketFitConfig[analysis.market_fit].label}
+                {t("research.deepdive.market_fit", locale)}: {t("research.deepdive.market_fit." + analysis.market_fit, locale)}
               </span>
             </div>
             {analysis.market_fit_reason && (
@@ -256,25 +259,25 @@ export function DeepDivePanel({
 
           <AnalysisList
             icon={AlertTriangle}
-            title="Pain points"
+            title={t("research.deepdive.pain_points", locale)}
             items={analysis.pain_points}
             iconClassName="text-amber-500"
           />
           <AnalysisList
             icon={Lightbulb}
-            title="Oportunidades de diferenciación"
+            title={t("research.deepdive.differentiation", locale)}
             items={analysis.differentiation_opportunities}
             iconClassName="text-emerald-500"
           />
           <AnalysisList
             icon={ShieldAlert}
-            title="Factores de riesgo"
+            title={t("research.deepdive.risks", locale)}
             items={analysis.risk_factors}
             iconClassName="text-rose-500"
           />
           <AnalysisList
             icon={Target}
-            title="Acciones recomendadas"
+            title={t("research.deepdive.actions", locale)}
             items={analysis.recommended_actions}
             iconClassName="text-primary"
           />
@@ -283,9 +286,9 @@ export function DeepDivePanel({
 
       <div className="flex gap-2 justify-end pt-1">
         <Button variant="outline" onClick={onClose}>
-          Cerrar
+          {t("common.close", locale)}
         </Button>
-        <Button onClick={handleSave}>Guardar en Research</Button>
+        <Button onClick={handleSave}>{t("research.deepdive.save", locale)}</Button>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 ---
 tipo: personal
 tags: [learning, aprendizaje]
-ultima_actualizacion: 2026-07-31
+ultima_actualizacion: 2026-08-01
 ---
 
 # Learning Log
@@ -41,6 +41,26 @@ ultima_actualizacion: 2026-07-31
 - **Extension sin iconos**: Chrome carga igual (usa icono default de puzzle). Pero si el manifest REFERENCIA iconos que no existen, RECHAZA la carga.
 - **host_permissions**: Para que una extension pueda fetchear la web app con cookies (`credentials: "include"`), el dominio destino debe estar en `host_permissions` — sino CORS bloquea y las cookies SameSite=Lax no viajan.
 - **Verificacion de extensiones con Playwright**: `chromium.launchPersistentContext` con `--load-extension` permite testear carga real: verificar `extensions-item`, boton de errores y toggle enabled.
+
+## Zod (2026-08-01)
+
+- **`.catch()` por campo para respuestas de LLM**: `z.enum([...]).catch("fallback")` y `z.array(...).catch([])` permiten que un solo campo invalido de GPT no tire todo el parseo. Mejor que `.parse()` estricto para respuestas no deterministas.
+
+## Testing / TypeScript (2026-08-01)
+
+- **Mocks de NextRequest en tests**: `createMockRequest` debe tener return type `NextRequest` con cast interno (`as unknown as NextRequest`) — asi los route handlers typecheckean sin tocar los 40 call sites. Arreglo centralizado de errores de tipo.
+- **`ReturnType<typeof fn>` auto-referencial rompe inferencia**: `return x as ReturnType<typeof buildQueryChain>` crea referencia circular → TS7023. Solucion: anotar el return type de la funcion directamente.
+- **Cast `Error` a `Record<string, unknown>` falla**: las clases de Error no se solapan lo suficiente. Usar `as unknown as Record<...>`.
+
+## Build cross-platform (2026-08-01)
+
+- **`adm-zip` reemplaza PowerShell Compress-Archive**: `new AdmZip().addLocalFolder(dist).writeZip(path)` es cross-platform. `zip.addLocalFolder` incluye los directorios raiz (`content/`, `popup/`), igual que Compress-Archive.
+- **Scripts que usan `npx` sin declarar la dep son bug latente**: `tsx`/`esbuild` se usaban en `npm run build:extension` sin estar en devDependencies — un `npm ci` fresco los rompe. Declarar siempre.
+
+## Verificacion contra prod (2026-08-01)
+
+- **Probar schema real con probe insert/delete**: insertar un registro marcado (`TEST_PROBE_DELETE_ME`) con el payload exacto del endpoint y borrarlo de inmediato valida compatibilidad de schema sin credenciales de usuario. El service role key permite SELECT/INSERT/DELETE via PostgREST.
+- **El vault puede estar desactualizado**: `App State.md` decia "migration pendiente" pero ya estaba aplicada en prod — verificar contra el sistema real antes de asumir.
 
 ## Subagent-Driven Development (2026-07-31)
 

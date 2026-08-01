@@ -39,7 +39,7 @@ describe("SpApiClient", () => {
     expect(err).toBeInstanceOf(Error);
     expect(err.name).toBe("SpApiAuthError");
     expect(err.message).toBe("auth error");
-    expect((err as Record<string, unknown>).refreshToken).toBeUndefined();
+    expect((err as unknown as Record<string, unknown>).refreshToken).toBeUndefined();
   });
 
   it("accepta opciones minimales (sin refreshToken ni sellerId)", () => {

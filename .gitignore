@@ -2,6 +2,8 @@ node_modules
 .next
 .env.local
 .env
+.env.*
+!.env.example
 dist
 build
 *.log
@@ -15,6 +17,19 @@ lighthouse-*.json
 # Credentials and secrets
 *.apps.googleusercontent.com.json
 client_secret_*.json
+service-account*.json
+credentials.json
+*.credentials.json
+
+# Private keys / certs
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.pkcs8
+*.jks
+*.keystore
 
 # IDE
 .vscode/
@@ -52,4 +67,3 @@ Obsidian/
 public/extension-dist/
 
 # Misc
-esto es
