@@ -20,15 +20,27 @@ function parseLocalizedNumber(text: string): number | null {
   if (!cleaned) return null;
   const lastComma = cleaned.lastIndexOf(",");
   const lastDot = cleaned.lastIndexOf(".");
-  let normalized: string;
-  if (lastComma > lastDot) {
-    normalized = cleaned.replace(/\./g, "").replace(",", ".");
-  } else if (lastDot > lastComma) {
-    normalized = cleaned.replace(/,/g, "");
-  } else {
-    normalized = cleaned.replace(/,/g, "");
+  const hasComma = lastComma !== -1;
+  const hasDot = lastDot !== -1;
+  if (hasComma && hasDot) {
+    const normalized =
+      lastComma > lastDot
+        ? cleaned.replace(/\./g, "").replace(",", ".")
+        : cleaned.replace(/,/g, "");
+    const num = parseFloat(normalized);
+    return isNaN(num) ? null : num;
   }
-  const num = parseFloat(normalized);
+  if (hasDot) {
+    const decimals = cleaned.length - lastDot - 1;
+    const num = decimals >= 3 ? parseFloat(cleaned.replace(/\./g, "")) : parseFloat(cleaned);
+    return isNaN(num) ? null : num;
+  }
+  if (hasComma) {
+    const decimals = cleaned.length - lastComma - 1;
+    const num = decimals >= 3 ? parseFloat(cleaned.replace(/,/g, "")) : parseFloat(cleaned.replace(",", "."));
+    return isNaN(num) ? null : num;
+  }
+  const num = parseFloat(cleaned);
   return isNaN(num) ? null : num;
 }
 
@@ -57,7 +69,9 @@ function detectCurrency(text: string, hostname: string): string {
 
 function outermostAsinCards(): Element[] {
   const all = document.querySelectorAll('[data-asin]:not([data-asin=""])');
-  return Array.from(all).filter((el) => el.closest('[data-asin]') === el);
+  return Array.from(all).filter(
+    (el) => !el.parentElement?.closest("[data-asin]")
+  );
 }
 
 export function scrapeCurrentPage(): ScrapedProduct[] {
