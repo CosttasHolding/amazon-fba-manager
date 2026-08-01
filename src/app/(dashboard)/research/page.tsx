@@ -17,7 +17,6 @@ import {
   DollarSign,
   Trash2,
   Sparkles,
-  Download,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -297,28 +296,6 @@ export default function ResearchPage() {
           </Button>
         </div>
       </PageHeader>
-
-      <div className="rounded-2xl border border-border bg-gradient-to-r from-primary/5 to-transparent p-5">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              FBA Research Agent
-            </h3>
-            <p className="text-xs text-muted-foreground mt-1 max-w-xl">
-              {t("research.extension.description", locale)}
-            </p>
-          </div>
-          <div className="flex gap-2 shrink-0">
-            <Button variant="outline" size="sm" asChild>
-              <a href="/extension.zip" download>
-                <Download className="h-3.5 w-3.5 me-1.5" />
-                {t("research.extension.download", locale)}
-              </a>
-            </Button>
-          </div>
-        </div>
-      </div>
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4 p-3 rounded-xl bg-muted/20 border border-border">
         <div className="flex items-center gap-2 flex-1">

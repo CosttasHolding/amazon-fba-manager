@@ -27,7 +27,9 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 ## Proximos pasos
 
 ### 1. Usuario debe resolver (ALTA)
-- **Verificar descarga E2E de la extension**: en la web cliquear "Descargar extensión" y confirmar que el archivo sea ~5.5KB (zip), NO HTML (~16KB). Despues instalar con Load unpacked desde `public/extension-dist` (o el zip descomprimido). Reportar si aparece en `chrome://extensions`
+- **Instalar la extension**: Load unpacked directamente sobre la carpeta `public/exteRB/` (manifest en raiz, verificada OK en Chromium). Ya NO hay zip ni boton de descarga en la web
+- **Mover `public/exteRB.pem` FUERA del repo**: es la clave privada de firma del pack (la genero el usuario al hacer "Pack extension"). Gitignored, no commiteada — pero no debe vivir en public/. Guardarla segura (sin ella no se puede actualizar el .crx con el mismo ID)
+- **Decidir que hacer con `public/exteRB.crx`** (untracked): si se quiere distribuir instalable, guardarlo; el .pem es la contraparte
 - **Probar el ENVIO con la extension instalada** (follow-up del fix): el fetch del popup a `/api/research/capture` con `credentials: "include"` y cookie `SameSite=Lax` puede dar 401 — si falla, evaluar cookies cross-site o mover el fetch al content script / credenciales
 - **Cargar creditos/licencias xAI** — sin esto el deep dive tira 403 (https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c)
 - **Agregar XAI_API_KEY en Vercel** (Settings → Environment Variables) — solo existe en .env.local

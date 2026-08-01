@@ -1,12 +1,9 @@
 import { mkdirSync, copyFileSync, readdirSync, existsSync, rmSync } from "fs";
 import { join, resolve } from "path";
 import { execSync } from "child_process";
-import AdmZip from "adm-zip";
 
 const EXTENSION_SRC = resolve(__dirname, "../chrome-extension");
-const DIST = resolve(__dirname, "../../public/extension-dist");
-const PUBLIC_DIR = resolve(__dirname, "../../public");
-const ZIP_PATH = join(PUBLIC_DIR, "extension.zip");
+const DIST = resolve(__dirname, "../../public/exteRB");
 
 function buildTs(file: string, out: string) {
   execSync(`npx esbuild "${file}" --bundle --outfile="${out}" --minify --platform=browser --format=iife`, {
@@ -35,7 +32,6 @@ async function build() {
   mkdirSync(DIST, { recursive: true });
   mkdirSync(join(DIST, "popup"), { recursive: true });
   mkdirSync(join(DIST, "content"), { recursive: true });
-  mkdirSync(PUBLIC_DIR, { recursive: true });
 
   copyFileSync(join(EXTENSION_SRC, "manifest.json"), join(DIST, "manifest.json"));
   copyFileSync(join(EXTENSION_SRC, "popup", "popup.html"), join(DIST, "popup", "popup.html"));
@@ -45,12 +41,7 @@ async function build() {
   buildTs(join(EXTENSION_SRC, "popup", "popup.ts"), join(DIST, "popup", "popup.js"));
   buildTs(join(EXTENSION_SRC, "content", "content.ts"), join(DIST, "content", "content.js"));
 
-  if (existsSync(ZIP_PATH)) rmSync(ZIP_PATH);
-  const zip = new AdmZip();
-  zip.addLocalFolder(DIST);
-  zip.writeZip(ZIP_PATH);
-
-  console.log(`Extension built: ${ZIP_PATH}`);
+  console.log(`Extension built: ${DIST} (Load unpacked → esta carpeta)`);
 }
 
 build().catch((err) => {

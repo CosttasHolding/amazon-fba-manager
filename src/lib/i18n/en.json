@@ -1129,8 +1129,6 @@
   "research.empty_action": "New Product",
   "research.empty_subtitle": "Add your first product idea to get started",
   "research.empty_title": "No products in research",
-  "research.extension.description": "Download the Chrome Extension to capture products directly from Amazon with H10 Xray data or automatic scraper.",
-  "research.extension.download": "Download .zip",
   "research.form.asin": "Reference ASIN",
   "research.form.avg_price": "Est. Avg Price",
   "research.form.bsr": "BSR",

@@ -56,7 +56,7 @@ db_migrations: aplicadas (source_data confirmada en prod)
 
 ## Features en progreso
 
-- **Extension Chrome**: bug de instalacion DIAGNOSTICADO y FIXEADO (deploy viejo no incluia el zip → se movio a /extension.zip, commits pusheados). Pendiente: verificacion E2E del usuario + probar el envio (posible 401 por cookie SameSite=Lax — follow-up)
+- **Extension Chrome**: bug de instalacion DIAGNOSTICADO y FIXEADO. La extension ahora vive como carpeta en `public/exteRB/` (Load unpacked directo, sin zip, sin boton de descarga en la web) — verificada OK en Chromium. Pendiente: usuario la instale + probar el envio (posible 401 por cookie SameSite=Lax — follow-up)
 - **Deep dive Grok bloqueado**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c + agregar XAI_API_KEY en Vercel prod
 - API keys OpenAI y xAI expuestas en chat 2026-08-01 — pendiente rotacion
 - Zod validation en SP-API / Drive / Cron routes (MEDIUM)
