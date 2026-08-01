@@ -1,6 +1,6 @@
 ---
 ultima_actualizacion: 2026-08-01
-estado: estable, main al dia (pusheado 2026-08-01, 91df13f + dd67f31)
+estado: estable, main al dia (pusheado 2026-08-01, 91df13f + dd67f31); extension reconstruida como recolector multi-fuente
 version: 2.0.0
 branch: main
 deploy: https://amazon-fba-manager-virid.vercel.app
@@ -56,7 +56,7 @@ db_migrations: aplicadas (source_data confirmada en prod)
 
 ## Features en progreso
 
-- **Extension Chrome**: bug de instalacion DIAGNOSTICADO y FIXEADO. La extension ahora vive como carpeta en `public/exteRB/` (Load unpacked directo, sin zip, sin boton de descarga en la web) — verificada OK en Chromium. Pendiente: usuario la instale + probar el envio (posible 401 por cookie SameSite=Lax — follow-up)
+- **Extension Chrome — recolector multi-fuente**: reconstruida para leer overlays de **H10 free + AMZScout + Keepa** (usuario los instalo free) porque el scraper de busqueda no produce BSR/ventas/nicho. Nuevos `overlay-reader.ts` + `sources.ts`, `content.ts` con merge por ASIN (prioridad h10>amzscout>keepa), scraper arreglado (titulo real, dedupe de cards anidadas, moneda detectada), y **tool de debug en el popup** para copiar el HTML de los overlays. exteRB regenerada. **Pendiente**: usuario recargue la extension, corra "Debug overlays" y pegue el HTML de AMZScout/Keepa para afinar selectores
 - **Deep dive Grok bloqueado**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c + agregar XAI_API_KEY en Vercel prod
 - API keys OpenAI y xAI expuestas en chat 2026-08-01 — pendiente rotacion
 - Zod validation en SP-API / Drive / Cron routes (MEDIUM)

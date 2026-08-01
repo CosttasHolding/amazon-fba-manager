@@ -40,22 +40,40 @@ function parseBsr(text: string): number | null {
   return parseLocalizedNumber(text);
 }
 
+function detectCurrency(text: string, hostname: string): string {
+  const upper = text.toUpperCase();
+  if (upper.includes("ARS")) return "ARS";
+  if (upper.includes("EUR") || upper.includes("€")) return "EUR";
+  if (upper.includes("GBP") || upper.includes("£")) return "GBP";
+  if (upper.includes("CAD") || upper.includes("CA$")) return "CAD";
+  if (upper.includes("MXN") || upper.includes("MX$")) return "MXN";
+  if (upper.includes("USD") || upper.includes("US$")) return "USD";
+  if (hostname.includes("amazon.es")) return "EUR";
+  if (hostname.includes("amazon.co.uk")) return "GBP";
+  if (hostname.includes("amazon.ca")) return "CAD";
+  if (hostname.includes("amazon.com.mx")) return "MXN";
+  return "USD";
+}
+
+function outermostAsinCards(): Element[] {
+  const all = document.querySelectorAll('[data-asin]:not([data-asin=""])');
+  return Array.from(all).filter((el) => el.closest('[data-asin]') === el);
+}
+
 export function scrapeCurrentPage(): ScrapedProduct[] {
   const results: ScrapedProduct[] = [];
+  const hostname = window.location.hostname;
 
-  const productCards = document.querySelectorAll(
-    '[data-asin]:not([data-asin=""])'
-  );
-
-  productCards.forEach((card) => {
+  outermostAsinCards().forEach((card) => {
     const asin = card.getAttribute("data-asin") || "";
     if (!asin || asin.length !== 10) return;
 
-    const titleEl = card.querySelector("h2 a, h2 span, [class*='title']");
+    const titleEl = card.querySelector("h2 a span, h2 a, .a-link-normal.s-link-style");
     const title = titleEl?.textContent?.trim() || "";
 
     const priceEl = card.querySelector(".a-price .a-offscreen, .a-price span:last-child");
-    const price = priceEl?.textContent ? parsePrice(priceEl.textContent) : null;
+    const priceText = priceEl?.textContent || "";
+    const price = priceText ? parsePrice(priceText) : null;
 
     const ratingEl = card.querySelector("[class*='rating'] i span, .a-icon-alt");
     const ratingText = ratingEl?.textContent || "";
@@ -74,7 +92,7 @@ export function scrapeCurrentPage(): ScrapedProduct[] {
       asin,
       title,
       price,
-      currency: "USD",
+      currency: priceText ? detectCurrency(priceText, hostname) : "USD",
       bsr: null,
       review_count,
       average_rating,
@@ -94,7 +112,8 @@ export function scrapeProductPage(): ScrapedProduct | null {
   const title = titleEl?.textContent?.trim() || "";
 
   const priceEl = document.querySelector(".a-price .a-offscreen, #priceblock_ourprice, #price_inside_buybox");
-  const price = priceEl?.textContent ? parsePrice(priceEl.textContent) : null;
+  const priceText = priceEl?.textContent || "";
+  const price = priceText ? parsePrice(priceText) : null;
 
   const bsrEls = document.querySelectorAll("#detailBullets_feature_div li, #productDetails_detailBullets_sections1 tr");
   let bsr: number | null = null;
@@ -125,7 +144,7 @@ export function scrapeProductPage(): ScrapedProduct | null {
     asin: asinExtract,
     title,
     price,
-    currency: "USD",
+    currency: priceText ? detectCurrency(priceText, window.location.hostname) : "USD",
     bsr,
     review_count: reviewCount,
     average_rating: rating,

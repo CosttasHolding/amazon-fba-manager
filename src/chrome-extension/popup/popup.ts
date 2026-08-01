@@ -17,6 +17,7 @@ interface CapturedResponse {
   page_type: string;
   capture_url: string;
   capture_timestamp: string;
+  sources?: string[];
 }
 
 function $(id: string): HTMLElement {
@@ -58,6 +59,10 @@ async function init() {
 
     $("product-count").textContent = `${response.products.length} producto(s)`;
     $("page-type").textContent = response.page_type;
+    $("source-badge").textContent =
+      response.sources && response.sources.length > 0
+        ? `Fuentes: ${response.sources.join(", ")}`
+        : "Solo DOM";
 
     const list = $("product-list");
     response.products.forEach((p) => {
@@ -97,6 +102,28 @@ async function init() {
 
     $("done-btn").addEventListener("click", () => {
       window.close();
+    });
+
+    $("debug-btn").addEventListener("click", async () => {
+      const debug = await chrome.tabs.sendMessage(activeTab.id, { type: "GET_OVERLAY_DEBUG" }) as { key: string; html: string }[] | null;
+      if (!debug || debug.length === 0) {
+        $("debug-output").value = "No se detectaron overlays (H10, AMZScout o Keepa) en esta página.\n\nSi instalaste las extensiones, recargá la página de Amazon y abrí el overlay antes de volver a hacer debug.";
+      } else {
+        $("debug-output").value = debug
+          .map((o) => `<!-- ===== ${o.key.toUpperCase()} ===== -->\n${o.html}`)
+          .join("\n\n");
+      }
+      results.classList.add("hidden");
+      $("debug").classList.remove("hidden");
+    });
+
+    $("copy-btn").addEventListener("click", async () => {
+      await navigator.clipboard.writeText($("debug-output").value);
+    });
+
+    $("debug-back-btn").addEventListener("click", () => {
+      $("debug").classList.add("hidden");
+      results.classList.remove("hidden");
     });
   } catch {
     loading.classList.add("hidden");
