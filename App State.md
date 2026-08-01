@@ -56,7 +56,7 @@ db_migrations: aplicadas (source_data confirmada en prod)
 
 ## Features en progreso
 
-- **Extension Chrome — recolector multi-fuente**: reconstruida para leer overlays de **H10 free + AMZScout + Keepa** (usuario los instalo free) porque el scraper de busqueda no produce BSR/ventas/nicho. Nuevos `overlay-reader.ts` + `sources.ts`, `content.ts` con merge por ASIN (prioridad h10>amzscout>keepa), scraper arreglado (titulo real, dedupe de cards anidadas, moneda detectada), y **tool de debug en el popup** para copiar el HTML de los overlays. exteRB regenerada. **Pendiente**: usuario recargue la extension, corra "Debug overlays" y pegue el HTML de AMZScout/Keepa para afinar selectores
+- **Extension Chrome — recolector multi-fuente**: reconstruida para leer overlays de **H10 free + AMZScout + Keepa** (usuario los instalo free) porque el scraper de busqueda no produce BSR/ventas/nicho. Nuevos `overlay-reader.ts` + `sources.ts`, `content.ts` con merge por ASIN (prioridad h10>amzscout>keepa), scraper arreglado (titulo real, dedupe de cards anidadas, moneda detectada) y **tool de debug en el popup**. **OJO**: el usuario carga desde `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\exteRB\` (copia personal) — ya sincronizada con el build. **Pendiente**: usuario recargue la extension + refresque la pestana de Amazon + corra "Debug overlays" y pegue el HTML de AMZScout/Keepa para afinar selectores
 - **Deep dive Grok bloqueado**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c + agregar XAI_API_KEY en Vercel prod
 - API keys OpenAI y xAI expuestas en chat 2026-08-01 — pendiente rotacion
 - Zod validation en SP-API / Drive / Cron routes (MEDIUM)

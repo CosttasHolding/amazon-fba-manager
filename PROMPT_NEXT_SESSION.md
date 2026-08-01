@@ -4,12 +4,12 @@
 
 ## Ultima sesion
 
-- **Fecha**: 2026-08-01
-- **Resumen**: La extension fue reconstruida como **recolector multi-fuente** para resolver "no me toma datos, nunca pone nicho":
-  - **Diagnostico**: BSR/ventas/nicho NO estan en el DOM de resultados de busqueda de Amazon — solo en overlays (Xray completo de H10) o pagina del producto. Con H10 free no se detectaba el overlay. Los `niche`/`amazon_category` de la app solo los produce el LLM (deep dive, bloqueado por creditos xAI)
-  - **Fix**: `content/overlay-reader.ts` (lector generico por ASIN) + `content/sources.ts` (deteccion H10/AMZScout/Keepa + debug) + `content/content.ts` reescrito (merge por ASIN, prioridad h10>amzscout>keepa, observer) + `scraper.ts` arreglado (titulo real `h2 a span`, dedupe `[data-asin]` anidados, moneda detectada) + **tool de debug en popup** (boton "Debug overlays" → copia HTML)
-  - **Estado**: exteRB regenerada, tsc 0, lint solo warnings pre-existentes, 217 tests OK. **Pendiente: DOM real de AMZScout/Keepa** para afinar selectores (usuario los tiene instalados free)
-- Ver `Daily Notes/2026-08-01.md` (4ta parte) para el detalle completo
+- **Fecha**: 2026-08-01 (5ta parte)
+- **Resumen**:
+  - **"No cambia nada los datos que muestra la extension" — CAUSA: copia instalada VIEJA**. El usuario carga desde `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\exteRB\` y esa copia tenia el content.js viejo (4538 bytes) — Chrome ejecutaba el codigo anterior. **Se sincronizo la copia personal con el build nuevo** (verificado por hash: SINCRONIZADO)
+  - **Test del scraper (jsdom, +6 tests) encontro 3 bugs reales**: dedupe roto (`closest()` arranca en si mismo), precio localizado "ARS$ 89.999"→89999, fixture de precio de producto. **223/223 tests, tsc 0**
+  - Commits: `64c5a2b` (recolector multi-fuente) + `b3015f2` (fixes scraper + test)
+  - Verificacion en vivo vs Amazon: NO viable en perfil Playwright fresco (anti-bot "Sorry! Something went wrong!") — queda como paso manual del usuario en su navegador
 
 ## Estado actual
 
@@ -23,7 +23,8 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 ## Proximos pasos
 
 ### 1. USUARIO debe hacer (DESBLOQUEA el afilado de selectores)
-- **Recargar la extension** en chrome://extensions (Load unpacked → `public/exteRB/`)
+- **Recargar la extension** en chrome://extensions (Load unpacked → `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\exteRB\` — YA SINCRONIZADA con el build; apunta a ESTA carpeta, NO a `public/exteRB`)
+- **Refrescar la pestaña de Amazon** — el content script corre al cargar la pagina; sin refresh sigue mostrando los datos viejos
 - **Abrir una busqueda de Amazon** con AMZScout y/o Keepa activos (overlays visibles) y correr el boton **"Debug overlays"** del popup → copiar el HTML que aparece (o el mensaje "No se detectaron overlays")
 - **Pegar ese HTML en el chat** para afinar los readers de AMZScout (niche score, ventas, revenue) y Keepa (BSR)
 
