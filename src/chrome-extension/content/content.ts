@@ -30,6 +30,17 @@ function mergeNonNull(
   return out;
 }
 
+function publishDebugToDom() {
+  const root = document.documentElement;
+  try {
+    const debug = collectOverlayDebugHtml();
+    root.setAttribute("data-fba-overlay-debug", JSON.stringify(debug));
+    root.setAttribute("data-fba-captured", JSON.stringify(capturedData));
+  } catch {
+    root.setAttribute("data-fba-overlay-debug", "[]");
+  }
+}
+
 function collect() {
   const pageType = determinePageType();
   if (pageType === "unknown") return;
@@ -78,6 +89,8 @@ function collect() {
       sources: overlays.map((o) => o.key),
     };
   }
+
+  publishDebugToDom();
 }
 
 function watchOverlays() {

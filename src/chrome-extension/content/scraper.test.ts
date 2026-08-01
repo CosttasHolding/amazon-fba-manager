@@ -83,6 +83,9 @@ describe("scraper", () => {
 describe("scraper product page", () => {
   beforeEach(() => {
     window.history.pushState({}, "", "/dp/B0ABC123XY");
+  });
+
+  it("parsea datos de la pagina de producto", () => {
     document.body.innerHTML = `
       <span id="productTitle">Real Wireless Headphones Pro (2026)</span>
       <div class="a-price">
@@ -94,14 +97,44 @@ describe("scraper product page", () => {
         <li>Best Sellers Rank: #12,345 in Electronics</li>
       </div>
     `;
-  });
-
-  it("parsea datos de la pagina de producto", () => {
     const product = scrapeProductPage();
     expect(product?.asin).toBe("B0ABC123XY");
     expect(product?.title).toContain("Real Wireless Headphones Pro");
     expect(product?.price).toBe(149.99);
     expect(product?.average_rating).toBe(4.5);
     expect(product?.review_count).toBe(12345);
+  });
+
+  it("parsea BSR del HTML real de amazon (prodDetails, texto en espanol)", () => {
+    document.body.innerHTML = `
+      <span id="productTitle">RORSOU C6 Audifonos</span>
+      <div class="a-price">
+        <span class="a-offscreen">$26.99</span>
+      </div>
+      <div id="prodDetails">
+        <h1>Informacion del producto</h1>
+        <div class="a-section">
+          <li><span class="a-list-item"><span>nº722 en Electrónica (<a href="/gp/bestsellers/electronics">Ver el Top 100 en Electrónica</a>)</span></span></li>
+          <li><span class="a-list-item"><span>nº52 en <a href="/gp/bestsellers/electronics/12097479011">Audífonos Externos</a></span></span></li>
+        </div>
+      </div>
+    `;
+    const product = scrapeProductPage();
+    expect(product?.bsr).toBe(52);
+    expect(product?.category).toBe("Audífonos Externos");
+  });
+
+  it("extrae la categoria desde el BSR en espanol", () => {
+    document.body.innerHTML = `
+      <span id="productTitle">RORSOU C6 Audifonos</span>
+      <div class="a-price">
+        <span class="a-offscreen">$26.99</span>
+      </div>
+      <div id="prodDetails">
+        <li><span class="a-list-item"><span>nº52 en <a href="/gp/bestsellers/electronics/12097479011">Audífonos Externos</a></span></span></li>
+      </div>
+    `;
+    const product = scrapeProductPage();
+    expect(product?.bsr).toBe(52);
   });
 });

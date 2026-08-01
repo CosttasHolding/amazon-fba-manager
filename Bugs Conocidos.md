@@ -24,6 +24,13 @@ ultima_actualizacion: 2026-08-01
 
 ## Resueltos
 
+### Scraper de producto nunca capturaba el BSR del DOM real de Amazon
+- **Fecha**: 2026-08-01
+- **Sintoma**: el `bsr` y la `category` llegaban `null` desde la pagina del producto
+- **Causa raiz**: el scraper buscaba `#detailBullets_feature_div li` con texto "Best Sellers Rank"/"Clasificación", pero el DOM real (pagina en espanol) usa `#prodDetails` con `li` tipo "nº52 en Audífonos Externos" — el selector y el formato de texto no matcheaban
+- **Fix**: TDD en `scraper.ts` — `parseBsr` reconoce `nº|#|n°`, `parseBsrCategory` extrae "en X"/"in X"; selectores ampliados a `#prodDetails li, #detailBullets_feature_div li, #productDetails_detailBullets_sections1 tr`; se toma el BSR mas bajo (subcategoria = nicho). Verificado en vivo: `B0F12Q56RZ` → bsr 52, categoria "Audífonos Externos"
+- **Dato clave**: Amazon expone el BSR gratis en el DOM del producto — NO requiere overlays de terceros ni login
+
 ### Extension no se podia instalar: descarga servia HTML en vez del zip
 - **Fecha**: 2026-07-31 (reportado) / 2026-08-01 (diagnosticado y arreglado)
 - **Sintoma**: El usuario descargaba `extension.zip` desde la web y Chrome la rechazaba — "ni siquiera pude instalarla"

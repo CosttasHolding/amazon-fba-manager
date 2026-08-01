@@ -49,7 +49,16 @@ function parsePrice(text: string): number | null {
 }
 
 function parseBsr(text: string): number | null {
-  return parseLocalizedNumber(text);
+  const matches = text.match(/(?:nº|#|n°)\s*([\d.,]+)/i);
+  const value = matches?.[1] ?? text.match(/([\d.,]+)\s+(?:en|in)\s+/)?.[1];
+  return value ? parseLocalizedNumber(value) : null;
+}
+
+function parseBsrCategory(text: string): string | null {
+  const match = text.match(/en\s+(.+?)(?:\(|\s*$)/i);
+  const matchEn = text.match(/in\s+(.+?)(?:\(|\s*$)/i);
+  const raw = match?.[1] ?? matchEn?.[1];
+  return raw ? raw.replace(/\s*$/, "").trim() : null;
 }
 
 function detectCurrency(text: string, hostname: string): string {
@@ -129,12 +138,19 @@ export function scrapeProductPage(): ScrapedProduct | null {
   const priceText = priceEl?.textContent || "";
   const price = priceText ? parsePrice(priceText) : null;
 
-  const bsrEls = document.querySelectorAll("#detailBullets_feature_div li, #productDetails_detailBullets_sections1 tr");
+  const bsrEls = document.querySelectorAll(
+    "#prodDetails li, #detailBullets_feature_div li, #productDetails_detailBullets_sections1 tr"
+  );
   let bsr: number | null = null;
+  let bsrCategory: string | null = null;
   bsrEls.forEach((el) => {
     const text = el.textContent || "";
-    if (text.includes("Best Sellers Rank") || text.includes("Clasificación")) {
-      bsr = parseBsr(text);
+    const parsed = parseBsr(text);
+    if (parsed != null) {
+      if (bsr == null || parsed < bsr) {
+        bsr = parsed;
+        bsrCategory = parseBsrCategory(text);
+      }
     }
   });
 
@@ -152,7 +168,7 @@ export function scrapeProductPage(): ScrapedProduct | null {
   const image_url = imgEl?.getAttribute("src") || null;
 
   const categoryEl = document.querySelector("#wayfinding-breadcrumbs_container ul li:last-child a");
-  const category = categoryEl?.textContent?.trim() || null;
+  const category = bsrCategory ?? categoryEl?.textContent?.trim() ?? null;
 
   return {
     asin: asinExtract,
