@@ -1,6 +1,6 @@
 ---
 ultima_actualizacion: 2026-08-01
-estado: estable, cambios sin commitear (tsc 0 errores, 217 tests)
+estado: estable, main al dia (pusheado 2026-08-01, 91df13f + dd67f31)
 version: 2.0.0
 branch: main
 deploy: https://amazon-fba-manager-virid.vercel.app
@@ -23,8 +23,8 @@ db_migrations: aplicadas (source_data confirmada en prod)
 ## Git
 
 - **Branch**: main
-- **Ultimos commits**: seguridad (rate limiting, CSP), UI optimization, research bot
-- **Working tree**: SUCIO — cambios de 2026-08-01 sin commitear (analyzer Zod, i18n, kanban deep dive, fix 41 errores tsc, build-extension adm-zip, migration rename, deps)
+- **Ultimos commits**: `dd67f31` (consolidacion sesion 2026-08-01), `91df13f` (fix extension: descarga en /extension.zip), previos de seguridad/UI/research
+- **Working tree**: LIMPIO salvo vault (App State/Bugs/Learning Log actualizados post-push)
 
 ## Build
 
@@ -56,7 +56,7 @@ db_migrations: aplicadas (source_data confirmada en prod)
 
 ## Features en progreso
 
-- Extension Chrome no aparece en el navegador del usuario (paquete verificado OK en Playwright — diagnostico pendiente)
+- **Extension Chrome**: bug de instalacion DIAGNOSTICADO y FIXEADO (deploy viejo no incluia el zip → se movio a /extension.zip, commits pusheados). Pendiente: verificacion E2E del usuario + probar el envio (posible 401 por cookie SameSite=Lax — follow-up)
 - **Deep dive Grok bloqueado**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c + agregar XAI_API_KEY en Vercel prod
 - API keys OpenAI y xAI expuestas en chat 2026-08-01 — pendiente rotacion
 - Zod validation en SP-API / Drive / Cron routes (MEDIUM)

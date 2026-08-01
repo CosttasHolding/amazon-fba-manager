@@ -12,18 +12,6 @@ ultima_actualizacion: 2026-08-01
 
 ## Activos
 
-### Extension no aparece en Chrome del usuario (PENDIENTE DIAGNOSTICO)
-- **Fecha**: 2026-07-31
-- **Sintoma**: El usuario instala la extension pero no aparece ni en la barra ni en el menu del puzzle
-- **Verificado**: El zip `public/research/extension.zip` carga PERFECTO en Playwright/Chromium (enabled, sin errores, ID asignado) — el paquete es valido
-- **Hipotesis**: 
-  1. Usuario tiene zip viejo (de antes del fix de iconos que Chrome rechazaba)
-  2. Carpeta anidada al descomprimir (selecciono la carpeta padre)
-  3. Multiples perfiles de Chrome (instalo en uno, mira en otro)
-  4. Politica de empresa que bloquea extensiones unpacked
-- **Proximo paso**: Pedir al usuario que abra `chrome://extensions` y reporte: si aparece en la lista, si hay boton rojo "Errors", si el toggle esta ON
-- **Contexto**: Ver `Daily Notes/2026-07-31.md`
-
 ### Deep dive falla por falta de creditos/licencias en xAI (BLOQUEADO)
 - **Fecha**: 2026-08-01
 - **Sintoma**: `/api/research/analyze-deep` y `/api/research/analyze` devuelven `403 Your newly created team doesn't have any credits or licenses yet`
@@ -35,6 +23,14 @@ ultima_actualizacion: 2026-08-01
 ---
 
 ## Resueltos
+
+### Extension no se podia instalar: descarga servia HTML en vez del zip
+- **Fecha**: 2026-07-31 (reportado) / 2026-08-01 (diagnosticado y arreglado)
+- **Sintoma**: El usuario descargaba `extension.zip` desde la web y Chrome la rechazaba — "ni siquiera pude instalarla"
+- **Causa raiz**: La URL de descarga era `/research/extension.zip` (archivo en `public/research/`) pero el deploy de produccion era VIEJO (anterior al commit que agrego el zip). Vercel no tenia el archivo estatico → la peticion caia al middleware → redirect a /login → el navegador descargaba la pagina HTML (16KB) con nombre `.zip` → Chrome la rechazaba
+- **Evidencia**: `/LOGO.png` → 200 directo (estaticos se sirven sin auth); `/research/extension.zip` → 307 a /login (no existe el archivo en el deploy); zip commiteado en HEAD: VALIDO y trackeado → el deploy no incluia el commit
+- **Fix**: zip movido a `public/extension.zip` (raiz, sin colision con rutas de app), link de descarga actualizado a `/extension.zip`, `build-extension.ts` ahora genera `public/extension.zip`. Commit `91df13f` + `dd67f31` pusheados → Vercel redeployo
+- **Nota**: el middleware corre antes que los estaticos en esta app (matcher no excluye `.zip`), asi que descarga anonima da 307; un usuario logueado recibe el archivo. Verificacion E2E pendiente con el usuario (verificar que el archivo descargado sea ~5.5KB, no HTML)
 
 ### Logo no se ve en Vercel
 - **Fecha**: 2026-07-22

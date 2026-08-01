@@ -5,15 +5,15 @@
 ## Ultima sesion
 
 - **Fecha**: 2026-08-01
-- **Resumen**: Sesion de consolidacion y hardening:
-  - **Verificado en prod**: migration `source_data` YA estaba aplicada (vault estaba desactualizado); payload del capture endpoint 100% compatible con schema real (probe insert/delete)
-  - **Deep dive migrado a xAI Grok**: `getOpenAI` → `getXAIClient` (OpenAI SDK + `baseURL: https://api.x.ai/v1` + `XAI_API_KEY`), modelo `grok-4.5`. Key VALIDA pero team SIN CREDITOS (403)
-  - **Minor findings del research engine resueltos**: fallback enums GPT (Zod `.catch()` en analyzer), deep dive en kanban, i18n es/en/ar en componentes nuevos, build-extension cross-platform (adm-zip), migration renombrada a `029_`
-- **41 errores tsc pre-existentes eliminados** — tsc a 0 errores
-- **Deps declaradas**: tsx, esbuild, adm-zip en devDependencies
-- **Seguridad**: pre-commit hook anti-secretos (Husky + scripts/check-secrets.js), .gitignore reforzado, regla en AGENTS.md. Auditoria: repo limpio de secretos
-- **Build**: 0 errores, tsc 0 errores, 217 tests pasando
-- **Branch**: main — NO commiteado (hay cambios sin commit, verificar git status). Al commitear, el hook check-secrets correra
+- **Resumen**: Consolidacion/hardening + **diagnostico y fix de la extension Chrome**:
+  - **CAUSA RAZ CONFIRMADA (extension)**: el deploy de produccion era VIEJO y NO incluia el zip. `/research/extension.zip` no existia como estatico en Vercel (307 a /login) → el usuario descargaba la pagina HTML como "zip" → Chrome la rechazaba. Ver `Daily Notes/2026-08-01.md` (2da parte)
+  - **Fix**: zip movido a `public/extension.zip` (raiz), link actualizado, `build-extension.ts` genera la ruta nueva. Commits **`91df13f`** + **`dd67f31`** PUSHEADOS a main → Vercel redeployo
+  - **Verificado en prod**: migration `source_data` YA estaba aplicada; payload del capture 100% compatible (probe insert/delete)
+  - **Deep dive migrado a xAI Grok** `grok-4.5` (`getXAIClient`). Key VALIDA pero team SIN CREDITOS (403)
+  - **Minor findings resueltos**: Zod `.catch()` en analyzer (+6 tests), deep dive en kanban, i18n es/en/ar, build-extension adm-zip, migration `029_`
+- **41 errores tsc pre-existentes eliminados** — tsc a 0 errores; **217 tests**; build OK; lint solo warnings pre-existentes
+- **Seguridad**: pre-commit hook anti-secretos (Husky + check-secrets), .gitignore reforzado, regla en AGENTS.md. Auditoria: repo limpio
+- **Branch**: main AL DIA (pusheado). Vault actualizado post-push (App State, Bugs, Learning Log, Daily Notes)
 
 ## Estado actual
 
@@ -22,19 +22,19 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 - `source_data` JSONB confirmado en prod (column existe)
 - **Bloqueante deep dive**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c
 - **XAI_API_KEY solo en .env.local** — falta agregarla en Vercel (prod) o el deep dive fallara en produccion
-- Extension Chrome del usuario sigue sin diagnosticar (paquete verificado OK en Playwright)
+- **Extension Chrome**: bug de instalacion FIXEADO. Pendiente verificacion E2E del usuario (descarga ~5.5KB + Load unpacked) y probar el ENVIO (posible 401 por cookie `SameSite=Lax` en fetch cross-site del popup)
 
 ## Proximos pasos
 
 ### 1. Usuario debe resolver (ALTA)
+- **Verificar descarga E2E de la extension**: en la web cliquear "Descargar extensión" y confirmar que el archivo sea ~5.5KB (zip), NO HTML (~16KB). Despues instalar con Load unpacked desde `public/extension-dist` (o el zip descomprimido). Reportar si aparece en `chrome://extensions`
+- **Probar el ENVIO con la extension instalada** (follow-up del fix): el fetch del popup a `/api/research/capture` con `credentials: "include"` y cookie `SameSite=Lax` puede dar 401 — si falla, evaluar cookies cross-site o mover el fetch al content script / credenciales
 - **Cargar creditos/licencias xAI** — sin esto el deep dive tira 403 (https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c)
 - **Agregar XAI_API_KEY en Vercel** (Settings → Environment Variables) — solo existe en .env.local
-- **Rotar las API keys AL CARGAR CREDITOS** — decision tomada (riesgo bajo hoy, keys sin creditos). Al rotar: generar key nueva y guardarla en `.env.local`
-- **Diagnostico extension Chrome**: abrir `chrome://extensions`, reportar si aparece, si hay boton "Errors", si el toggle esta ON (ver [[Bugs Conocidos]])
-- Al rotar keys: guardar las NUEVAS en `.env.local` (el pre-commit hook las bloquea en git)
+- **Rotar las API keys AL CARGAR CREDITOS** — decision tomada (riesgo bajo hoy, keys sin creditos). Al rotar: generar key nueva y guardarla en `.env.local` (el pre-commit hook bloquea keys en git)
 
-### 2. Commit de esta sesion (ALTA)
-- Working tree tiene cambios sin commit. Revisar `git status`/`git diff` y commitear: analyzer Zod, i18n, kanban deep dive, fix 41 errores tsc, build-extension adm-zip, migration rename, deps
+### 2. (TERMINADO) Commits de la sesion
+- `91df13f` fix extension + `dd67f31` consolidacion — PUSHEADOS. Vault actualizado post-push (puede haber un commit chico pendiente de vault si se toco tras el push)
 
 ### 3. Backlog previo (MEDIUM)
 - Zod validation en SP-API / Drive / Cron routes

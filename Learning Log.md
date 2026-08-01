@@ -62,6 +62,13 @@ ultima_actualizacion: 2026-08-01
 - **Probar schema real con probe insert/delete**: insertar un registro marcado (`TEST_PROBE_DELETE_ME`) con el payload exacto del endpoint y borrarlo de inmediato valida compatibilidad de schema sin credenciales de usuario. El service role key permite SELECT/INSERT/DELETE via PostgREST.
 - **El vault puede estar desactualizado**: `App State.md` decia "migration pendiente" pero ya estaba aplicada en prod — verificar contra el sistema real antes de asumir.
 
+## Vercel / Next.js estaticos vs middleware (2026-08-01)
+
+- **`public/` se sirve sin auth**: `/LOGO.png` responde 200 anonimo aunque el app exija login. Los estaticos de `public/` se sirven directo desde el CDN.
+- **PERO el middleware corre antes que los estaticos SI el matcher incluye el path**: un archivo `public/extension.zip` con matcher `.*` (que NO excluye `.zip`) da 307 a /login para peticiones anonimas. Un usuario logueado lo recibe igual (pasa el middleware con `NextResponse.next()`).
+- **Shadowing por segmento de ruta**: un zip en `public/research/extension.zip` bajo una ruta de app `(dashboard)/research` es fragil — y si el deploy es VIEJO (anterior al commit que agrego el archivo), Vercel no lo tiene y la descarga devuelve la pagina HTML como "zip". Fix: archivos de descarga en la raiz de `public/` (`/extension.zip`), sin colision con segmentos de ruta.
+- **`git show HEAD:file > file` en PowerShell corrompe binario** (convierte a texto). Usar `cmd /c "git show HEAD:file > out"` o `git cat-file`.
+
 ## Subagent-Driven Development (2026-07-31)
 
 - **Review final whole-branch vale oro**: encontro 4 criticos que los reviews por tarea no vieron (dominio inventado en el plan, endpoint publico, zip untracked, host_permissions).
