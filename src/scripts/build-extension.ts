@@ -1,10 +1,11 @@
 import { mkdirSync, copyFileSync, readdirSync, existsSync, rmSync } from "fs";
 import { join, resolve } from "path";
 import { execSync } from "child_process";
+import AdmZip from "adm-zip";
 
 const EXTENSION_SRC = resolve(__dirname, "../chrome-extension");
 const DIST = resolve(__dirname, "../../public/extension-dist");
-const PUBLIC_DIR = resolve(__dirname, "../../public/research");
+const PUBLIC_DIR = resolve(__dirname, "../../public");
 const ZIP_PATH = join(PUBLIC_DIR, "extension.zip");
 
 function buildTs(file: string, out: string) {
@@ -45,10 +46,9 @@ async function build() {
   buildTs(join(EXTENSION_SRC, "content", "content.ts"), join(DIST, "content", "content.js"));
 
   if (existsSync(ZIP_PATH)) rmSync(ZIP_PATH);
-  execSync(
-    `powershell -NoProfile -Command "Compress-Archive -Path '${join(DIST, "*")}' -DestinationPath '${ZIP_PATH}' -Force"`,
-    { stdio: "inherit" }
-  );
+  const zip = new AdmZip();
+  zip.addLocalFolder(DIST);
+  zip.writeZip(ZIP_PATH);
 
   console.log(`Extension built: ${ZIP_PATH}`);
 }

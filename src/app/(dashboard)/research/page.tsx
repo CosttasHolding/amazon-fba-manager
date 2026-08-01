@@ -232,14 +232,14 @@ export default function ResearchPage() {
         body: JSON.stringify(data),
       });
       if (res.ok) {
-        toast.success("Producto guardado desde análisis");
+        toast.success(t("research.analyzer.saved", locale));
         fetchItems();
       } else {
         const err = await res.json();
-        toast.error(err.error || "Error al guardar");
+        toast.error(err.error || t("research.toast.error_save", locale));
       }
     } catch {
-      toast.error("Error al guardar el análisis");
+      toast.error(t("research.analyzer.error_save", locale));
     } finally {
       setSaving(false);
     }
@@ -306,14 +306,14 @@ export default function ResearchPage() {
               FBA Research Agent
             </h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-xl">
-              Descargá la Chrome Extension para capturar productos directamente desde Amazon con datos de H10 Xray o scraper automático.
+              {t("research.extension.description", locale)}
             </p>
           </div>
           <div className="flex gap-2 shrink-0">
             <Button variant="outline" size="sm" asChild>
-              <a href="/research/extension.zip" download>
+              <a href="/extension.zip" download>
                 <Download className="h-3.5 w-3.5 me-1.5" />
-                Descargar .zip
+                {t("research.extension.download", locale)}
               </a>
             </Button>
           </div>
@@ -324,7 +324,7 @@ export default function ResearchPage() {
         <div className="flex items-center gap-2 flex-1">
           <Sparkles className="h-4 w-4 text-primary shrink-0" />
           <Input
-            placeholder="ASIN o URL de Amazon..."
+            placeholder={t("research.analyzer.placeholder", locale)}
             value={analyzerInput}
             onChange={(e) => setAnalyzerInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") setShowAnalyzer(true); }}
@@ -332,7 +332,7 @@ export default function ResearchPage() {
           />
           <Button size="sm" onClick={() => setShowAnalyzer(true)} className="shrink-0">
             <Sparkles className="h-3.5 w-3.5 me-1.5" />
-            Analizar con IA
+            {t("research.analyzer.button", locale)}
           </Button>
         </div>
       </div>
@@ -397,6 +397,9 @@ export default function ResearchPage() {
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-[10px] text-muted-foreground">{new Date(item.created_at).toLocaleDateString(locale === "en" ? "en-US" : "es-ES")}</span>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setDeepDiveProduct(item); }} className="min-w-[44px] min-h-[44px]">
+                            <Sparkles className="h-4 w-4" />
+                          </Button>
                           <Select value={item.status} onValueChange={(v) => handleStatusChange(item, v)}>
                             <SelectTrigger className="h-9 text-xs bg-muted/50 border-border px-2 py-1 min-w-[44px] min-h-[44px]" onClick={(e) => e.stopPropagation()}>
                               <SelectValue />
