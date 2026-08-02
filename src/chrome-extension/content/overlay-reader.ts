@@ -14,6 +14,7 @@ export interface OverlayProduct {
   niche_score: number | null;
   brand: string | null;
   category: string | null;
+  listing_health_score: number | null;
 }
 
 function parseLocalizedNumber(text: string): number | null {
@@ -21,15 +22,27 @@ function parseLocalizedNumber(text: string): number | null {
   if (!cleaned) return null;
   const lastComma = cleaned.lastIndexOf(",");
   const lastDot = cleaned.lastIndexOf(".");
-  let normalized: string;
-  if (lastComma > lastDot) {
-    normalized = cleaned.replace(/\./g, "").replace(",", ".");
-  } else if (lastDot > lastComma) {
-    normalized = cleaned.replace(/,/g, "");
-  } else {
-    normalized = cleaned.replace(/,/g, "");
+  const hasComma = lastComma !== -1;
+  const hasDot = lastDot !== -1;
+  if (hasComma && hasDot) {
+    const normalized =
+      lastComma > lastDot
+        ? cleaned.replace(/\./g, "").replace(",", ".")
+        : cleaned.replace(/,/g, "");
+    const num = parseFloat(normalized);
+    return isNaN(num) ? null : num;
   }
-  const num = parseFloat(normalized);
+  if (hasDot) {
+    const decimals = cleaned.length - lastDot - 1;
+    const num = decimals >= 3 ? parseFloat(cleaned.replace(/\./g, "")) : parseFloat(cleaned);
+    return isNaN(num) ? null : num;
+  }
+  if (hasComma) {
+    const decimals = cleaned.length - lastComma - 1;
+    const num = decimals >= 3 ? parseFloat(cleaned.replace(/,/g, "")) : parseFloat(cleaned.replace(",", "."));
+    return isNaN(num) ? null : num;
+  }
+  const num = parseFloat(cleaned);
   return isNaN(num) ? null : num;
 }
 
@@ -98,8 +111,108 @@ export function readOverlay(container: Element): OverlayProduct[] {
       niche_score: extractNumber(row, ['[class*="niche"], [class*="Niche"]']),
       brand: extractText(row, '[class*="brand"], [class*="Brand"]'),
       category: extractText(row, '[class*="category"], [class*="Category"]'),
+      listing_health_score: null,
     });
   }
 
   return products;
+}
+
+function textOf(el: Element | null): string {
+  return el?.textContent?.replace(/\u00a0/g, " ").trim() || "";
+}
+
+function parseRank(text: string): number | null {
+  const match = text.match(/#\s*([\d.,]+)/);
+  return match ? parseLocalizedNumber(match[1]) : null;
+}
+
+function valueNearLabel(container: Element, labelText: string): string {
+  let labelEl: Element | null = null;
+  for (const el of Array.from(container.querySelectorAll("div, span, p"))) {
+    if (textOf(el) === labelText || textOf(el) === `${labelText}:`) {
+      labelEl = el;
+      break;
+    }
+  }
+  if (!labelEl) return "";
+
+  let current: Element | null = labelEl;
+  for (let depth = 0; depth < 3 && current; depth++) {
+    const value = findNumberLeaf(current);
+    if (value !== "") return value;
+    current = current.parentElement;
+  }
+  return "";
+}
+
+function findNumberLeaf(root: Element): string {
+  const leaves = Array.from(root.querySelectorAll("div, span"))
+    .filter((el) => el.children.length === 0)
+    .map((el) => textOf(el))
+    .filter((t) => t && /[\d.,]/.test(t));
+  const value = leaves.find((t) => /^[\d.,]+\s*[Kk]?$/.test(t));
+  return value ?? "";
+}
+
+function shadowRootOf(container: Element): ShadowRoot | null {
+  for (const child of Array.from(container.children)) {
+    if (child.shadowRoot) return child.shadowRoot;
+  }
+  return container.shadowRoot ?? null;
+}
+
+export function readH10Summary(container: Element): OverlayProduct[] {
+  const root = shadowRootOf(container);
+  const scoped = (root ?? container) as Element;
+  const rootText = scoped.textContent || "";
+  const asinMatch = rootText.match(/Product Summary for "([A-Z0-9]{10})"/);
+  const asin = asinMatch?.[1] ?? null;
+  if (!asin) return [];
+
+  let bsr: number | null = null;
+  let category: string | null = null;
+  for (const link of Array.from(scoped.querySelectorAll('a[href*="/gp/bestsellers/"]'))) {
+    const cat = textOf(link);
+    const block = link.parentElement;
+    const rank = block ? parseRank(block.textContent || "") : null;
+    if (!cat || rank == null) continue;
+    if (bsr == null || rank < bsr) {
+      bsr = rank;
+      category = cat;
+    }
+  }
+
+  const lhsText = valueNearLabel(scoped, "Listing Health Score");
+  const lhsMatch = lhsText.match(/([\d.,]+)/);
+  const listing_health_score = lhsMatch ? parseLocalizedNumber(lhsMatch[1]) : null;
+
+  const unitSalesText = valueNearLabel(scoped, "Unit Sales:");
+  const unitSalesMatch = unitSalesText.match(/([\d.,]+)/);
+  const estimated_monthly_sales = unitSalesMatch ? parseLocalizedNumber(unitSalesMatch[1]) : null;
+
+  const ratingText = valueNearLabel(scoped, "Current Rating");
+  const ratingMatch = ratingText.match(/([\d.,]+)/);
+  const average_rating = ratingMatch ? parseLocalizedNumber(ratingMatch[1]) : null;
+
+  return [
+    {
+      asin,
+      title: "",
+      price: null,
+      currency: null,
+      bsr,
+      review_count: null,
+      average_rating,
+      estimated_monthly_sales,
+      estimated_monthly_revenue: null,
+      estimated_fba_fee: null,
+      seller_count_fba: null,
+      seller_count_fbm: null,
+      niche_score: null,
+      brand: null,
+      category,
+      listing_health_score,
+    },
+  ];
 }

@@ -1,5 +1,5 @@
 import { scrapeCurrentPage, scrapeProductPage } from "./scraper";
-import { readOverlay, type OverlayProduct } from "./overlay-reader";
+import { readOverlay, readH10Summary, type OverlayProduct } from "./overlay-reader";
 import { detectOverlays, collectOverlayDebugHtml } from "./sources";
 
 let capturedData: Record<string, unknown> | null = null;
@@ -68,7 +68,10 @@ function collect() {
 
   const overlaysWithData: string[] = [];
   for (const overlay of sortedOverlays) {
-    const overlayProducts = readOverlay(overlay.container) as OverlayProduct[];
+    const overlayProducts =
+      overlay.key === "h10"
+        ? (readH10Summary(overlay.container) as OverlayProduct[])
+        : (readOverlay(overlay.container) as OverlayProduct[]);
     if (overlayProducts.length > 0) overlaysWithData.push(overlay.key);
     for (const op of overlayProducts) {
       const existing = byAsin.get(op.asin);

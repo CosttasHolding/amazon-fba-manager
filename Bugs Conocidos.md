@@ -24,6 +24,13 @@ ultima_actualizacion: 2026-08-01
 
 ## Resueltos
 
+### Overlay de H10 no se leia: shadow DOM + classnames hash + numeros mal parseados
+- **Fecha**: 2026-08-01 (9na parte)
+- **Sintoma**: el HTML real del widget `#h10-product-score` (Product Summary for X) no producia datos: `readOverlay` busca filas con ASIN y el summary no las tiene; ademas el contenido vive dentro de un shadowRoot y los classnames son hash (sc-*)
+- **Causa raiz**: (a) el summary es un widget de producto individual, no una tabla; (b) el `textContent`/`querySelectorAll` del host no atraviesa el shadow root; (c) `parseLocalizedNumber` de overlay-reader asumia coma=decimal ("1,240" → 1.24); (d) `valueNearLabel` no encontraba el valor cuando label y valor estaban separados con texto largo
+- **Fix**: `readH10Summary()` (ASIN de "Product Summary for", BSR/categoria de links bestsellers con BSR mas bajo, listing_health_score de label "Listing Health Score"); `shadowRootOf()` para leer desde el shadow root; parseo numerico unificado con scraper; `valueNearLabel` busca label exacto + numero hoja en 3 ancestros
+- **Resultado**: `listing_health_score: 6.9` + BSR/categoria capturados en vivo; ventas/rating quedan N/A en plan free (detras de Platinum)
+
 ### Scraper de busqueda: titulo "Deja un comentario sobre el anuncio" + duplicados + review_count null
 - **Fecha**: 2026-08-01 (8va parte)
 - **Sintoma**: (a) los productos de anuncios (`AdHolder`) salian con titulo "Deja un comentario sobre el anuncio"; (b) el mismo ASIN aparecia duplicado (anuncio + organico); (c) `review_count` siempre null en busqueda

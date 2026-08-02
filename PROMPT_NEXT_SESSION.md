@@ -4,35 +4,34 @@
 
 ## Ultima sesion
 
-- **Fecha**: 2026-08-01 (8va parte)
+- **Fecha**: 2026-08-01 (9na parte)
 - **Resumen**:
-  - **Boton `🔄 Reload` en el popup** (`chrome.tabs.reload` + `chrome.runtime.reload`): recarga pestana + extension desde disco sin ir a chrome://extensions. No requiere permisos nuevos
-  - **Fixes del scraper de busqueda verificados en vivo** (Playwright + chromium empaquetado): titulo real en cards de anuncios (anti-badge "Deja un comentario sobre el anuncio"), dedupe por ASIN (anuncio + organico), `review_count` desde `a[aria-label*="valoraciones"]` o `(92.9 K)` (formato K), `brand` en producto (`#bylineInfo` / `tr.po-brand`)
-  - **Mode honesto**: `mode: h10_xray` y `sources` solo reflejan overlays que realmente aportaron datos (`readOverlay().length > 0`) — H10 sin login ya no miente
-  - **233/233 tests, tsc 0**. Build extension OK (content.js 8.5KB); copia personal sincronizada por hash
-  - **Verificado en vivo**: SEARCH → 22 productos con titulo real, price/currency ARS, review_count, rating, image; PRODUCTO (B0DNVLW5MC) → bsr=72, category=Audífonos Externos, brand=Wentronic
+  - **HTML real de H10 capturado por el usuario** (widget `#h10-product-score`, summary de producto): BSR `#28 Action Figures` + `#1,240 Toys & Games`, Listing Health Score `6.9`, Unit Sales/Rating N/A (plan free). Keepa = iframe cross-origin ilegible
+  - **NUEVO `readH10Summary()`** en overlay-reader: ASIN + BSR/categoria (links bestsellers, BSR mas bajo) + `listing_health_score` (campo nuevo) + Unit Sales / Current Rating; lee desde el **shadow root** (estructura real de H10); parseo numerico unificado (1,240 → 1240)
+  - **238/238 tests, tsc 0**. Build extension OK; copia personal sincronizada por hash
+  - **Verificado en vivo**: amazon.com/dp/B0GZYR5LJF + HTML real inyectado en shadow root → bsr 28, category Figuras de Acción, listing_health_score 6.9, mode h10_xray
 
 ## Estado actual
 
 Leer `App State.md` para el snapshot completo. Puntos clave:
 - Motor de Investigacion funcional: extension -> capture -> scoring -> deep dive (LLM = xAI Grok `grok-4.5`)
 - `source_data` JSONB confirmado en prod (column existe)
-- **Extension = recolector multi-fuente**: overlay-reader + sources + content merge por ASIN + scraper arreglado + BSR/categoria/brand del DOM de producto + boton Reload + tool de debug. exteRB regenerada y lista para recargar
-- **El BSR/categoria/brand del producto ya sale del DOM de Amazon (gratis, sin overlays)** — solo el nicho score/ventas/revenue de AMZScout requieren sesion real del usuario
+- **Extension = recolector multi-fuente**: overlay-reader (H10 summary + generico) + sources + content merge por ASIN + scraper arreglado (BSR/categoria/brand del DOM) + boton Reload + tool de debug. exteRB regenerada y lista para recargar
+- **BSR/categoria/brand/listing_health_score ya salen del DOM de Amazon + widget H10 (gratis)** — solo nicho score/ventas/revenue de AMZScout requieren sesion real del usuario
 - **Bloqueante deep dive**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c
 - **XAI_API_KEY solo en .env.local** — falta agregarla en Vercel (prod)
 
 ## Proximos pasos
 
 ### 1. USUARIO debe hacer (DESBLOQUEA el afilado de selectores de AMZScout)
-- **Usar el boton `🔄 Reload` del popup** (recarga pestana de Amazon + extension desde disco) en vez de ir a chrome://extensions — la copia personal `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\exteRB\` YA esta sincronizada con el build (hash)
-- **Si usa AMZScout/H10 LOGUEADOS**: abrir una busqueda con el overlay visible y correr **"Debug overlays"** → pegar el HTML real (ahora incluye shadow roots) para afinar `overlay-reader.ts` (niche score, ventas, revenue)
-- **Confirmar que una pagina de producto captura BSR + categoria + brand** (la UI deberia mostrar el nicho sin depender del LLM)
+- **Usar el boton `🔄 Reload` del popup** (recarga pestana + extension desde disco); la copia personal `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\exteRB\` YA esta sincronizada (hash)
+- **Abrir un producto con H10 visible** → la captura deberia incluir `listing_health_score` y BSR/categoria (verificar en "Debug overlays")
+- **Si usa AMZScout LOGUEADO**: abrir una busqueda con el overlay visible y correr **"Debug overlays"** → pegar el HTML real de la tabla (nicho score, ventas, revenue) para afinar `overlay-reader.ts`
+- **Probar el ENVIO**: boton para guardar desde el popup → `/api/research/capture` (posible 401 por cookie SameSite=Lax)
 
 ### 2. Agente (despues de tener el DOM real de AMZScout)
-- Afinar `overlay-reader.ts` selectores de AMZScout (niche score, ventas, revenue) y lectura dentro del shadowRoot; mapear campos al capture endpoint y a `source_data` JSONB
-- Decidir si el BSR/categoria/brand del producto se muestra en la UI del research (vista producto) y/o se usa para scoring sin LLM
-- Probar el ENVIO: fetch del popup a `/api/research/capture` con `credentials: "include"` y cookie `SameSite=Lax` (posible 401)
+- Afinar `readOverlay`/`readH10Summary` selectores de AMZScout (niche score, ventas, revenue) y mapear a `source_data` JSONB
+- Decidir si BSR/categoria/listing_health_score se muestran en la UI del research y/o se usan para scoring sin LLM
 - Rebuild + verificacion por fase (tsc/lint/test:run/build)
 
 ### 3. Usuario — pendientes de sesiones anteriores
