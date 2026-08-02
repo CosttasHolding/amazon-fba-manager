@@ -7,9 +7,16 @@ const OVERLAY_SOURCES: { key: string; selectors: string[] }[] = [
   {
     key: "h10",
     selectors: [
+      '[id*="h10-xray"]',
+      '[id="h10-product-score"]',
+      '[id="h10-bsr-container"]',
+      '[id="h10-page-widget"]',
+      '[id="h10-price-checker"]',
+      '[id="h10-sales-estimator"]',
+      '[id*="h10-bsr"]',
+      '[id*="h10-xray"]',
       '[class*="xray"]',
       '[class*="Xray"]',
-      '[id*="h10"]',
       '[id*="helium"]',
       '[class*="helium"]',
     ],
@@ -47,9 +54,32 @@ export function detectOverlays(): DetectedOverlay[] {
   return overlays;
 }
 
+function deepestShadowElement(el: Element): Element {
+  let current = el;
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const child of Array.from(current.children)) {
+      if (child.shadowRoot) {
+        current = child;
+        changed = true;
+      }
+    }
+  }
+  return current;
+}
+
+function outerHtmlIncludingShadow(el: Element): string {
+  const target = deepestShadowElement(el);
+  if (target.shadowRoot) {
+    return target.outerHTML + "\n<!-- shadow root: " + target.shadowRoot.innerHTML.length + " chars -->\n" + target.shadowRoot.innerHTML;
+  }
+  return el.outerHTML;
+}
+
 export function collectOverlayDebugHtml(): { key: string; html: string }[] {
   return detectOverlays().map(({ key, container }) => ({
     key,
-    html: container.outerHTML.slice(0, 20000),
+    html: outerHtmlIncludingShadow(container).slice(0, 20000),
   }));
 }

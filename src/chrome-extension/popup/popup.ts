@@ -42,15 +42,19 @@ async function init() {
 
   const showDebug = async () => {
     let debug: { key: string; html: string }[] | null = null;
+    let connectError = false;
     if (activeTabId) {
       try {
         debug = await chrome.tabs.sendMessage(activeTabId, { type: "GET_OVERLAY_DEBUG" }) as { key: string; html: string }[] | null;
       } catch {
         debug = null;
+        connectError = true;
       }
     }
-    if (!debug || debug.length === 0) {
-      $("debug-output").value = "No se detectaron overlays (H10, AMZScout o Keepa) en esta página.\n\nSi instalaste las extensiones, recargá la página de Amazon y abrí el overlay antes de volver a hacer debug.";
+    if (connectError) {
+      $("debug-output").value = "La extensión no pudo comunicarse con esta página (el content script no responde).\n\nRecargá la extensión en chrome://extensions (botón Reload) y luego refrescá la página de Amazon (F5).";
+    } else if (!debug || debug.length === 0) {
+      $("debug-output").value = "No se detectaron overlays (H10, AMZScout o Keepa) en esta página.\n\nSi el overlay se ve en pantalla pero no aparece aquí, pegá en el chat el resultado del DOM:\n1) Abrí DevTools (F12) → pestaña Elements\n2) Click derecho sobre el overlay de H10 → Copy → Copy outerHTML\n3) Pegalo en el chat.";
     } else {
       $("debug-output").value = debug
         .map((o) => `<!-- ===== ${o.key.toUpperCase()} ===== -->\n${o.html}`)
