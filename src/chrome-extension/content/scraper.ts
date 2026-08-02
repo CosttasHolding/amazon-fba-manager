@@ -7,6 +7,7 @@ export interface ScrapedProduct {
   review_count: number | null;
   average_rating: number | null;
   category: string | null;
+  brand: string | null;
   image_url: string | null;
 }
 
@@ -48,6 +49,15 @@ function parsePrice(text: string): number | null {
   return parseLocalizedNumber(text);
 }
 
+function parseCountWithK(text: string): number | null {
+  const cleaned = text.replace(/[^\d.,Kk]/g, "");
+  if (!cleaned) return null;
+  const isK = /[Kk]$/.test(text);
+  const normalized = isK ? cleaned.replace(/[Kk]/g, "") : cleaned;
+  const num = parseLocalizedNumber(normalized);
+  return num == null ? null : isK ? Math.round(num * 1000) : Math.round(num);
+}
+
 function parseBsr(text: string): number | null {
   const matches = text.match(/(?:nº|#|n°)\s*([\d.,]+)/i);
   const value = matches?.[1] ?? text.match(/([\d.,]+)\s+(?:en|in)\s+/)?.[1];
@@ -76,6 +86,34 @@ function detectCurrency(text: string, hostname: string): string {
   return "USD";
 }
 
+const BADGE_PATTERNS = [
+  /deja un comentario sobre el anuncio/i,
+  /leave feedback on this ad/i,
+  /est\u00e1s viendo este anuncio/i,
+  /sponsored|patrocinado/i,
+];
+
+function isBadgeText(text: string): boolean {
+  return BADGE_PATTERNS.some((re) => re.test(text));
+}
+
+function extractTitleCandidates(card: Element): string[] {
+  return Array.from(
+    card.querySelectorAll("h2 a span, h2 a, .a-link-normal.s-link-style")
+  )
+    .map((el) => el.textContent?.trim() || "")
+    .filter(Boolean);
+}
+
+function extractRealTitle(card: Element): string {
+  const candidates = extractTitleCandidates(card);
+  return (
+    candidates.find((t) => !isBadgeText(t) && t.length >= 10) ||
+    candidates[0] ||
+    ""
+  );
+}
+
 function outermostAsinCards(): Element[] {
   const all = document.querySelectorAll('[data-asin]:not([data-asin=""])');
   return Array.from(all).filter(
@@ -91,8 +129,7 @@ export function scrapeCurrentPage(): ScrapedProduct[] {
     const asin = card.getAttribute("data-asin") || "";
     if (!asin || asin.length !== 10) return;
 
-    const titleEl = card.querySelector("h2 a span, h2 a, .a-link-normal.s-link-style");
-    const title = titleEl?.textContent?.trim() || "";
+    const title = extractRealTitle(card);
 
     const priceEl = card.querySelector(".a-price .a-offscreen, .a-price span:last-child");
     const priceText = priceEl?.textContent || "";
@@ -103,13 +140,37 @@ export function scrapeCurrentPage(): ScrapedProduct[] {
     const ratingMatch = ratingText.match(/([\d.]+)/);
     const average_rating = ratingMatch ? parseFloat(ratingMatch[1]) : null;
 
-    const reviewCountEl = card.querySelector("[class*='rating'] ~ [class*='link'] a, [class*='rating'] ~ a");
-    const reviewText = reviewCountEl?.textContent || "";
-    const reviewCountMatch = reviewText.match(/([\d,]+)/);
-    const review_count = reviewCountMatch ? parseInt(reviewCountMatch[1].replace(/,/g, ""), 10) : null;
+    const reviewAria = card.querySelector('a[aria-label*="valoraciones"], a[aria-label*="ratings"], a[aria-label*="calificaciones"], a[aria-label*="rese\u00f1as"]');
+    const reviewAriaMatch = reviewAria?.getAttribute("aria-label")?.match(/([\d.,]+\s*K?)/i);
+    const reviewTextEl = card.querySelector("[class*='rating'] ~ [class*='link'] a, [class*='rating'] ~ a, .a-size-mini.puis-normal-weight-text");
+    const reviewText = reviewTextEl?.textContent || "";
+    const reviewFromText = reviewText.match(/\(([\d.,]+\s*K?)\)/i)?.[1] || "";
+    const reviewRaw = reviewAriaMatch?.[1] || reviewFromText;
+    const review_count = reviewRaw ? parseCountWithK(reviewRaw) : null;
 
     const imgEl = card.querySelector("img[src*='images'], img[src*='media']");
     const image_url = imgEl?.getAttribute("src") || null;
+
+    const existing = results.find((r) => r.asin === asin);
+    const thisIsBad = !title || isBadgeText(title);
+    const existingIsBad =
+      !existing || !existing.title || isBadgeText(existing.title);
+    if (existing && !thisIsBad && existingIsBad) {
+      results[results.indexOf(existing)] = {
+        asin,
+        title,
+        price,
+        currency: priceText ? detectCurrency(priceText, hostname) : "USD",
+        bsr: null,
+        review_count,
+        average_rating,
+        category: null,
+        brand: null,
+        image_url,
+      };
+      return;
+    }
+    if (existing && thisIsBad) return;
 
     results.push({
       asin,
@@ -120,6 +181,7 @@ export function scrapeCurrentPage(): ScrapedProduct[] {
       review_count,
       average_rating,
       category: null,
+      brand: null,
       image_url,
     });
   });
@@ -167,6 +229,14 @@ export function scrapeProductPage(): ScrapedProduct | null {
   const imgEl = document.querySelector("#landingImage, #imgTagWrapperId img");
   const image_url = imgEl?.getAttribute("src") || null;
 
+  const brandOverviewEl = document.querySelector("#productOverview_feature_div tr.po-brand, #productOverview_feature_div [class*='po-brand']");
+  const brandOverview = brandOverviewEl?.textContent || "";
+  const brandOverviewMatch = brandOverview.match(/Marca\s*(.+)/i);
+  const bylineEl = document.querySelector("#bylineInfo");
+  const bylineText = bylineEl?.textContent?.trim() || "";
+  const bylineMatch = bylineText.match(/(?:tienda de|store of|by)\s+(.+)$/i);
+  const brand = brandOverviewMatch?.[1]?.trim() || bylineMatch?.[1]?.trim() || null;
+
   const categoryEl = document.querySelector("#wayfinding-breadcrumbs_container ul li:last-child a");
   const category = bsrCategory ?? categoryEl?.textContent?.trim() ?? null;
 
@@ -179,6 +249,7 @@ export function scrapeProductPage(): ScrapedProduct | null {
     review_count: reviewCount,
     average_rating: rating,
     category,
+    brand,
     image_url,
   };
 }

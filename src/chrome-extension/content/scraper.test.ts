@@ -78,6 +78,69 @@ describe("scraper", () => {
       "Sponsored Headphones"
     );
   });
+
+  it("ignora el badge 'Deja un comentario sobre el anuncio' como titulo", () => {
+    document.body.innerHTML = `
+      <div data-asin="B0ADB00001" class="AdHolder">
+        <h2 class="a-size-mini">
+          <a class="a-link-normal s-link-style" href="/sspa/click?url=%2Fdp%2FB0ADB00001">
+            <span>Deja un comentario sobre el anuncio</span>
+          </a>
+        </h2>
+        <h2 class="a-size-mini">
+          <a href="/dp/B0ADB00001"><span>MMWOWARTS Auriculares inalámbricos Pro</span></a>
+        </h2>
+        <div class="a-price"><span class="a-offscreen">$49.99</span></div>
+      </div>
+    `;
+    const products = scrapeCurrentPage();
+    expect(products.find((p) => p.asin === "B0ADB00001")?.title).toBe(
+      "MMWOWARTS Auriculares inalámbricos Pro"
+    );
+  });
+
+  it("dedupea el mismo asin entre anuncio y card organica (prioriza titulo real)", () => {
+    document.body.innerHTML = `
+      <div data-asin="B0DUP00001" class="AdHolder">
+        <h2><a href="/dp/B0DUP00001"><span>Deja un comentario sobre el anuncio</span></a></h2>
+        <div class="a-price"><span class="a-offscreen">$99.99</span></div>
+      </div>
+      <div data-asin="B0DUP00001">
+        <h2><a href="/dp/B0DUP00001"><span>Real Headphones 2026 Original</span></a></h2>
+        <div class="a-price"><span class="a-offscreen">$89.99</span></div>
+      </div>
+    `;
+    const products = scrapeCurrentPage();
+    const dupe = products.filter((p) => p.asin === "B0DUP00001");
+    expect(dupe).toHaveLength(1);
+    expect(dupe[0].title).toBe("Real Headphones 2026 Original");
+  });
+
+  it("parsea el count de reviews desde el aria-label con 'valoraciones'", () => {
+    document.body.innerHTML = `
+      <div data-asin="B0REV00001">
+        <h2><a href="/dp/B0REV00001"><span>Headphones with reviews</span></a></h2>
+        <div class="a-price"><span class="a-offscreen">$49.99</span></div>
+        <i class="a-icon a-icon-star-mini"><span class="a-icon-alt">4.4 de 5 estrellas</span></i>
+        <a aria-label="92,984 valoraciones" class="a-link-normal s-link-style" href="/dp/B0REV00001">(92.9&nbsp;K)</a>
+      </div>
+    `;
+    const products = scrapeCurrentPage();
+    expect(products.find((p) => p.asin === "B0REV00001")?.review_count).toBe(92984);
+  });
+
+  it("parsea count de reviews con formato abreviado (92.9K) cuando no hay aria-label", () => {
+    document.body.innerHTML = `
+      <div data-asin="B0REV00002">
+        <h2><a href="/dp/B0REV00002"><span>Headphones K format</span></a></h2>
+        <div class="a-price"><span class="a-offscreen">$39.99</span></div>
+        <i class="a-icon a-icon-star-mini"><span class="a-icon-alt">4.2 de 5 estrellas</span></i>
+        <span class="a-size-mini puis-normal-weight-text s-underline-text">(92.9&nbsp;K)</span>
+      </div>
+    `;
+    const products = scrapeCurrentPage();
+    expect(products.find((p) => p.asin === "B0REV00002")?.review_count).toBe(92900);
+  });
 });
 
 describe("scraper product page", () => {
@@ -136,5 +199,20 @@ describe("scraper product page", () => {
     `;
     const product = scrapeProductPage();
     expect(product?.bsr).toBe(52);
+  });
+
+  it("extrae la marca desde bylineInfo y productOverview", () => {
+    document.body.innerHTML = `
+      <span id="productTitle">Wentronic Y01</span>
+      <div class="a-price">
+        <span class="a-offscreen">$51.99</span>
+      </div>
+      <a id="bylineInfo" class="a-link-normal">Visita la tienda de Wentronic</a>
+      <div id="productOverview_feature_div">
+        <tr class="a-spacing-small po-brand"><td><span>Marca</span></td><td><span>Wentronic</span></td></tr>
+      </div>
+    `;
+    const product = scrapeProductPage();
+    expect(product?.brand).toBe("Wentronic");
   });
 });

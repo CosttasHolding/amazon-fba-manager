@@ -67,6 +67,17 @@ async function init() {
 
   $("debug-btn").addEventListener("click", showDebug);
 
+  $("reload-btn").addEventListener("click", async () => {
+    if (activeTabId) {
+      try {
+        await chrome.tabs.reload(activeTabId);
+      } catch {
+        // la pestaña puede no ser recargable; se sigue igual
+      }
+    }
+    await chrome.runtime.reload();
+  });
+
   $("copy-btn").addEventListener("click", async () => {
     await navigator.clipboard.writeText($("debug-output").value);
   });

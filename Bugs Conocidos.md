@@ -24,6 +24,13 @@ ultima_actualizacion: 2026-08-01
 
 ## Resueltos
 
+### Scraper de busqueda: titulo "Deja un comentario sobre el anuncio" + duplicados + review_count null
+- **Fecha**: 2026-08-01 (8va parte)
+- **Sintoma**: (a) los productos de anuncios (`AdHolder`) salian con titulo "Deja un comentario sobre el anuncio"; (b) el mismo ASIN aparecia duplicado (anuncio + organico); (c) `review_count` siempre null en busqueda
+- **Causa raiz**: (a) el selector `h2 a span` matcheaba el badge del anuncio antes que el titulo real; (b) no habia dedupe por ASIN entre cards; (c) el count real esta en `a[aria-label*="valoraciones"]` ("92,984 valoraciones") o texto `(92.9 K)` (formato abreviado con K), no en el hermano del rating
+- **Fix**: `extractRealTitle()` filtra candidatos por `BADGE_PATTERNS` (elige el primer titulo >=10 chars); dedupe por ASIN priorizando el titulo real; `parseCountWithK()` (K → x1000) + selectores aria-label y `.a-size-mini.puis-normal-weight-text`
+- **Adicional**: `brand` en producto desde `#bylineInfo` / `tr.po-brand`; `mode: h10_xray` solo si H10 aporto datos reales (overlays vacios ya no mienten)
+
 ### Scraper de producto nunca capturaba el BSR del DOM real de Amazon
 - **Fecha**: 2026-08-01
 - **Sintoma**: el `bsr` y la `category` llegaban `null` desde la pagina del producto

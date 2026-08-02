@@ -66,8 +66,10 @@ function collect() {
     (a, b) => priority.indexOf(a.key) - priority.indexOf(b.key)
   );
 
+  const overlaysWithData: string[] = [];
   for (const overlay of sortedOverlays) {
     const overlayProducts = readOverlay(overlay.container) as OverlayProduct[];
+    if (overlayProducts.length > 0) overlaysWithData.push(overlay.key);
     for (const op of overlayProducts) {
       const existing = byAsin.get(op.asin);
       if (existing) {
@@ -82,11 +84,11 @@ function collect() {
   if (merged.length > 0) {
     capturedData = {
       products: merged,
-      mode: overlays.some((o) => o.key === "h10") ? "h10_xray" : "scraper",
+      mode: overlaysWithData.includes("h10") ? "h10_xray" : "scraper",
       page_type: pageType,
       capture_url: window.location.href,
       capture_timestamp: new Date().toISOString(),
-      sources: overlays.map((o) => o.key),
+      sources: overlaysWithData,
     };
   }
 
