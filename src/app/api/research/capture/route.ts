@@ -5,6 +5,8 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrgId } from "@/lib/api-handler";
 import { apiErrorResponse } from "@/lib/api-utils";
+import { calculateScore } from "@/lib/research/scoring";
+import type { ScoringInput } from "@/lib/research/types";
 
 const capturedProductSchema = z.object({
   asin: z.string().max(20),
@@ -54,28 +56,58 @@ export async function POST(req: NextRequest) {
 
     const { products, mode, page_type, search_keyword } = parsed.data;
 
-    const records = products.map((p) => ({
-      user_id: user.id,
-      org_id: orgId,
-      name: p.title || "Unknown",
-      asin_reference: p.asin,
-      amazon_category: p.category ?? "",
-      estimated_monthly_sales: p.estimated_monthly_sales ?? null,
-      average_price: p.price ?? null,
-      review_count_competitor: p.review_count ?? null,
-      average_rating: p.average_rating ?? null,
-      bsr: p.bsr ?? null,
-      source: "capture",
-      status: "idea",
-      priority: 3,
-      source_data: {
-        ...p,
-        capture_mode: mode,
-        page_type,
-        search_keyword,
-        captured_at: p.capture_timestamp,
-      },
-    }));
+    function toScoringInput(p: z.infer<typeof capturedProductSchema>): ScoringInput {
+      return {
+        estimated_monthly_sales: p.estimated_monthly_sales ?? null,
+        estimated_monthly_revenue: p.estimated_monthly_revenue ?? null,
+        bsr: p.bsr ?? null,
+        review_count: p.review_count ?? null,
+        average_rating: p.average_rating ?? null,
+        seller_count_fba: p.seller_count_fba ?? null,
+        price: p.price ?? null,
+        estimated_fba_fee: p.estimated_fba_fee ?? null,
+        estimated_cogs: null,
+      };
+    }
+
+    const records = products.map((p) => {
+      const input = toScoringInput(p);
+      const hasData =
+        input.estimated_monthly_sales !== null ||
+        input.estimated_monthly_revenue !== null ||
+        input.bsr !== null ||
+        input.review_count !== null ||
+        input.average_rating !== null ||
+        input.seller_count_fba !== null ||
+        input.price !== null ||
+        input.estimated_fba_fee !== null;
+      const scoring = calculateScore(input);
+
+      return {
+        user_id: user.id,
+        org_id: orgId,
+        name: p.title || "Unknown",
+        asin_reference: p.asin,
+        amazon_category: p.category ?? "",
+        estimated_monthly_sales: p.estimated_monthly_sales ?? null,
+        average_price: p.price ?? null,
+        review_count_competitor: p.review_count ?? null,
+        average_rating: p.average_rating ?? null,
+        bsr: p.bsr ?? null,
+        score: hasData ? scoring.total : null,
+        source: "capture",
+        status: "idea",
+        priority: 3,
+        source_data: {
+          ...p,
+          capture_mode: mode,
+          page_type,
+          search_keyword,
+          captured_at: p.capture_timestamp,
+          score_details: hasData ? scoring.dimensions : undefined,
+        },
+      };
+    });
 
     const saved: unknown[] = [];
 

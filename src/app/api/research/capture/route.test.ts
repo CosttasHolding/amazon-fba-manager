@@ -159,4 +159,50 @@ describe("POST /api/research/capture", () => {
     const res = await POST(req as never);
     expect(res.status).toBe(400);
   });
+
+  it("calcula y guarda el score enriquecido con source_data completo", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({ resultData: [{ id: "new-id", name: "Test Product" }] });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify(validPayload),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(201);
+    const inserted = mockInsert.mock.calls[0][0];
+    expect(inserted.score).toBeGreaterThan(0);
+    expect(inserted.source_data.score_details).toBeDefined();
+    expect(inserted.source_data.score_details.demanda).toBeDefined();
+    expect(inserted.source_data.score_details.rentabilidad).toBeDefined();
+  });
+
+  it("guarda score null cuando no hay datos del producto", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({ resultData: [{ id: "new-id", name: "Sin datos" }] });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify({ products: [{ asin: "B0EMPTY123", title: "Sin datos" }], mode: "scraper" }),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(201);
+    const inserted = mockInsert.mock.calls[0][0];
+    expect(inserted.score).toBeNull();
+  });
+
+  it("refresca el score al actualizar un ASIN existente", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({ existing: { id: "existing-id" }, resultData: [{ id: "existing-id", name: "Test Product" }] });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify(validPayload),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(201);
+    const updated = mockUpdate.mock.calls[0][0];
+    expect(updated.score).toBeGreaterThan(0);
+    expect(updated.source_data.score_details).toBeDefined();
+  });
 });
