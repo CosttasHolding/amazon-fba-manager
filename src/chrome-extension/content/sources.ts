@@ -24,6 +24,7 @@ const OVERLAY_SOURCES: { key: string; selectors: string[] }[] = [
   {
     key: "amzscout",
     selectors: [
+      "amzscout-pro",
       '[id*="amzscout"]',
       '[id*="amz-scout"]',
       '[class*="amzscout"]',
@@ -52,6 +53,12 @@ export function detectOverlays(): DetectedOverlay[] {
     }
   }
   return overlays;
+}
+
+export function overlayContentFingerprint(): string {
+  return detectOverlays()
+    .map((o) => `${o.key}:${(o.container.textContent || "").trim().length}`)
+    .join("|");
 }
 
 function deepestShadowElement(el: Element): Element {

@@ -21,6 +21,7 @@ const capturedProductSchema = z.object({
   seller_count_fbm: z.number().nullable().optional(),
   category: z.string().max(200).nullable().optional(),
   brand: z.string().max(200).nullable().optional(),
+  net_margin_percent: z.number().nullable().optional(),
   image_url: z.string().max(1000).nullable().optional(),
   source: z.string().optional(),
   capture_url: z.string().max(2000).optional(),

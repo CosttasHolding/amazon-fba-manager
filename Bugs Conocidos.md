@@ -24,6 +24,31 @@ ultima_actualizacion: 2026-08-01
 
 ## Resueltos
 
+### La captura traia muchisimos productos: AMZScout tomaba la tabla del nicho en la pagina de producto
+- **Fecha**: 2026-08-01 (13va parte)
+- **Sintoma**: "me capturo datos de muchisimos productos no solo el que tenia en la pagina abierta" — al enviar desde una pagina de producto con AMZScout logueado, llegaban todos los productos similares del nicho, no solo el ASIN abierto
+- **Causa raiz**: el panel `as-pro-container` de AMZScout tiene SIEMPRE dos zonas — el header con los totals (`.totals-item`: Results, Avg. Mo Sales, Revenue, Rank, Price, Margin) y la tabla `.maintable__row-wrapper .maintable__row`. **En la pagina de producto esa tabla se llena con los productos similares del nicho** (bundle: "You will see similar items currently sold on Amazon that represent a 'niche'"). `readAMZScout` priorizaba la tabla → si habia filas devolvia TODAS. El fix del fingerprint (12va parte) EXPUSO el bug latente: antes el collect inicial veia la tabla vacia → caia a totals (1 producto); ahora el observer re-colecta cuando la tabla del nicho se llena → capturaba todos los similares
+- **Fix**: `readAMZScout` en `overlay-reader.ts` — si hay `fallbackAsin` (pagina de producto): (1) si el ASIN abierto esta en la tabla, devuelve SOLO esa fila; (2) si no esta, usa los totals del header SOLO si `Results <= 1`; si `Results > 1` devuelve `[]` (los totals son promedio del NICHO, no del producto). Sin `fallbackAsin` (busqueda) → tabla completa como antes
+- **Test**: +3 tests en `overlay-reader.test.ts` (RED primero) con fixture de tabla del nicho (Results:2 + 2 filas). 247/247
+- **Resultado**: en la pagina de producto se captura solo el ASIN abierto. Pendiente verificacion E2E del usuario (boton Reload + F5 + abrir producto)
+
+### Al enviar desde el popup solo llegaba lo de H10, no los totals de AMZScout
+- **Fecha**: 2026-08-01 (12va parte)
+- **Sintoma**: el usuario reporto "envia si pero solo lo de h10" — el debug del popup mostraba el HTML de AMZScout con los totals (Ventas/m, Revenue, Margen) pero el capture llegaba sin esos datos
+- **Causa raiz**: **timing**. AMZScout inserta su host `<amzscout-pro>` VACIO a document_start y Angular lo llena DESPUES (fetch + render async de los totals). El `collect()` inicial veia el host vacio → `readAMZScout` devolvia `[]` → `sources: ["h10"]`. El MutationObserver de `content.ts` solo re-disparaba cuando `keys !== lastOverlayKeys` — como la key "amzscout" ya existia desde el inicio, cuando Angular llenaba los totals NO habia cambio de keys → nunca se re-colectaba. El debug (corrido despues, con totals renderizados) mostraba el HTML completo → por eso el usuario veia los datos en debug pero no en el envio
+- **Fix**: `overlayContentFingerprint()` en `sources.ts` (key + length del textContent de cada overlay detectado); `content.ts` re-colecta si cambian las keys O el fingerprint (`keys !== lastOverlayKeys || fingerprint !== lastOverlayFingerprint`) — ahora cuando AMZScout pinta los totals, el observer re-colecta y captura los datos
+- **Test**: +1 test en `sources.test.ts` (RED primero: fingerprint cambia cuando un overlay se llena). 244/244
+- **Resultado**: la captura ahora re-colecta al llenarse el overlay async. Pendiente verificacion E2E del usuario (boton Reload + F5 + esperar a que carguen los totals + enviar)
+
+
+### AMZScout no se detectaba en "Debug overlays" (custom element `<amzscout-pro>`)
+- **Fecha**: 2026-08-01 (10ma parte)
+- **Sintoma**: el usuario tenia el overlay de AMZScout visible pero "Debug overlays" mostraba solo H10 y Keepa
+- **Causa raiz**: AMZScout (bundle.js, corre a document_start) inserta un **custom element `<amzscout-pro>`** como primer hijo de `<html>` (`document.createElement("amzscout-pro")`, host Angular, DOM plano sin shadow root). Nuestros selectores buscaban `[id*="amzscout"]` / `[class*="amzscout"]` — matchean ATRIBUTOS id/class, no el TAG NAME del custom element
+- **Fix**: selector de tag `amzscout-pro` al inicio de los selectores de amzscout en `sources.ts`; `MutationObserver` ahora observa `document.documentElement` (el host se inserta como hijo de `<html>`, no del body) en `content.ts`
+- **Test**: +1 test en `sources.test.ts` (RED primero: crea `<amzscout-pro>` y verifica deteccion). 239/239
+- **Resultado**: la deteccion ahora matchea el host real de AMZScout. Los DATOS del overlay (nicho score/ventas/revenue) requieren sesion/plan de AMZScout — reader pendiente de afinar con el HTML real
+
 ### Overlay de H10 no se leia: shadow DOM + classnames hash + numeros mal parseados
 - **Fecha**: 2026-08-01 (9na parte)
 - **Sintoma**: el HTML real del widget `#h10-product-score` (Product Summary for X) no producia datos: `readOverlay` busca filas con ASIN y el summary no las tiene; ademas el contenido vive dentro de un shadowRoot y los classnames son hash (sc-*)

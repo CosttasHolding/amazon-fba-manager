@@ -15,6 +15,7 @@ export interface OverlayProduct {
   brand: string | null;
   category: string | null;
   listing_health_score: number | null;
+  net_margin_percent: number | null;
 }
 
 function parseLocalizedNumber(text: string): number | null {
@@ -76,6 +77,7 @@ function detectCurrency(text: string): string | null {
   if (upper.includes("CAD") || upper.includes("CA$")) return "CAD";
   if (upper.includes("MXN") || upper.includes("MX$")) return "MXN";
   if (upper.includes("USD") || upper.includes("US$")) return "USD";
+  if (text.includes("$")) return "USD";
   return null;
 }
 
@@ -112,6 +114,7 @@ export function readOverlay(container: Element): OverlayProduct[] {
       brand: extractText(row, '[class*="brand"], [class*="Brand"]'),
       category: extractText(row, '[class*="category"], [class*="Category"]'),
       listing_health_score: null,
+      net_margin_percent: null,
     });
   }
 
@@ -213,6 +216,130 @@ export function readH10Summary(container: Element): OverlayProduct[] {
       brand: null,
       category,
       listing_health_score,
+      net_margin_percent: null,
     },
   ];
+}
+
+function scopedText(row: Element, selector: string): string {
+  return row.querySelector(selector)?.textContent?.trim() || "";
+}
+
+function scopedNumber(row: Element, selectors: string[]): number | null {
+  for (const selector of selectors) {
+    const text = scopedText(row, selector);
+    if (!text) continue;
+    const num = parseLocalizedNumber(text);
+    if (num !== null) return num;
+  }
+  return null;
+}
+
+function percentToNumber(text: string): number | null {
+  const match = text.match(/^([\d.,]+)\s*%$/);
+  if (!match) return null;
+  const num = parseLocalizedNumber(match[1]);
+  return num == null ? null : Math.round(num);
+}
+
+function emptyProduct(asin: string): OverlayProduct {
+  return {
+    asin,
+    title: "",
+    price: null,
+    currency: null,
+    bsr: null,
+    review_count: null,
+    average_rating: null,
+    estimated_monthly_sales: null,
+    estimated_monthly_revenue: null,
+    estimated_fba_fee: null,
+    seller_count_fba: null,
+    seller_count_fbm: null,
+    niche_score: null,
+    brand: null,
+    category: null,
+    listing_health_score: null,
+    net_margin_percent: null,
+  };
+}
+
+function readAmzscoutTotals(container: Element, asin: string): OverlayProduct | null {
+  const totals: { title: string; value: string }[] = [];
+  for (const item of Array.from(container.querySelectorAll(".totals-item"))) {
+    const title = item.querySelector(".totals-item__title")?.textContent?.trim() || "";
+    const value = item.querySelector(".totals-item__val")?.textContent?.trim() || "";
+    if (title && value) totals.push({ title, value });
+  }
+  if (totals.length === 0) return null;
+
+  const product = emptyProduct(asin);
+  for (const { title, value } of totals) {
+    const parsed = parseLocalizedNumber(value);
+    if (title.includes("Mo Sales")) product.estimated_monthly_sales = parsed;
+    if (title.includes("Mo Revenue")) product.estimated_monthly_revenue = parsed;
+    if (title.includes("Sales Rank")) product.bsr = parsed;
+    if (title.includes("Price") && parsed != null) {
+      product.price = parsed;
+      product.currency = detectCurrency(value);
+    }
+    if (title.includes("Net Margin")) product.net_margin_percent = percentToNumber(value);
+  }
+  return product;
+}
+
+function readAmzscoutTable(container: Element): OverlayProduct[] {
+  const rows = container.querySelectorAll(".maintable__row-wrapper .maintable__row");
+  const products: OverlayProduct[] = [];
+  for (const row of Array.from(rows)) {
+    const asin = extractAsinFromRow(row);
+    if (!asin) continue;
+    const product = emptyProduct(asin);
+    product.title = scopedText(row, ".col-name a, .col-name");
+    product.brand = scopedText(row, ".col-brand");
+    product.category = scopedText(row, ".col-category");
+    product.seller_count_fba = scopedNumber(row, [".col-sellers"]);
+    product.bsr = scopedNumber(row, [".col-rank"]);
+    const priceText = scopedText(row, ".col-price");
+    product.price = priceText ? parseLocalizedNumber(priceText) : null;
+    product.currency = priceText ? detectCurrency(priceText) : null;
+    product.estimated_fba_fee = scopedNumber(row, [".col-fees"]);
+    const marginText = scopedText(row, ".col-mi");
+    product.net_margin_percent = marginText ? percentToNumber(marginText) : null;
+    product.estimated_monthly_sales = scopedNumber(row, [".col-sales"]);
+    product.estimated_monthly_revenue = scopedNumber(row, [".col-revenue"]);
+    product.review_count = scopedNumber(row, [".col-reviews"]);
+    product.average_rating = scopedNumber(row, [".col-rating"]);
+    products.push(product);
+  }
+  return products;
+}
+
+function readAmzscoutResults(container: Element): number | null {
+  for (const item of Array.from(container.querySelectorAll(".totals-item"))) {
+    const title = item.querySelector(".totals-item__title")?.textContent?.trim() || "";
+    if (title.toLowerCase().includes("result")) {
+      const value = item.querySelector(".totals-item__val")?.textContent?.trim() || "";
+      return parseLocalizedNumber(value);
+    }
+  }
+  return null;
+}
+
+export function readAMZScout(container: Element, fallbackAsin?: string | null): OverlayProduct[] {
+  const tableProducts = readAmzscoutTable(container);
+
+  if (fallbackAsin) {
+    const match = tableProducts.find((p) => p.asin === fallbackAsin);
+    if (match) return [match];
+
+    const results = readAmzscoutResults(container);
+    if (results != null && results > 1) return [];
+
+    const totals = readAmzscoutTotals(container, fallbackAsin);
+    if (totals) return [totals];
+    return [];
+  }
+
+  return tableProducts;
 }

@@ -1,9 +1,10 @@
 import { scrapeCurrentPage, scrapeProductPage } from "./scraper";
-import { readOverlay, readH10Summary, type OverlayProduct } from "./overlay-reader";
-import { detectOverlays, collectOverlayDebugHtml } from "./sources";
+import { readOverlay, readH10Summary, readAMZScout, type OverlayProduct } from "./overlay-reader";
+import { detectOverlays, collectOverlayDebugHtml, overlayContentFingerprint } from "./sources";
 
 let capturedData: Record<string, unknown> | null = null;
 let lastOverlayKeys = "";
+let lastOverlayFingerprint = "";
 
 function isSearchResultsPage(): boolean {
   return !!document.querySelector('[data-asin]:not([data-asin=""])');
@@ -55,6 +56,7 @@ function collect() {
 
   const overlays = detectOverlays();
   lastOverlayKeys = overlays.map((o) => o.key).sort().join(",");
+  lastOverlayFingerprint = overlayContentFingerprint();
 
   const byAsin = new Map<string, Record<string, unknown>>();
   for (const product of products) {
@@ -67,11 +69,14 @@ function collect() {
   );
 
   const overlaysWithData: string[] = [];
+  const fallbackAsin = products.length === 1 ? String(products[0].asin ?? "") : null;
   for (const overlay of sortedOverlays) {
     const overlayProducts =
       overlay.key === "h10"
         ? (readH10Summary(overlay.container) as OverlayProduct[])
-        : (readOverlay(overlay.container) as OverlayProduct[]);
+        : overlay.key === "amzscout"
+          ? (readAMZScout(overlay.container, fallbackAsin) as OverlayProduct[])
+          : (readOverlay(overlay.container) as OverlayProduct[]);
     if (overlayProducts.length > 0) overlaysWithData.push(overlay.key);
     for (const op of overlayProducts) {
       const existing = byAsin.get(op.asin);
@@ -105,10 +110,11 @@ function watchOverlays() {
     timer = window.setTimeout(() => {
       timer = undefined;
       const keys = detectOverlays().map((o) => o.key).sort().join(",");
-      if (keys !== lastOverlayKeys) collect();
+      const fingerprint = overlayContentFingerprint();
+      if (keys !== lastOverlayKeys || fingerprint !== lastOverlayFingerprint) collect();
     }, 400);
   });
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
 }
 
 collect();

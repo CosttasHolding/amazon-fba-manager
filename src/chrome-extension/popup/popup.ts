@@ -8,6 +8,8 @@ interface ProductData {
   review_count: number | null;
   average_rating: number | null;
   estimated_monthly_sales?: number | null;
+  estimated_monthly_revenue?: number | null;
+  net_margin_percent?: number | null;
   [key: string]: unknown;
 }
 
@@ -144,6 +146,8 @@ async function init() {
       if (p.review_count) meta.push(`<span><span class="label">Reviews:</span> <span class="value">${p.review_count}</span></span>`);
       if (p.average_rating) meta.push(`<span><span class="label">Rating:</span> <span class="value">${p.average_rating}</span></span>`);
       if (p.estimated_monthly_sales) meta.push(`<span><span class="label">Ventas/m:</span> <span class="value">${Number(p.estimated_monthly_sales).toLocaleString()}</span></span>`);
+      if (p.estimated_monthly_revenue) meta.push(`<span><span class="label">Revenue/m:</span> <span class="value">$${Number(p.estimated_monthly_revenue).toLocaleString()}</span></span>`);
+      if (p.net_margin_percent) meta.push(`<span><span class="label">Margen:</span> <span class="value">${p.net_margin_percent}%</span></span>`);
 
       card.innerHTML = `<div class="product-title">${escapeHtml(p.title || "Unknown")}</div><div class="product-meta">${meta.join("")}</div>`;
       list.appendChild(card);
