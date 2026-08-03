@@ -17,6 +17,7 @@ import {
   DollarSign,
   Trash2,
   Sparkles,
+  BarChart3,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,10 +43,11 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ProductResearch } from "@/types";
-import { t } from "@/lib/i18n/translations";
+import { t, type Locale } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { FormDialogLayout, FormDialogFooter } from "@/components/ui/form-dialog";
 import { inputClass, labelClass } from "@/lib/form-constants";
+import { numField, fmtCompact } from "@/lib/research/card-data";
 
 type ViewMode = "kanban" | "list";
 type FilterStatus = "all" | ProductResearch["status"];
@@ -68,6 +70,39 @@ const PRIORITY_COLORS: Record<number, string> = {
   4: "text-slate-400 bg-slate-500/10 border-slate-500/20",
   5: "text-slate-500 bg-slate-500/5 border-slate-500/10",
 };
+
+function scoreBadgeClass(score: number): string {
+  if (score >= 70) return "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
+  if (score >= 40) return "text-amber-500 bg-amber-500/10 border-amber-500/20";
+  return "text-rose-500 bg-rose-500/10 border-rose-500/20";
+}
+
+function sourceBadges(item: ProductResearch, locale: Locale) {
+  const sd = item.source_data as Record<string, unknown> | null | undefined;
+  const bsr = item.bsr ?? numField(sd, "bsr");
+  const sales = numField(sd, "estimated_monthly_sales");
+  const revenue = numField(sd, "estimated_monthly_revenue");
+  const margin = numField(sd, "net_margin_percent");
+  const health = numField(sd, "listing_health_score");
+
+  const badges: { text: string; className: string }[] = [];
+  if (bsr !== null && bsr > 0) {
+    badges.push({ text: `${t("research.card.bsr", locale)} #${bsr}`, className: "text-primary bg-primary/10" });
+  }
+  if (sales !== null && sales > 0) {
+    badges.push({ text: `~${fmtCompact(sales, locale)} ${t("research.card.sales_month", locale)}`, className: "text-violet-500 bg-violet-500/10" });
+  }
+  if (revenue !== null && revenue > 0) {
+    badges.push({ text: `$${fmtCompact(revenue, locale)}${t("research.card.revenue_month", locale)}`, className: "text-cyan-500 bg-cyan-500/10" });
+  }
+  if (margin !== null) {
+    badges.push({ text: `${t("research.card.margin", locale)} ${margin}%`, className: "text-emerald-500 bg-emerald-500/10" });
+  }
+  if (health !== null) {
+    badges.push({ text: `${t("research.card.health", locale)} ${health}`, className: "text-sky-500 bg-sky-500/10" });
+  }
+  return badges;
+}
 
 export default function ResearchPage() {
   const { locale } = useLocale();
@@ -370,6 +405,16 @@ export default function ResearchPage() {
                             <Star className="h-2.5 w-2.5" /> {item.competition_level}
                           </span>
                         )}
+                        {item.score != null && (
+                          <span className={cn("inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border", scoreBadgeClass(item.score))}>
+                            <BarChart3 className="h-2.5 w-2.5" /> {t("research.card.score", locale)} {item.score}
+                          </span>
+                        )}
+                        {sourceBadges(item, locale).map((b) => (
+                          <span key={b.text} className={cn("inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded", b.className)}>
+                            {b.text}
+                          </span>
+                        ))}
                       </div>
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-[10px] text-muted-foreground">{new Date(item.created_at).toLocaleDateString(locale === "en" ? "en-US" : "es-ES")}</span>
