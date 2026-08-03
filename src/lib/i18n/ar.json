@@ -1104,6 +1104,8 @@
   "research.competition.high": "مرتفعة",
   "research.competition.low": "منخفضة",
   "research.competition.medium": "متوسطة",
+  "research.competition.very_high": "مرتفعة جدا",
+  "research.competition.very_low": "منخفضة جدا",
   "research.count": "{count} منتجات",
   "research.deepdive.actions": "الإجراءات الموصى بها",
   "research.deepdive.analyzing": "جارٍ التحليل...",

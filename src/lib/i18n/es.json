@@ -1103,6 +1103,8 @@
   "research.competition.high": "Alta",
   "research.competition.low": "Baja",
   "research.competition.medium": "Media",
+  "research.competition.very_high": "Muy alta",
+  "research.competition.very_low": "Muy baja",
   "research.count": "{count} productos",
   "research.deepdive.actions": "Acciones recomendadas",
   "research.deepdive.analyzing": "Analizando...",
