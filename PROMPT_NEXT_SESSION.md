@@ -4,44 +4,43 @@
 
 ## Ultima sesion
 
-- **Fecha**: 2026-08-01 (13va parte)
+- **Fecha**: 2026-08-03 (sesion que cruzo la medianoche del 08-02)
 - **Resumen**:
-  - **Bug "capturo muchisimos productos" — ROOT CAUSE**: el panel de AMZScout (`as-pro-container`) tiene SIEMPRE dos zonas — header con totals (`Results`, Avg. Mo Sales/Revenue/Rank/Price/Margin) + tabla `.maintable__row-wrapper .maintable__row` que **en la pagina de producto se llena con los productos similares del nicho**. `readAMZScout` priorizaba la tabla y devolvia TODAS las filas. El fix del fingerprint (12va parte) expuso el bug: el observer re-colecta cuando la tabla del nicho se llena → capturaba todos
-  - **Fix**: `readAMZScout` con `fallbackAsin` (pagina de producto): (1) devuelve SOLO la fila del ASIN abierto si esta en la tabla; (2) si no, usa los totals SOLO si `Results <= 1`; si `Results > 1` → `[]` (totals = promedio del NICHO). Busqueda sigue capturando la tabla completa
-  - **247/247 tests, tsc 0**. Build extension OK (content.js 13.5KB); copia personal sincronizada por hash
-  - **Parte 12va**: fix "solo envia h10" — observer re-colecta cuando cambia el fingerprint de contenido (AMZScout llena su host async)
-  - **Parte 11va**: `readAMZScout()` con HTML real del usuario — tabla de busqueda (`.maintable__row .scout-col.*`) + totals del header aplicados al ASIN de la pagina; campo `net_margin_percent`; popup muestra Ventas/m + Revenue/m + Margen
-  - **Parte 10ma**: deteccion de AMZScout via tag name `amzscout-pro` (custom element como primer hijo de `<html>`)
+  - **Commiteo + push de los fixes de extension pendientes** (10ma-13va parte, `c0257b4`): reader AMZScout (tabla+totals), deteccion custom element `amzscout-pro`, observer con `overlayContentFingerprint()`, fix "capturo muchisimos productos" (fallbackAsin en pagina de producto)
+  - **Feature completa: score enriquecido + source_data en UI** (spec `592e6c5`, commits `9413ba3`..`ff0c895`, plan `4b4bfbe`):
+    - Columna `score` en `product_research` (migracion `030_add_score.sql`)
+    - `POST /api/research/capture` calcula `calculateScore()` con source_data completo → persiste `score` + `score_details` (4 dimensiones) en source_data; UPDATE de ASIN existente refresca
+    - Cards kanban: badge de Score (colores por rango) + BSR/ventas/m/revenue/m/margen/listing health (solo si existen)
+    - Helpers puros `src/lib/research/card-data.ts` (`numField`, `fmtCompact`) + i18n `research.card.*` en es/en/ar
+  - **SDD por tareas**: 4 implementers + 4 reviewers + final whole-branch review → **READY TO MERGE**
+  - **Push a origin/main**: 7 commits (deploy a Vercel)
+  - **USUARIO aplico la migracion `030_add_score.sql` en Supabase prod** (columna `score` confirmada)
+  - Verificacion: tsc 0 | lint solo warnings pre-existentes | **255/255 tests** | build OK
 
 ## Estado actual
 
 Leer `App State.md` para el snapshot completo. Puntos clave:
 - Motor de Investigacion funcional: extension -> capture -> scoring -> deep dive (LLM = xAI Grok `grok-4.5`)
-- `source_data` JSONB confirmado en prod (column existe)
-- **Extension = recolector multi-fuente**: overlay-reader (H10 summary + generico) + sources (deteccion incluye `<amzscout-pro>`) + content merge por ASIN + scraper (BSR/categoria/brand del DOM) + boton Reload + tool de debug
-- **BSR/categoria/brand/listing_health_score ya salen del DOM de Amazon + widget H10 (gratis)** — solo nicho score/ventas/revenue de AMZScout requieren sesion real del usuario
+- **Extension = recolector multi-fuente** (H10/AMZScout/Keepa): lee overlays + BSR/categoria/brand gratis del DOM de Amazon. Fixes 10ma-13va commiteados y pusheados. Copia personal `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\exteRB\` sincronizada (content.js 13.5KB)
+- **Score enriquecido ya funciona end-to-end**: capture route calcula y persiste; cards kanban muestran los badges
 - **Bloqueante deep dive**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c
 - **XAI_API_KEY solo en .env.local** — falta agregarla en Vercel (prod)
 
 ## Proximos pasos
 
-### 1. USUARIO debe hacer (verificar el fix de "muchisimos productos")
-- **Usar el boton `🔄 Reload` del popup** (recarga pestana + extension desde disco); la copia personal `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\exteRB\` YA esta sincronizada (hash)
-- **Abrir un producto con AMZScout logueado, ESPERAR a que cargue** → el popup deberia mostrar **1 solo producto** (el abierto) con sus datos de AMZScout (Ventas/m + Revenue/m + Margen) si su ASIN esta en la tabla del nicho o si Results=1
-- **Enviar** → verificar que `/api/research/capture` recibe el ASIN correcto con ventas/revenue/margen + datos de H10
-
-### 2. Agente (despues de tener el DOM real de AMZScout)
-- Afinar `readOverlay` selectores de AMZScout (niche score, ventas, revenue) y mapear a `source_data` JSONB
-- Decidir si BSR/categoria/listing_health_score se muestran en la UI del research y/o se usan para scoring sin LLM
-- Rebuild + verificacion por fase (tsc/lint/test:run/build)
-
-### 3. Usuario — pendientes de sesiones anteriores
+### 1. USUARIO debe hacer
+- **Verificar la extension E2E**: boton `🔄 Reload` del popup + F5 → abrir un producto con AMZScout logueado, ESPERAR a que cargue → el popup deberia mostrar **1 solo producto** (el abierto) con Ventas/m + Revenue/m + Margen → Enviar → verificar que `/api/research/capture` reciba el ASIN con ventas/revenue/margen + datos H10. La card kanban deberia mostrar el badge de Score
 - **Cargar creditos/licencias xAI** — sin esto el deep dive tira 403 (https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c)
 - **Agregar XAI_API_KEY en Vercel** (Settings → Environment Variables)
 - **Rotar las API keys AL CARGAR CREDITOS** — decision tomada (riesgo bajo hoy, keys sin creditos)
 - El `.pem` de firma de la extension esta movido fuera del repo (copia personal `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\`)
 
-### 4. Backlog (MEDIUM)
+### 2. Agente — follow-ups del research
+- **[MEDIUM] Score stale en ediciones manuales**: `PUT /api/research` y el modal de edicion no recalculan `score` — un producto editado a mano queda con score de captura viejo. Recalcular en PUT (mergear row existente + payload) o documentar como snapshot de captura
+- **[MEDIUM] Reconsiderar**: los Minor findings del final review — i18n keys no alfabeticas, `key={b.text}` fragil, formatters re-creados, score en digitos occidentales en AR, test solo aserta 2/4 dimensiones, `scoreBadgeClass`/`sourceBadges` inline
+- Verificar que la card kanban renderice bien con datos reales capturados en prod (la migracion ya esta aplicada)
+
+### 3. Backlog (MEDIUM)
 - Zod validation en SP-API / Drive / Cron routes
 - N+1 queries fix + dashboard limits
 - Accessibility fixes
@@ -50,16 +49,18 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 
 ## Archivos clave
 
-- `src/chrome-extension/content/scraper.ts` — **BSR + categoria del DOM de producto (`#prodDetails` `nºN en X`)**, titulo real, dedupe, moneda
-- `src/chrome-extension/content/content.ts` — merge multi-fuente + `publishDebugToDom()` (data-fba-overlay-debug / data-fba-captured)
-- `src/chrome-extension/content/overlay-reader.ts` — lector generico de overlays por ASIN (pendiente afinar con DOM real de AMZScout)
-- `src/chrome-extension/content/sources.ts` — deteccion H10/AMZScout/Keepa + debug html
-- `src/chrome-extension/popup/popup.{ts,html,css}` — tool de debug (boton + textarea copiable)
+- `src/app/api/research/capture/route.ts` — calcula y persiste `score` + `score_details`; gate `hasData` (null si no hay datos)
+- `src/lib/research/scoring.ts` — `calculateScore` (inmutable, solo se consume)
+- `src/lib/research/card-data.ts` — `numField` / `fmtCompact` (helpers de badges)
+- `src/app/(dashboard)/research/page.tsx` — badges en cards kanban (`scoreBadgeClass`, `sourceBadges`)
+- `supabase/migrations/030_add_score.sql` — columna score (APLICADA en prod)
+- `src/chrome-extension/content/overlay-reader.ts` — `readAMZScout` (tabla + totals + fallbackAsin), `readH10Summary` (shadow root)
+- `src/chrome-extension/content/sources.ts` — deteccion + `overlayContentFingerprint()`
+- `src/chrome-extension/content/content.ts` — merge multi-fuente + observer
+- `src/chrome-extension/popup/popup.{ts,html,css}` — boton Reload + tool de debug
 - `src/lib/ai/client.ts` — `getXAIClient()` (OpenAI SDK → xAI baseURL)
-- `src/lib/research/analyzer.ts` — Grok `grok-4.5` + Zod schema con fallbacks (`.catch()`)
-- `src/scripts/build-extension.ts` — build → `public/exteRB/` (sin zip)
-- `src/app/api/research/capture/route.ts` — endpoint con Zod (passthrough → source_data JSONB)
 - `.env.local` — XAI_API_KEY (gitignored)
+- Spec/plan: `docs/superpowers/specs/2026-08-02-research-score-source-data-ui-design.md` y `docs/superpowers/plans/2026-08-02-research-score-source-data-ui.md`
 - Temp (fuera de repo): `C:\Users\Nacho\AppData\Local\Temp\opencode\` → `get_crx.py`, `live_capture.py`, `bsr_html.py`, `verify_bsr.py`, `ext-src\{amzscout,keepa}` (CRX oficiales extraidos), `pw7-profile` (perfil persistente que evita el anti-bot)
 
 ## Comandos
@@ -68,7 +69,7 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 npm run dev              # Desarrollo
 npm run build            # Build produccion
 npm run lint             # Linting
-npm run test:run         # Tests (247)
+npm run test:run         # Tests (255)
 npm run build:extension  # Regenerar exteRB (public/exteRB)
 npx tsc --noEmit         # Typecheck (0 errores esperados)
 ```

@@ -1,7 +1,7 @@
 ---
 tipo: personal
 tags: [learning, aprendizaje]
-ultima_actualizacion: 2026-08-01
+ultima_actualizacion: 2026-08-03
 ---
 
 # Learning Log
@@ -74,6 +74,22 @@ ultima_actualizacion: 2026-08-01
 - **Review final whole-branch vale oro**: encontro 4 criticos que los reviews por tarea no vieron (dominio inventado en el plan, endpoint publico, zip untracked, host_permissions).
 - **El plan puede tener errores**: el dominio `fba-manager.vercel.app` del plan era inventado; el real estaba en README/CONVENTIONS. Verificar valores del plan contra el repo antes de implementar.
 - **Tests TDD descubren problemas de tipos**: `ScoringInput` con campos requeridos no compilaba con tests de input parcial — los tests forzaron hacerlos opcionales (mejor diseno).
+
+## i18n / Intl (2026-08-03)
+
+- **El brief con datos de test puede estar mal**: `Intl.NumberFormat("en-US", {notation:"compact"})` redondea `91992` → `"92K"` (ICU rounding), NO `"91.9K"` como esperaba el plan. Un implementer con TDD honesto corrigio el input de test a `91900` y documento el desvio. Verificar valores numericos de fixtures con el runtime real.
+- **`t()` de este codebase exige `Locale`** (`"es"|"en"|"ar"`), no `string` — tipar los parametros de helpers que pasan a `t()` con `Locale`.
+- **`Intl.NumberFormat` por badge es caro**: en lists renderizadas, un solo `fmtCompact` hoisted por locale es mejor que recrear el formatter por item.
+
+## Scoring en capture (2026-08-03)
+
+- **Score como snapshot de captura**: si el score se calcula solo en el capture route, cualquier edicion manual posterior (PUT) lo deja stale. Si se persiste una columna derivada, o se recalcula en cada mutacion o se documenta como snapshot — nunca dejar el drift silencioso.
+- **Gate `hasData` vs score 0**: distinguir "sin datos → null" de "datos presentes pero score bajo → 0" evita que un producto sin informacion aparezca con score 0 (indistinguible de un producto malo de verdad).
+
+## Observaciones SDD (2026-08-03)
+
+- **3 desvios del brief que eran correcciones**: ICU rounding en fixture, `Locale` en vez de `string`, guard `!= null` (no `!== null`) para campos opcionales. Un brief no es dogma: si el implementer documenta el por que y el reviewer lo verifica contra el runtime, es el flujo trabajando.
+- **El "7 tests" del plan no coincidia con el snippet (5 `it`)**: los numeros de test del plan son estimaciones; el reporte honesto del implementer manda.
 
 ---
 

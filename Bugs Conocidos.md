@@ -20,6 +20,13 @@ ultima_actualizacion: 2026-08-01
 - **Adicional**: XAI_API_KEY solo esta en `.env.local` — falta agregarla en Vercel (prod) o el deep dive fallara en produccion
 - **Seguridad**: las keys de OpenAI y xAI quedaron expuestas en el chat del 2026-08-01. **DECISION**: riesgo bajo (sin creditos hoy), rotar cuando el usuario cargue creditos — ahi generar key nueva en vez de usar la expuesta
 
+### Score no se recalcula al editar el producto manualmente
+- **Fecha**: 2026-08-03
+- **Sintoma**: el score de captura queda "stale" — si se editan ventas/precio/BSR desde el modal de edicion (o via `POST /api/research` del analyzer/deep dive), la columna `score` y `score_details` no se recalculan y la card muestra un score que ya no refleja los datos editados
+- **Causa**: `calculateScore()` solo se invoca en `POST /api/research/capture`. `PUT /api/research` y `POST /api/research` (rutas de edicion) no lo tocan
+- **Estado**: follow-up MEDIUM registrado (fuera de scope del spec original, que solo cubria el capture). Fix propuesto: recalcular en PUT (mergear row existente + payload a traves de `toScoringInput`) o documentar `score` como snapshot de captura
+- **Referencia**: final review del 2026-08-03, finding Important #1
+
 ---
 
 ## Resueltos
