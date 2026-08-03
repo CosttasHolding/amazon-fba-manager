@@ -10,7 +10,7 @@ export const researchSchema = z.object({
   review_count_competitor: z.coerce.number().int().min(0).nullable().optional(),
   average_rating: z.coerce.number().min(0).max(5).nullable().optional(),
   bsr: z.coerce.number().int().min(0).nullable().optional(),
-  competition_level: z.enum(["low", "medium", "high"]).nullable().optional(),
+  competition_level: z.enum(["very_low", "low", "medium", "high", "very_high"]).nullable().optional(),
   estimated_cogs: z.coerce.number().min(0).nullable().optional(),
   estimated_selling_price: z.coerce.number().min(0).nullable().optional(),
   estimated_roi: z.coerce.number().nullable().optional(),

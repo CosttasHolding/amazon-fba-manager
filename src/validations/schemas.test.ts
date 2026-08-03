@@ -237,8 +237,15 @@ describe("researchSchema", () => {
   });
 
   it("acepta competition_level valido", () => {
-    const result = researchSchema.safeParse({ name: "Test", competition_level: "high" });
+    const result = researchSchema.safeParse({ name: "Test", competition_level: "very_high" });
     expect(result.success).toBe(true);
+  });
+
+  it("acepta los 5 niveles", () => {
+    for (const level of ["very_low", "low", "medium", "high", "very_high"]) {
+      const result = researchSchema.safeParse({ name: "Test", competition_level: level });
+      expect(result.success).toBe(true);
+    }
   });
 
   it("falla con competition_level invalido", () => {

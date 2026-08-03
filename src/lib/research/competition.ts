@@ -1,6 +1,6 @@
-type CompetitionLevel5 = "very_low" | "low" | "medium" | "high" | "very_high";
+import type { CompetitionLevel } from "@/types";
 
-export function competitionLevelFromScore(score: number): CompetitionLevel5 {
+export function competitionLevelFromScore(score: number): CompetitionLevel {
   if (score >= 80) return "very_low";
   if (score >= 60) return "low";
   if (score >= 40) return "medium";

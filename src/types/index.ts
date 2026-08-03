@@ -379,7 +379,7 @@ export interface NotificationsResponse {
 // ============================================
 
 export type ResearchStatus = 'idea' | 'validating' | 'approved' | 'rejected' | 'in_progress' | 'launched';
-export type CompetitionLevel = 'low' | 'medium' | 'high';
+export type CompetitionLevel = 'very_low' | 'low' | 'medium' | 'high' | 'very_high';
 
 export interface ProductResearch {
   id: string;
