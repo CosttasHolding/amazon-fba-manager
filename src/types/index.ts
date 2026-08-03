@@ -403,6 +403,7 @@ export interface ProductResearch {
   priority: number;
   source: string | null;
   source_data?: Record<string, unknown> | null;
+  score?: number | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
