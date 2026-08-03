@@ -148,6 +148,10 @@ const AMZSCOUT_TOTALS_HTML = `
           <h4 class="totals-item__title ng-binding">Avg. Net Margin</h4>
           <span class="totals-item__val ng-binding">80%</span>
         </div>
+        <div class="totals-item ng-scope" ng-if="options.opScore">
+          <h4 class="totals-item__title ng-binding">Niche Score</h4>
+          <span class="totals-item__val ng-binding">72</span>
+        </div>
       </div>
     </header>
   </div>
@@ -265,6 +269,12 @@ describe("readAMZScout", () => {
     expect(products).toHaveLength(1);
     expect(products[0].asin).toBe("B0GZYR5LJF");
     expect(products[0].estimated_monthly_sales).toBe(1151);
+  });
+
+  it("lee el Niche Score de los totals cuando esta presente", () => {
+    const products = readAMZScout(makeContainer(AMZSCOUT_TOTALS_HTML), "B0GZYR5LJF");
+    expect(products).toHaveLength(1);
+    expect(products[0].niche_score).toBe(72);
   });
 
   it("devuelve vacio si no hay ni tabla ni totals", () => {

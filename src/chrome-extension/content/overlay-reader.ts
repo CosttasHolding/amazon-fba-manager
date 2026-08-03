@@ -276,6 +276,7 @@ function readAmzscoutTotals(container: Element, asin: string): OverlayProduct | 
   const product = emptyProduct(asin);
   for (const { title, value } of totals) {
     const parsed = parseLocalizedNumber(value);
+    const titleLower = title.toLowerCase();
     if (title.includes("Mo Sales")) product.estimated_monthly_sales = parsed;
     if (title.includes("Mo Revenue")) product.estimated_monthly_revenue = parsed;
     if (title.includes("Sales Rank")) product.bsr = parsed;
@@ -284,6 +285,7 @@ function readAmzscoutTotals(container: Element, asin: string): OverlayProduct | 
       product.currency = detectCurrency(value);
     }
     if (title.includes("Net Margin")) product.net_margin_percent = percentToNumber(value);
+    if (titleLower.includes("niche") || titleLower.includes("nicho")) product.niche_score = parsed;
   }
   return product;
 }
