@@ -42,7 +42,7 @@ import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
 import { useDebounce } from "@/hooks/use-debounce";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { ProductResearch } from "@/types";
+import { ProductResearch, type CompetitionLevel } from "@/types";
 import { t, type Locale } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { FormDialogLayout, FormDialogFooter } from "@/components/ui/form-dialog";
@@ -401,8 +401,8 @@ export default function ResearchPage() {
                           </span>
                         )}
                         {item.competition_level && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded capitalize">
-                            <Star className="h-2.5 w-2.5" /> {item.competition_level}
+                          <span className="inline-flex items-center gap-1 text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                            <Star className="h-2.5 w-2.5" /> {t("research.competition." + item.competition_level, locale)}
                           </span>
                         )}
                         {item.score != null && (
@@ -544,12 +544,14 @@ export default function ResearchPage() {
           </div>
           <div>
             <Label htmlFor="competition_level" className={labelClass}>{t("research.form.competition", locale)}</Label>
-            <Select value={formCompetition || ""} onValueChange={(v) => setValue("competition_level", v as "low" | "medium" | "high", { shouldValidate: true })}>
+            <Select value={formCompetition || ""} onValueChange={(v) => setValue("competition_level", v as CompetitionLevel, { shouldValidate: true })}>
               <SelectTrigger id="competition_level" className={inputClass}><SelectValue placeholder={t("common.dash", locale)} /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="very_low">{t("research.competition.very_low", locale)}</SelectItem>
                 <SelectItem value="low">{t("research.competition.low", locale)}</SelectItem>
                 <SelectItem value="medium">{t("research.competition.medium", locale)}</SelectItem>
                 <SelectItem value="high">{t("research.competition.high", locale)}</SelectItem>
+                <SelectItem value="very_high">{t("research.competition.very_high", locale)}</SelectItem>
               </SelectContent>
             </Select>
           </div>
