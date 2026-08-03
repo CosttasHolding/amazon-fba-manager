@@ -1,4 +1,13 @@
 import { sendToWebApp } from "../utils/api";
+import { competitionLevelFromCaptured } from "./competition";
+
+const COMPETITION_LABELS: Record<string, string> = {
+  very_low: "Muy baja",
+  low: "Baja",
+  medium: "Media",
+  high: "Alta",
+  very_high: "Muy alta",
+};
 
 interface ProductData {
   asin: string;
@@ -10,6 +19,8 @@ interface ProductData {
   estimated_monthly_sales?: number | null;
   estimated_monthly_revenue?: number | null;
   net_margin_percent?: number | null;
+  competition_level?: string | null;
+  seller_count_fba?: number | null;
   [key: string]: unknown;
 }
 
@@ -138,6 +149,8 @@ async function init() {
       const card = document.createElement("div");
       card.className = "product-card";
 
+      const competition = competitionLevelFromCaptured(p) ?? p.competition_level ?? null;
+
       const meta: string[] = [
         `<span><span class="label">ASIN:</span> <span class="value">${escapeHtml(p.asin)}</span></span>`,
       ];
@@ -148,6 +161,7 @@ async function init() {
       if (p.estimated_monthly_sales) meta.push(`<span><span class="label">Ventas/m:</span> <span class="value">${Number(p.estimated_monthly_sales).toLocaleString()}</span></span>`);
       if (p.estimated_monthly_revenue) meta.push(`<span><span class="label">Revenue/m:</span> <span class="value">$${Number(p.estimated_monthly_revenue).toLocaleString()}</span></span>`);
       if (p.net_margin_percent) meta.push(`<span><span class="label">Margen:</span> <span class="value">${p.net_margin_percent}%</span></span>`);
+      if (competition) meta.push(`<span><span class="label">Competencia:</span> <span class="value">${escapeHtml(COMPETITION_LABELS[competition] ?? competition)}</span></span>`);
 
       card.innerHTML = `<div class="product-title">${escapeHtml(p.title || "Unknown")}</div><div class="product-meta">${meta.join("")}</div>`;
       list.appendChild(card);
