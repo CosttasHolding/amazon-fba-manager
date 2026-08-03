@@ -7,6 +7,7 @@ import { getOrgId } from "@/lib/api-handler";
 import { apiErrorResponse } from "@/lib/api-utils";
 import { calculateScore } from "@/lib/research/scoring";
 import type { ScoringInput } from "@/lib/research/types";
+import { competitionLevelFromScore } from "@/lib/research/competition";
 
 const capturedProductSchema = z.object({
   asin: z.string().max(20),
@@ -89,6 +90,8 @@ export async function POST(req: NextRequest) {
         name: p.title || "Unknown",
         asin_reference: p.asin,
         amazon_category: p.category ?? "",
+        niche: p.category ?? null,
+        competition_level: hasData ? competitionLevelFromScore(scoring.dimensions.competencia.score) : null,
         estimated_monthly_sales: p.estimated_monthly_sales ?? null,
         average_price: p.price ?? null,
         review_count_competitor: p.review_count ?? null,

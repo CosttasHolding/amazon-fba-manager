@@ -205,4 +205,37 @@ describe("POST /api/research/capture", () => {
     expect(updated.score).toBeGreaterThan(0);
     expect(updated.source_data.score_details).toBeDefined();
   });
+
+  it("completa niche con la categoria y deriva competition_level de la captura", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({ resultData: [{ id: "new-id", name: "Test Product" }] });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify(validPayload),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(201);
+    const inserted = mockInsert.mock.calls[0][0];
+    expect(inserted.niche).toBe("Sports & Fitness");
+    expect(inserted.competition_level).toBeDefined();
+    expect(["very_low", "low", "medium", "high", "very_high"]).toContain(inserted.competition_level);
+    const compScore = inserted.source_data.score_details.competencia.score;
+    expect(compScore).toBeGreaterThanOrEqual(0);
+    expect(compScore).toBeLessThanOrEqual(100);
+  });
+
+  it("guarda competition_level null cuando no hay datos", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({ resultData: [{ id: "new-id", name: "Sin datos" }] });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify({ products: [{ asin: "B0EMPTY123", title: "Sin datos" }], mode: "scraper" }),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(201);
+    const inserted = mockInsert.mock.calls[0][0];
+    expect(inserted.competition_level).toBeNull();
+  });
 });
