@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { numField, fmtCompact } from "@/lib/research/card-data";
+import { numField, fmtCompact, scoreRank, competitionBadgeClass } from "@/lib/research/card-data";
 
 describe("numField", () => {
   it("lee números", () => {
@@ -25,5 +25,46 @@ describe("fmtCompact", () => {
 
   it("no inventa sufijo para números chicos", () => {
     expect(fmtCompact(50, "en-US")).toBe("50");
+  });
+});
+
+describe("scoreRank", () => {
+  it("high para score >= 70", () => {
+    expect(scoreRank(70)).toBe("high");
+    expect(scoreRank(100)).toBe("high");
+  });
+
+  it("mid para 40-69", () => {
+    expect(scoreRank(69)).toBe("mid");
+    expect(scoreRank(40)).toBe("mid");
+  });
+
+  it("low para < 40", () => {
+    expect(scoreRank(39)).toBe("low");
+    expect(scoreRank(0)).toBe("low");
+  });
+
+  it("low si no hay score", () => {
+    expect(scoreRank(-1)).toBe("low");
+  });
+});
+
+describe("competitionBadgeClass", () => {
+  const levels = ["very_low", "low", "medium", "high", "very_high"];
+  it("devuelve una clase para cada nivel", () => {
+    for (const level of levels) {
+      expect(competitionBadgeClass(level)).toContain("text-");
+      expect(competitionBadgeClass(level)).toContain("bg-");
+    }
+  });
+
+  it("cada nivel tiene un color distinto", () => {
+    const colors = levels.map((l) => competitionBadgeClass(l));
+    expect(new Set(colors).size).toBe(5);
+  });
+
+  it("niveles extremos son opuestos", () => {
+    expect(competitionBadgeClass("very_low")).toContain("emerald");
+    expect(competitionBadgeClass("very_high")).toContain("rose");
   });
 });
