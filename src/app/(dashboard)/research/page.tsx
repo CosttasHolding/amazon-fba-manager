@@ -4,6 +4,8 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { researchSchema, type ResearchFormData } from "@/validations/research";
 import {
   FlaskConical,
@@ -12,17 +14,15 @@ import {
   List,
   Search,
   Filter,
-  TrendingUp,
-  Star,
-  DollarSign,
   Trash2,
   Sparkles,
-  BarChart3,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProductAnalyzer } from "@/components/research/product-analyzer";
 import { DeepDivePanel } from "@/components/research/deep-dive-panel";
+import { ResearchCard } from "@/components/research/research-card";
+import { STATUS_CONFIG, STATUS_ORDER, PRIORITY_COLORS } from "@/components/research/research-card-config";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -34,7 +34,6 @@ import {
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PaginationControl } from "@/components/ui/pagination-control";
@@ -47,62 +46,9 @@ import { t, type Locale } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { FormDialogLayout, FormDialogFooter } from "@/components/ui/form-dialog";
 import { inputClass, labelClass } from "@/lib/form-constants";
-import { numField, fmtCompact } from "@/lib/research/card-data";
 
 type ViewMode = "kanban" | "list";
 type FilterStatus = "all" | ProductResearch["status"];
-
-const STATUS_CONFIG: Record<string, { color: string; border: string; bg: string }> = {
-  idea: { color: "text-slate-400", border: "border-slate-500/20", bg: "bg-slate-500/5" },
-  validating: { color: "text-amber-400", border: "border-amber-500/20", bg: "bg-amber-500/5" },
-  approved: { color: "text-cyan-400", border: "border-cyan-500/20", bg: "bg-cyan-500/5" },
-  in_progress: { color: "text-purple-400", border: "border-purple-500/20", bg: "bg-purple-500/5" },
-  launched: { color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-500/5" },
-  rejected: { color: "text-rose-400", border: "border-rose-500/20", bg: "bg-rose-500/5" },
-};
-
-const STATUS_ORDER = ["idea", "validating", "approved", "in_progress", "launched", "rejected"];
-
-const PRIORITY_COLORS: Record<number, string> = {
-  1: "text-rose-400 bg-rose-500/10 border-rose-500/20",
-  2: "text-amber-400 bg-amber-500/10 border-amber-500/20",
-  3: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
-  4: "text-slate-400 bg-slate-500/10 border-slate-500/20",
-  5: "text-slate-500 bg-slate-500/5 border-slate-500/10",
-};
-
-function scoreBadgeClass(score: number): string {
-  if (score >= 70) return "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
-  if (score >= 40) return "text-amber-500 bg-amber-500/10 border-amber-500/20";
-  return "text-rose-500 bg-rose-500/10 border-rose-500/20";
-}
-
-function sourceBadges(item: ProductResearch, locale: Locale) {
-  const sd = item.source_data as Record<string, unknown> | null | undefined;
-  const bsr = item.bsr ?? numField(sd, "bsr");
-  const sales = numField(sd, "estimated_monthly_sales");
-  const revenue = numField(sd, "estimated_monthly_revenue");
-  const margin = numField(sd, "net_margin_percent");
-  const health = numField(sd, "listing_health_score");
-
-  const badges: { text: string; className: string }[] = [];
-  if (bsr !== null && bsr > 0) {
-    badges.push({ text: `${t("research.card.bsr", locale)} #${bsr}`, className: "text-primary bg-primary/10" });
-  }
-  if (sales !== null && sales > 0) {
-    badges.push({ text: `~${fmtCompact(sales, locale)} ${t("research.card.sales_month", locale)}`, className: "text-violet-500 bg-violet-500/10" });
-  }
-  if (revenue !== null && revenue > 0) {
-    badges.push({ text: `$${fmtCompact(revenue, locale)}${t("research.card.revenue_month", locale)}`, className: "text-cyan-500 bg-cyan-500/10" });
-  }
-  if (margin !== null) {
-    badges.push({ text: `${t("research.card.margin", locale)} ${margin}%`, className: "text-emerald-500 bg-emerald-500/10" });
-  }
-  if (health !== null) {
-    badges.push({ text: `${t("research.card.health", locale)} ${health}`, className: "text-sky-500 bg-sky-500/10" });
-  }
-  return badges;
-}
 
 export default function ResearchPage() {
   const { locale } = useLocale();
@@ -114,6 +60,8 @@ export default function ResearchPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  const [filterCompetition, setFilterCompetition] = useState<"all" | CompetitionLevel>("all");
+  const [filterScore, setFilterScore] = useState<"all" | "high" | "mid" | "low">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = DEFAULT_PAGE_SIZE;
   const [showModal, setShowModal] = useState(false);
@@ -168,7 +116,7 @@ export default function ResearchPage() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { setCurrentPage(1); }, [debouncedSearch, filterStatus]);
+  useEffect(() => { setCurrentPage(1); }, [debouncedSearch, filterStatus, filterCompetition, filterScore]);
 
   const filtered = useMemo(() => {
     let result = items;
@@ -181,8 +129,17 @@ export default function ResearchPage() {
       );
     }
     if (filterStatus !== "all") result = result.filter((i) => i.status === filterStatus);
+    if (filterCompetition !== "all") result = result.filter((i) => i.competition_level === filterCompetition);
+    if (filterScore !== "all") {
+      result = result.filter((i) => {
+        if (i.score == null) return false;
+        if (filterScore === "high") return i.score >= 70;
+        if (filterScore === "mid") return i.score >= 40 && i.score < 70;
+        return i.score < 40;
+      });
+    }
     return result;
-  }, [items, debouncedSearch, filterStatus]);
+  }, [items, debouncedSearch, filterStatus, filterCompetition, filterScore]);
 
   const byStatus = useMemo(() => {
     const map: Record<string, ProductResearch[]> = {};
@@ -195,6 +152,22 @@ export default function ResearchPage() {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filtered.slice(start, start + ITEMS_PER_PAGE);
   }, [filtered, currentPage, ITEMS_PER_PAGE]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+    const item = items.find((i) => i.id === active.id);
+    if (!item || over.id === active.id) return;
+    const target = over.data.current?.columnId as string | undefined;
+    const targetStatus = target ?? (String(over.id) as string);
+    if (targetStatus && targetStatus !== item.status) {
+      handleStatusChange(item, targetStatus);
+    }
+  };
 
   const onSubmit = async (data: ResearchFormData) => {
     setSaving(true);
@@ -357,7 +330,7 @@ export default function ResearchPage() {
         <div className="flex items-center gap-1.5">
           <Filter className="h-3.5 w-3.5 text-muted-foreground" />
           <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
-            <SelectTrigger className="h-9 bg-muted/50 border-border text-sm w-[180px]">
+            <SelectTrigger className="h-9 bg-muted/50 border-border text-sm w-[150px]">
               <SelectValue placeholder={t("common.all_statuses", locale)} />
             </SelectTrigger>
             <SelectContent>
@@ -367,80 +340,70 @@ export default function ResearchPage() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={filterCompetition} onValueChange={(v) => setFilterCompetition(v as "all" | CompetitionLevel)}>
+            <SelectTrigger className="h-9 bg-muted/50 border-border text-sm w-[150px]">
+              <SelectValue placeholder={t("research.filter.competition", locale)} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("common.all", locale)}</SelectItem>
+              {["very_low", "low", "medium", "high", "very_high"].map((l) => (
+                <SelectItem key={l} value={l}>{t("research.competition." + l, locale)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterScore} onValueChange={(v) => setFilterScore(v as "all" | "high" | "mid" | "low")}>
+            <SelectTrigger className="h-9 bg-muted/50 border-border text-sm w-[150px]">
+              <SelectValue placeholder={t("research.filter.score_range", locale)} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("research.filter.score_all", locale)}</SelectItem>
+              <SelectItem value="high">{t("research.filter.score_high", locale)}</SelectItem>
+              <SelectItem value="mid">{t("research.filter.score_mid", locale)}</SelectItem>
+              <SelectItem value="low">{t("research.filter.score_low", locale)}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       {view === "kanban" && (
-        <div className="flex gap-3 overflow-x-auto pb-2">
-          {STATUS_ORDER.map((status) => {
-            const columnItems = byStatus[status] || [];
-            const cfg = STATUS_CONFIG[status];
-            return (
-              <div key={status} className={cn("min-w-[260px] w-[260px] rounded-2xl border p-3 space-y-2", cfg.border, cfg.bg)}>
-                <div className="flex items-center justify-between px-1">
-                  <span className={cn("text-xs font-semibold uppercase tracking-wider", cfg.color)}>{t("research.status." + status, locale)}</span>
-                  <span className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">{columnItems.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {columnItems.map((item) => (
-                    <div key={item.id} className="rounded-xl border border-border bg-card p-3 space-y-2 hover:shadow-sm transition-shadow cursor-pointer group" onClick={() => openEdit(item)}>
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-medium text-foreground leading-tight line-clamp-2">{item.name}</p>
-                        <span className={cn("shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium border", PRIORITY_COLORS[item.priority] || PRIORITY_COLORS[3])}>P{item.priority}</span>
-                      </div>
-                      {item.niche && <p className="text-[10px] text-muted-foreground">{item.niche}</p>}
-                      <div className="flex flex-wrap gap-2">
-                        {item.estimated_roi !== null && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                            <TrendingUp className="h-2.5 w-2.5" /> {item.estimated_roi}%
-                          </span>
-                        )}
-                        {item.estimated_cogs !== null && item.estimated_selling_price !== null && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">
-                            <DollarSign className="h-2.5 w-2.5" /> ${item.estimated_selling_price}
-                          </span>
-                        )}
-                        {item.competition_level && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                            <Star className="h-2.5 w-2.5" /> {t("research.competition." + item.competition_level, locale)}
-                          </span>
-                        )}
-                        {item.score != null && (
-                          <span className={cn("inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border", scoreBadgeClass(item.score))}>
-                            <BarChart3 className="h-2.5 w-2.5" /> {t("research.card.score", locale)} {item.score}
-                          </span>
-                        )}
-                        {sourceBadges(item, locale).map((b) => (
-                          <span key={b.text} className={cn("inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded", b.className)}>
-                            {b.text}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-[10px] text-muted-foreground">{new Date(item.created_at).toLocaleDateString(locale === "en" ? "en-US" : "es-ES")}</span>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setDeepDiveProduct(item); }} className="min-w-[44px] min-h-[44px]">
-                            <Sparkles className="h-4 w-4" />
-                          </Button>
-                          <Select value={item.status} onValueChange={(v) => handleStatusChange(item, v)}>
-                            <SelectTrigger className="h-9 text-xs bg-muted/50 border-border px-2 py-1 min-w-[44px] min-h-[44px]" onClick={(e) => e.stopPropagation()}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {STATUS_ORDER.map((s) => (
-                                <SelectItem key={s} value={s}>{t("research.status." + s, locale)}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+          <div className="flex gap-3 overflow-x-auto pb-2 items-start">
+            {STATUS_ORDER.map((status) => {
+              const columnItems = byStatus[status] || [];
+              const cfg = STATUS_CONFIG[status];
+              return (
+                <div
+                  key={status}
+                  data-column={status}
+                  className={cn("flex flex-col w-[240px] min-w-[240px] max-h-[calc(100vh-320px)] rounded-2xl border p-3", cfg.border, cfg.bg)}
+                >
+                  <div className="flex items-center justify-between px-1 pb-2 shrink-0">
+                    <span className={cn("text-xs font-semibold uppercase tracking-wider", cfg.color)}>{t("research.status." + status, locale)}</span>
+                    <span className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">{columnItems.length}</span>
+                  </div>
+                  <SortableContext items={columnItems.map((i) => i.id)} strategy={rectSortingStrategy}>
+                    <div className="space-y-2 overflow-y-auto flex-1 pr-1" data-column-drop={status}>
+                      {columnItems.length === 0 ? (
+                        <p className="text-[10px] text-muted-foreground text-center py-4">{t("common.empty_column", locale)}</p>
+                      ) : (
+                        columnItems.map((item) => (
+                          <ResearchCard
+                            key={item.id}
+                            item={item}
+                            locale={locale}
+                            onEdit={openEdit}
+                            onDeepDive={setDeepDiveProduct}
+                            onStatusChange={handleStatusChange}
+                          />
+                        ))
+                      )}
                     </div>
-                  ))}
+                  </SortableContext>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </DndContext>
       )}
 
       {view === "list" && (

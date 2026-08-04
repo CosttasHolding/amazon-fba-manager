@@ -360,6 +360,7 @@
   "common.days": "days",
   "common.delete": "Delete",
   "common.edit": "Edit",
+  "common.empty_column": "No products",
   "common.error": "Error",
   "common.error_exporting": "Error exporting",
   "common.error_load_data": "Error loading data",

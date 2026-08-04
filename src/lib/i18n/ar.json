@@ -360,6 +360,7 @@
   "common.days": "أيام",
   "common.delete": "حذف",
   "common.edit": "تعديل",
+  "common.empty_column": "لا توجد منتجات",
   "common.error": "خطأ",
   "common.error_exporting": "خطأ في التصدير",
   "common.error_load_data": "خطأ في تحميل البيانات",
