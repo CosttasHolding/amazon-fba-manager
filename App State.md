@@ -1,13 +1,13 @@
 ---
 ultima_actualizacion: 2026-08-03
-estado: estable, main al dia; extension detecta AMZScout (custom element) + reader AMZScout (ventas/revenue/margen) + reader H10 (BSR + listing health score) + boton Reload + scraper fixeado + mode honesto + observer re-colecta cuando el overlay se llena async + captura solo el producto de la pagina en producto (fix "muchisimos productos") + capture route persiste score enriquecido + cards kanban muestran score/BSR/ventas/revenue/margen/health
+estado: estable, main al dia; extension detecta AMZScout (custom element) + reader AMZScout (ventas/revenue/margen/niche_score) + reader H10 (BSR + listing health score) + boton Reload + scraper fixeado + mode honesto + observer re-colecta cuando el overlay se llena async + captura solo el producto de la pagina en producto (fix "muchisimos productos") + capture route persiste score enriquecido + **competencia en 5 niveles (very_low..very_high)** en capture/UI/popup + cards kanban muestran score/BSR/ventas/revenue/margen/health
 version: 2.0.0
 branch: main
 deploy: https://amazon-fba-manager-virid.vercel.app
 build: 0 errores, warnings no bloqueantes
-tests: 255 pasando (vitest)
+tests: 268 pasando (vitest)
 tsc: 0 errores
-db_migrations: aplicadas (source_data + score confirmadas en prod)
+db_migrations: aplicadas (source_data + score + 031 competition 5 niveles CONFIRMADAS en prod)
 ---
 
 # App State
@@ -23,8 +23,8 @@ db_migrations: aplicadas (source_data + score confirmadas en prod)
 ## Git
 
 - **Branch**: main
-- **Ultimos commits**: `4b4bfbe` (plan research), `ff0c895` (badges kanban), `bf7b644` (i18n card), `0260bed` (capture route score), `9413ba3` (columna score), `592e6c5` (spec research), `c0257b4` (fixes extension 10ma-13va parte) — todos pusheados a origin/main
-- **Working tree**: LIMPIO salvo vault (daily note 08-03 + updates)
+- **Last commits**: `85bfcd1` (UI badge kanban 5 niveles), `2cc76b1` (reader AMZScout niche_score), `e04c183` (capture niche + competition_level), `176b86c` (i18n very_low/very_high), `bd23c16` (CompetitionLevel 5 + zod + migracion 031), `24fce3e` (competitionLevelFromScore), `0233f3f`..`4b4bfbe` (research score previo) — pendientes de push
+- **Working tree**: vault (checkpoint + daily 08-03 actualizados) — sin commits de feature pendientes
 
 ## Build
 
@@ -54,6 +54,7 @@ db_migrations: aplicadas (source_data + score confirmadas en prod)
 - Capacitor para mobile (iOS/Android)
 - Motor de Investigacion de Productos: Chrome Extension + scoring engine + deep dive Grok (2026-07-31; migrado de GPT-4o a xAI grok-4.5 el 2026-08-01)
 - **Score enriquecido al capturar + source_data visible en cards kanban (2026-08-03)**: `POST /api/research/capture` persiste `score` (columna) + `score_details` (dimensiones) en source_data; cards kanban muestran Score/BSR/ventas/m/revenue/m/margen/health con helpers puros `card-data.ts`
+- **Competencia en 5 niveles + niche (2026-08-03)**: `CompetitionLevel` pasa de 3 a 5 valores (`very_low`/`low`/`medium`/`high`/`very_high`); helper puro `competitionLevelFromScore` + migracion `031`; capture completa `niche` (categoria) y deriva `competition_level`; i18n `research.competition.*` en es/en/ar; modal con 5 opciones + badge kanban traducido; extension parsea `niche_score` de los totals de AMZScout; popup deriva y muestra la competencia localmente (port de `competenciaScore`)
 
 ## Features en progreso
 
@@ -64,6 +65,7 @@ db_migrations: aplicadas (source_data + score confirmadas en prod)
   - **Scraper de producto**: BSR/categoria/brand gratis del DOM de Amazon (`#prodDetails`, `#bylineInfo`)
   - **Pendiente**: usuario verifique E2E (Reload + F5 + producto con AMZScout logueado → 1 solo producto con ventas/revenue/margen)
 - **Research con score enriquecido (2026-08-03)**: `POST /api/research/capture` calcula `calculateScore()` con el source_data completo y persiste `score` (columna) + `score_details` (dimensiones en source_data); las cards kanban muestran badge de Score + BSR/ventas/m/revenue/m/margen/listing health solo si existen. Commits `9413ba3`..`ff0c895`
+- **Competencia 5 niveles (2026-08-03, commits `24fce3e`..`85bfcd1`)**: capture + i18n + UI + extension + popup — **PENDIENTE: aplicar migracion `031_competition_5_levels.sql` en prod** y verificacion E2E con AMZScout (Niche Score → badge de competencia)
 - **Deep dive Grok bloqueado**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c + agregar XAI_API_KEY en Vercel prod
 - API keys OpenAI y xAI expuestas en chat 2026-08-01 — pendiente rotacion
 - Zod validation en SP-API / Drive / Cron routes (MEDIUM)

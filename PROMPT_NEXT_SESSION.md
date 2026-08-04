@@ -2,6 +2,19 @@
 
 ---
 
+## FILOSOFIA DE TRABAJO (2026-08-03)
+
+- **Prioridad**: terminar TODA la app primero; los pagos/membresías (xAI, etc.) se pagan DESPUÉS, al final.
+- **Objetivo**: dejar todo armado de modo que el único paso pendiente sea pegar una API key (nada más).
+- **PENDIENTES BLOQUEADOS POR FALTA DE API KEY** (NO recordar al usuario hasta que ÉL de la key/usuario avise):
+  - Deep dive Grok (necesita `XAI_API_KEY` cargada + créditos) y agregar esa var en Vercel prod.
+  - Probar el deep dive end-to-end en prod.
+  - Rotar las keys de OpenAI y xAI (expuestas en chat 08-01) — rotar A PROPÓSITO cuando el usuario pida. Siempre pedir antes de tocar.
+  - Si algo requiere un servicio pagado/membresía, anotarlo aqui y avanzar con lo demás.
+- **No recordar la lista de arriba**. Solo volver a trabajarla cuando el usuario la pida.
+
+---
+
 ## Ultima sesion
 
 - **Fecha**: 2026-08-03 (sesion que cruzo la medianoche del 08-02)
@@ -16,20 +29,28 @@
   - **Push a origin/main**: 7 commits (deploy a Vercel)
   - **USUARIO aplico la migracion `030_add_score.sql` en Supabase prod** (columna `score` confirmada)
   - Verificacion: tsc 0 | lint solo warnings pre-existentes | **255/255 tests** | build OK
+- **Fecha**: 2026-08-03 (segunda sesion) — **nicho + competencia en 5 niveles**
+  - **Resumen**: `CompetitionLevel` de 3 → 5 valores (`very_low`..`very_high`); helper puro `competitionLevelFromScore` + test; migracion `031_competition_5_levels.sql`; capture completa `niche` (categoria) y deriva `competition_level` (2 tests nuevos); i18n `research.competition.very_low/very_high` en es/en/ar; modal con 5 opciones + badge kanban traducido; extension parsea `niche_score` de totals AMZScout; popup deriva competencia localmente (port de `competenciaScore` en `popup/competition.ts`, no puede importar `@/lib`)
+  - **Commits** (`24fce3e`..`bd3d511`): `24fce3e` helper, `bd23c16` types+zod+031, `e04c183` capture, `176b86c` i18n, `85bfcd1` UI, `2cc76b1` reader niche_score, `bd3d511` popup
+  - **SDD por tareas**: tasks 1-6 con implementers + reviewers (todos clean), 7-8 hechos directo con verificacion (tsc/lint/tests/build/extension)
+  - **Verificacion final**: tsc 0 | lint solo warnings | **268/268 tests** (35 archivos) | build OK | build:extension OK | copia personal `exteRB` sincronizada
+  - **PENDIENTE**: aplicar migracion `031` en Supabase prod + verificacion E2E con AMZScout
 
 ## Estado actual
 
 Leer `App State.md` para el snapshot completo. Puntos clave:
 - Motor de Investigacion funcional: extension -> capture -> scoring -> deep dive (LLM = xAI Grok `grok-4.5`)
-- **Extension = recolector multi-fuente** (H10/AMZScout/Keepa): lee overlays + BSR/categoria/brand gratis del DOM de Amazon. Fixes 10ma-13va commiteados y pusheados. Copia personal `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\exteRB\` sincronizada (content.js 13.5KB)
+- **Extension = recolector multi-fuente** (H10/AMZScout/Keepa): lee overlays + BSR/categoria/brand gratis del DOM de Amazon. Fixes 10ma-13va commiteados y pusheados. Copia personal `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\exteRB\` sincronizada (content.js 13.6KB). **Lee el Niche Score de los totals de AMZScout** (`niche_score`)
 - **Score enriquecido ya funciona end-to-end**: capture route calcula y persiste; cards kanban muestran los badges
+- **Competencia en 5 niveles YA esta en el codigo**: capture deriva `competition_level` (very_low..very_high) desde `competenciaScore`; modal + badge kanban traducidos; popup deriva competencia localmente. **PENDIENTE: aplicar migracion `031_competition_5_levels.sql` en prod + verificar E2E**
 - **Bloqueante deep dive**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c
 - **XAI_API_KEY solo en .env.local** — falta agregarla en Vercel (prod)
 
 ## Proximos pasos
 
 ### 1. USUARIO debe hacer
-- **Verificar la extension E2E**: boton `🔄 Reload` del popup + F5 → abrir un producto con AMZScout logueado, ESPERAR a que cargue → el popup deberia mostrar **1 solo producto** (el abierto) con Ventas/m + Revenue/m + Margen → Enviar → verificar que `/api/research/capture` reciba el ASIN con ventas/revenue/margen + datos H10. La card kanban deberia mostrar el badge de Score
+- **Aplicar la migracion `031_competition_5_levels.sql` en Supabase prod** (actualiza el CHECK constraint de `competition_level` para aceptar los 5 valores)
+- **Verificar la extension E2E**: boton `🔄 Reload` del popup + F5 → abrir un producto con AMZScout logueado, ESPERAR a que cargue → el popup deberia mostrar **1 solo producto** con Ventas/m + Revenue/m + Margen + **Competencia (Very low..Muy alta)** → Enviar → verificar la card kanban con el badge de competencia
 - **Cargar creditos/licencias xAI** — sin esto el deep dive tira 403 (https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c)
 - **Agregar XAI_API_KEY en Vercel** (Settings → Environment Variables)
 - **Rotar las API keys AL CARGAR CREDITOS** — decision tomada (riesgo bajo hoy, keys sin creditos)
@@ -49,18 +70,22 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 
 ## Archivos clave
 
-- `src/app/api/research/capture/route.ts` — calcula y persiste `score` + `score_details`; gate `hasData` (null si no hay datos)
+- `src/app/api/research/capture/route.ts` — calcula y persiste `score` + `score_details`; completa `niche` y deriva `competition_level` (5 niveles); gate `hasData` (null si no hay datos)
 - `src/lib/research/scoring.ts` — `calculateScore` (inmutable, solo se consume)
+- `src/lib/research/competition.ts` — `competitionLevelFromScore` (score de competencia → 5 niveles)
 - `src/lib/research/card-data.ts` — `numField` / `fmtCompact` (helpers de badges)
-- `src/app/(dashboard)/research/page.tsx` — badges en cards kanban (`scoreBadgeClass`, `sourceBadges`)
+- `src/app/(dashboard)/research/page.tsx` — badges en cards kanban (`scoreBadgeClass`, `sourceBadges`) + modal con 5 niveles de competencia
 - `supabase/migrations/030_add_score.sql` — columna score (APLICADA en prod)
-- `src/chrome-extension/content/overlay-reader.ts` — `readAMZScout` (tabla + totals + fallbackAsin), `readH10Summary` (shadow root)
+- `supabase/migrations/031_competition_5_levels.sql` — CHECK constraint 5 niveles (PENDIENTE aplicar en prod)
+- `src/chrome-extension/content/overlay-reader.ts` — `readAMZScout` (tabla + totals + niche_score + fallbackAsin), `readH10Summary` (shadow root)
 - `src/chrome-extension/content/sources.ts` — deteccion + `overlayContentFingerprint()`
 - `src/chrome-extension/content/content.ts` — merge multi-fuente + observer
-- `src/chrome-extension/popup/popup.{ts,html,css}` — boton Reload + tool de debug
+- `src/chrome-extension/popup/popup.ts` — deriva y muestra competencia (badge "Competencia") + boton Reload + tool de debug
+- `src/chrome-extension/popup/competition.ts` — `competitionLevelFromCaptured` (port de `competenciaScore` para el popup, que no puede importar `@/lib`)
 - `src/lib/ai/client.ts` — `getXAIClient()` (OpenAI SDK → xAI baseURL)
 - `.env.local` — XAI_API_KEY (gitignored)
 - Spec/plan: `docs/superpowers/specs/2026-08-02-research-score-source-data-ui-design.md` y `docs/superpowers/plans/2026-08-02-research-score-source-data-ui.md`
+- Plan nicho/competencia: `docs/superpowers/plans/2026-08-03-niche-competition-5-levels.md` (spec `7d13429`, base `23f4f99`)
 - Temp (fuera de repo): `C:\Users\Nacho\AppData\Local\Temp\opencode\` → `get_crx.py`, `live_capture.py`, `bsr_html.py`, `verify_bsr.py`, `ext-src\{amzscout,keepa}` (CRX oficiales extraidos), `pw7-profile` (perfil persistente que evita el anti-bot)
 
 ## Comandos
@@ -69,7 +94,7 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 npm run dev              # Desarrollo
 npm run build            # Build produccion
 npm run lint             # Linting
-npm run test:run         # Tests (255)
+npm run test:run         # Tests (268)
 npm run build:extension  # Regenerar exteRB (public/exteRB)
 npx tsc --noEmit         # Typecheck (0 errores esperados)
 ```

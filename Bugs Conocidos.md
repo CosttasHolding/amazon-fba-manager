@@ -1,7 +1,7 @@
 ---
 tipo: tracking
 tags: [bug, problemas]
-ultima_actualizacion: 2026-08-01
+ultima_actualizacion: 2026-08-03
 ---
 
 # Bugs Conocidos
@@ -24,8 +24,12 @@ ultima_actualizacion: 2026-08-01
 - **Fecha**: 2026-08-03
 - **Sintoma**: el score de captura queda "stale" — si se editan ventas/precio/BSR desde el modal de edicion (o via `POST /api/research` del analyzer/deep dive), la columna `score` y `score_details` no se recalculan y la card muestra un score que ya no refleja los datos editados
 - **Causa**: `calculateScore()` solo se invoca en `POST /api/research/capture`. `PUT /api/research` y `POST /api/research` (rutas de edicion) no lo tocan
-- **Estado**: follow-up MEDIUM registrado (fuera de scope del spec original, que solo cubria el capture). Fix propuesto: recalcular en PUT (mergear row existente + payload a traves de `toScoringInput`) o documentar `score` como snapshot de captura
+- **Estado**: follow-up MEDIUM registrado (fuera de scope del spec original, que solo cubria el capture). Fix propuesto: recalcular en PUT (mergear row existente + payload a traves de `toScoringInput`) o documentar `score` como snapshot de captura. **APLICA TAMBIEN a `competition_level`** (no se recalcula al editar)
 - **Referencia**: final review del 2026-08-03, finding Important #1
+
+### Verificacion E2E pendiente: competencia 5 niveles + Niche Score (2026-08-03)
+- **Estado**: la feature esta completa y verificada con tests (268/268), pero falta E2E real con AMZScout logueado
+- **Pendiente**: (1) aplicar migracion `031_competition_5_levels.sql` en Supabase prod; (2) verificar que el Niche Score de los totals de AMZScout se captura y deriva el badge de competencia (very_low..very_high) en el popup y en la card kanban
 
 ---
 
