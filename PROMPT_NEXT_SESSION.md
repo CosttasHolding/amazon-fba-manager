@@ -35,6 +35,12 @@
   - **SDD por tareas**: tasks 1-6 con implementers + reviewers (todos clean), 7-8 hechos directo con verificacion (tsc/lint/tests/build/extension)
   - **Verificacion final**: tsc 0 | lint solo warnings | **268/268 tests** (35 archivos) | build OK | build:extension OK | copia personal `exteRB` sincronizada
   - **PENDIENTE**: aplicar migracion `031` en Supabase prod + verificacion E2E con AMZScout
+- **Fecha**: 2026-08-03 (tercera sesion) — **rediseno de la vista Research (kanban 2.0)**
+  - **Resumen**: grilla de tarjetas compactas por estado con scroll interno, drag & drop entre estados con **@dnd-kit** y filtros combinables. Opcion "C" del brainstorm + "columnas por estado + drop"
+  - **Commits** (`2331831`..`c7daede`): `2331831` spec, `adbcc91` plan (5 fases), `aa51efd` Fase 1 (i18n filtros + helpers `scoreRank`/`competitionBadgeClass` + tests 12), `c7daede` Fases 2-4 (kanban redisenado)
+  - **Cambios**: `ResearchCard` (`research-card.tsx`, `useSortable`, score destacado verde/ámbar/rojo, badge competencia por color, línea metrics ROI/ventas-m/revenue-m/margen, drag handle `GripVertical`, Select status); config centralizada `research-card-config.ts` (`STATUS_ORDER`/`STATUS_CONFIG`/`PRIORITY_COLORS`/`scoreBadgeClass`); `page.tsx` con `DndContext` + `SortableContext` + columnas `w-[240px] max-h-[calc(100vh-320px)]` con scroll; filtros combinables (búsqueda + estado + competencia + rango score); i18n `common.empty_column` en es/en/ar
+  - **Ejecucion**: fases 2-4 hechas directo (no SDD subagentes) por confiabilidad sobre el mismo archivo de 669 líneas
+  - **Verificacion final**: tsc 0 | lint solo warnings pre-existentes | **275/275 tests** | build OK (research 30.8 kB) | **PENDIENTE push**
 
 ## Estado actual
 
@@ -43,6 +49,7 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 - **Extension = recolector multi-fuente** (H10/AMZScout/Keepa): lee overlays + BSR/categoria/brand gratis del DOM de Amazon. Fixes 10ma-13va commiteados y pusheados. Copia personal `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\exteRB\` sincronizada (content.js 13.6KB). **Lee el Niche Score de los totals de AMZScout** (`niche_score`)
 - **Score enriquecido ya funciona end-to-end**: capture route calcula y persiste; cards kanban muestran los badges
 - **Competencia en 5 niveles YA esta en el codigo**: capture deriva `competition_level` (very_low..very_high) desde `competenciaScore`; modal + badge kanban traducidos; popup deriva competencia localmente. **PENDIENTE: aplicar migracion `031_competition_5_levels.sql` en prod + verificar E2E**
+- **Kanban redisenado YA esta en el codigo**: grilla compacta 240px con scroll interno, drag & drop entre estados (dnd-kit), filtros combinables (búsqueda+estado+competencia+rango score). Pendiente verificar en prod con datos reales
 - **Bloqueante deep dive**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c
 - **XAI_API_KEY solo en .env.local** — falta agregarla en Vercel (prod)
 
@@ -60,6 +67,8 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 - **[MEDIUM] Score stale en ediciones manuales**: `PUT /api/research` y el modal de edicion no recalculan `score` — un producto editado a mano queda con score de captura viejo. Recalcular en PUT (mergear row existente + payload) o documentar como snapshot de captura
 - **[MEDIUM] Reconsiderar**: los Minor findings del final review — i18n keys no alfabeticas, `key={b.text}` fragil, formatters re-creados, score en digitos occidentales en AR, test solo aserta 2/4 dimensiones, `scoreBadgeClass`/`sourceBadges` inline
 - Verificar que la card kanban renderice bien con datos reales capturados en prod (la migracion ya esta aplicada)
+- **Verificar el kanban redisenado en prod** con datos reales: drag & drop entre estados + filtros combinables (competencia/rango score) + scroll interno de columnas
+- **[LOW/IDEA]** En la tarjeta compacta nueva, el score destacado + badge competencia ya ayudan a detectar oportunidades; considerar si se quiere re-agregar badges extra (source) que la card anterior tenia via `sourceBadges`
 
 ### 3. Backlog (MEDIUM)
 - Zod validation en SP-API / Drive / Cron routes
@@ -73,7 +82,11 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 - `src/app/api/research/capture/route.ts` — calcula y persiste `score` + `score_details`; completa `niche` y deriva `competition_level` (5 niveles); gate `hasData` (null si no hay datos)
 - `src/lib/research/scoring.ts` — `calculateScore` (inmutable, solo se consume)
 - `src/lib/research/competition.ts` — `competitionLevelFromScore` (score de competencia → 5 niveles)
-- `src/lib/research/card-data.ts` — `numField` / `fmtCompact` (helpers de badges)
+- `src/lib/research/card-data.ts` — `numField` / `fmtCompact` / `scoreRank` / `competitionBadgeClass` (helpers de color/score)
+- `src/components/research/research-card.tsx` — tarjeta compacta kanban (useSortable dnd-kit, score destacado, badge competencia, drag handle)
+- `src/components/research/research-card-config.ts` — `STATUS_ORDER`/`STATUS_CONFIG`/`PRIORITY_COLORS`/`scoreBadgeClass`
+- `src/app/(dashboard)/research/page.tsx` — kanban redisenado (DndContext + columnas 240px con scroll) + filtros combinables (búsqueda/estado/competencia/rango score)
+- Spec/plan rediseno: `docs/superpowers/specs/2026-08-03-research-kanban-redesign-design.md` y `docs/superpowers/plans/2026-08-03-research-kanban-redesign.md`
 - `src/app/(dashboard)/research/page.tsx` — badges en cards kanban (`scoreBadgeClass`, `sourceBadges`) + modal con 5 niveles de competencia
 - `supabase/migrations/030_add_score.sql` — columna score (APLICADA en prod)
 - `supabase/migrations/031_competition_5_levels.sql` — CHECK constraint 5 niveles (PENDIENTE aplicar en prod)
@@ -94,7 +107,7 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 npm run dev              # Desarrollo
 npm run build            # Build produccion
 npm run lint             # Linting
-npm run test:run         # Tests (268)
+npm run test:run         # Tests (275)
 npm run build:extension  # Regenerar exteRB (public/exteRB)
 npx tsc --noEmit         # Typecheck (0 errores esperados)
 ```

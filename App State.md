@@ -1,11 +1,11 @@
 ---
 ultima_actualizacion: 2026-08-03
-estado: estable, main al dia; extension detecta AMZScout (custom element) + reader AMZScout (ventas/revenue/margen/niche_score) + reader H10 (BSR + listing health score) + boton Reload + scraper fixeado + mode honesto + observer re-colecta cuando el overlay se llena async + captura solo el producto de la pagina en producto (fix "muchisimos productos") + capture route persiste score enriquecido + **competencia en 5 niveles (very_low..very_high)** en capture/UI/popup + cards kanban muestran score/BSR/ventas/revenue/margen/health
+estado: estable, main al dia; extension detecta AMZScout (custom element) + reader AMZScout (ventas/revenue/margen/niche_score) + reader H10 (BSR + listing health score) + boton Reload + mode honesto + observer re-colecta cuando el overlay se llena async + captura solo el producto de la pagina en producto (fix "muchisimos productos") + capture route persiste score enriquecido + **competencia en 5 niveles (very_low..very_high)** en capture/UI/popup + **kanban redisenado (grilla compacta 240px con scroll, drag & drop dnd-kit, filtros combinables: búsqueda+estado+competencia+rango score)**
 version: 2.0.0
 branch: main
 deploy: https://amazon-fba-manager-virid.vercel.app
 build: 0 errores, warnings no bloqueantes
-tests: 268 pasando (vitest)
+tests: 275 pasando (vitest)
 tsc: 0 errores
 db_migrations: aplicadas (source_data + score + 031 competition 5 niveles CONFIRMADAS en prod)
 ---
@@ -23,8 +23,8 @@ db_migrations: aplicadas (source_data + score + 031 competition 5 niveles CONFIR
 ## Git
 
 - **Branch**: main
-- **Last commits**: `85bfcd1` (UI badge kanban 5 niveles), `2cc76b1` (reader AMZScout niche_score), `e04c183` (capture niche + competition_level), `176b86c` (i18n very_low/very_high), `bd23c16` (CompetitionLevel 5 + zod + migracion 031), `24fce3e` (competitionLevelFromScore), `0233f3f`..`4b4bfbe` (research score previo) — pendientes de push
-- **Working tree**: vault (checkpoint + daily 08-03 actualizados) — sin commits de feature pendientes
+- **Last commits**: `c7daede` (kanban redisenado con ResearchCard + dnd-kit + filtros), `aa51efd` (i18n filtros + helpers color competencia/score), `adbcc91` (plan rediseno), `2331831` (spec rediseno), `a6e2658`..`2cc76b1` (competencia 5 niveles + extension) — pendientes de push
+- **Working tree**: vault actualizado (checkpoint + daily 08-03) — sin commits de feature pendientes
 
 ## Build
 
@@ -55,6 +55,7 @@ db_migrations: aplicadas (source_data + score + 031 competition 5 niveles CONFIR
 - Motor de Investigacion de Productos: Chrome Extension + scoring engine + deep dive Grok (2026-07-31; migrado de GPT-4o a xAI grok-4.5 el 2026-08-01)
 - **Score enriquecido al capturar + source_data visible en cards kanban (2026-08-03)**: `POST /api/research/capture` persiste `score` (columna) + `score_details` (dimensiones) en source_data; cards kanban muestran Score/BSR/ventas/m/revenue/m/margen/health con helpers puros `card-data.ts`
 - **Competencia en 5 niveles + niche (2026-08-03)**: `CompetitionLevel` pasa de 3 a 5 valores (`very_low`/`low`/`medium`/`high`/`very_high`); helper puro `competitionLevelFromScore` + migracion `031`; capture completa `niche` (categoria) y deriva `competition_level`; i18n `research.competition.*` en es/en/ar; modal con 5 opciones + badge kanban traducido; extension parsea `niche_score` de los totals de AMZScout; popup deriva y muestra la competencia localmente (port de `competenciaScore`)
+- **Kanban redisenado con drag & drop (2026-08-03)**: grilla de tarjetas compactas por estado (`ResearchCard` en `research-card.tsx`), columnas `w-[240px] max-h-[calc(100vh-320px)]` con scroll interno, drag & drop entre estados con **@dnd-kit** (`PointerSensor` + `SortableContext` + `rectSortingStrategy`), score destacado (verde ≥70 / curioso / <40 via `scoreBadgeClass`), badge competencia por color (`competitionBadgeClass`, very_low emerald → very_high rose), línea única de metrics (ROI/ventas-m/revenue-m/margen), drag handle `GripVertical`, y **filtros combinables** (búsqueda + estado + competencia + rango de score). Config centralizada en `research-card-config.ts`. Commits `aa51efd` + `c7daede`
 
 ## Features en progreso
 
