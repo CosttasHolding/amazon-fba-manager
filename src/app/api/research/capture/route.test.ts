@@ -95,6 +95,7 @@ describe("POST /api/research/capture", () => {
     expect(mockInsert).toHaveBeenCalled();
     const inserted = mockInsert.mock.calls[0][0];
     expect(inserted.asin_reference).toBe("B0TEST1234");
+    expect(inserted.amazon_url).toBe("https://www.amazon.com/dp/B0TEST1234");
     expect(inserted.name).toBe("Test Product");
     expect(inserted.source).toBe("capture");
     expect(inserted.source_data.capture_mode).toBe("scraper");
@@ -113,6 +114,22 @@ describe("POST /api/research/capture", () => {
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockInsert).not.toHaveBeenCalled();
     expect(mockUpdateEq).toHaveBeenCalledWith("id", "existing-id");
+  });
+
+  it("autocompleta amazon_url con el ASIN en insert y update", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({ existing: { id: "existing-id" }, resultData: [{ id: "existing-id", name: "Test Product" }] });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify(validPayload),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(201);
+    const updated = mockUpdate.mock.calls[0][0];
+    expect(updated.amazon_url).toBe("https://www.amazon.com/dp/B0TEST1234");
+    const inserted = mockInsert.mock.calls[0]?.[0];
+    expect(inserted).toBeUndefined();
   });
 
   it("valida que products sea array", async () => {

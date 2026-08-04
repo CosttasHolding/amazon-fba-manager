@@ -84,6 +84,8 @@ export default function ResearchPage() {
       niche: "",
       asin_reference: "",
       amazon_category: "",
+      amazon_url: "",
+      alibaba_url: "",
       estimated_monthly_sales: null,
       estimated_monthly_revenue: null,
       estimated_fba_fee: null,
@@ -180,6 +182,8 @@ export default function ResearchPage() {
         niche: data.niche || null,
         asin_reference: data.asin_reference || null,
         amazon_category: data.amazon_category || null,
+        amazon_url: data.amazon_url || null,
+        alibaba_url: data.alibaba_url || null,
         estimated_monthly_sales: data.estimated_monthly_sales ?? null,
         estimated_monthly_revenue: data.estimated_monthly_revenue ?? null,
         estimated_fba_fee: data.estimated_fba_fee ?? null,
@@ -208,6 +212,7 @@ export default function ResearchPage() {
         setEditingItem(null);
         reset({
           name: "", niche: "", asin_reference: "", amazon_category: "",
+          amazon_url: "", alibaba_url: "",
           estimated_monthly_sales: null, estimated_monthly_revenue: null, estimated_fba_fee: null,
           seller_count_fba: null, average_price: null, review_count_competitor: null,
           average_rating: null, bsr: null, competition_level: null, estimated_cogs: null,
@@ -261,6 +266,7 @@ export default function ResearchPage() {
 
   const resetForm = () => reset({
     name: "", niche: "", asin_reference: "", amazon_category: "",
+    amazon_url: "", alibaba_url: "",
     estimated_monthly_sales: null, estimated_monthly_revenue: null, estimated_fba_fee: null,
     seller_count_fba: null, average_price: null, review_count_competitor: null,
     average_rating: null, bsr: null, competition_level: null, estimated_cogs: null,
@@ -275,6 +281,8 @@ export default function ResearchPage() {
       niche: item.niche || "",
       asin_reference: item.asin_reference || "",
       amazon_category: item.amazon_category || "",
+      amazon_url: item.amazon_url || "",
+      alibaba_url: item.alibaba_url || "",
       estimated_monthly_sales: item.estimated_monthly_sales,
       estimated_monthly_revenue: item.estimated_monthly_revenue ?? (item.source_data?.estimated_monthly_revenue as number | undefined) ?? null,
       estimated_fba_fee: item.estimated_fba_fee ?? (item.source_data?.estimated_fba_fee as number | undefined) ?? null,
@@ -515,6 +523,16 @@ export default function ResearchPage() {
             <Label htmlFor="amazon_category" className={labelClass}>{t("research.form.category", locale)}</Label>
             <Input id="amazon_category" {...register("amazon_category")} className={inputClass} />
             {errors.amazon_category && <p className="text-xs text-destructive mt-1">{errors.amazon_category.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="amazon_url" className={labelClass}>{t("research.form.amazon_url", locale)}</Label>
+            <Input id="amazon_url" type="url" {...register("amazon_url")} className={inputClass} />
+            {errors.amazon_url && <p className="text-xs text-destructive mt-1">{errors.amazon_url.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="alibaba_url" className={labelClass}>{t("research.form.alibaba_url", locale)}</Label>
+            <Input id="alibaba_url" type="url" {...register("alibaba_url")} className={inputClass} />
+            {errors.alibaba_url && <p className="text-xs text-destructive mt-1">{errors.alibaba_url.message}</p>}
           </div>
           <div>
             <Label htmlFor="competition_level" className={labelClass}>{t("research.form.competition", locale)}</Label>

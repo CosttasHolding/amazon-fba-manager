@@ -2,7 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Star, TrendingUp, DollarSign, Sparkles, GripVertical } from "lucide-react";
+import { Star, TrendingUp, DollarSign, Sparkles, GripVertical, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -103,6 +103,35 @@ export function ResearchCard({ item, locale, onEdit, onDeepDive, onStatusChange 
 
       {metrics.length > 0 && (
         <p className="text-[10px] text-muted-foreground leading-snug">{metrics.join(" · ")}</p>
+      )}
+
+      {(item.amazon_url || item.alibaba_url) && (
+        <div className="flex items-center gap-1.5 pt-0.5">
+          {item.amazon_url && (
+            <a
+              href={item.amazon_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              aria-label={t("research.card.amazon", locale)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
+          {item.alibaba_url && (
+            <a
+              href={item.alibaba_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              aria-label={t("research.card.alibaba", locale)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
+        </div>
       )}
 
       <div className="flex items-center justify-between pt-1">

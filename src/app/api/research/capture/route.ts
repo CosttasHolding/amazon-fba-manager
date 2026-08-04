@@ -89,6 +89,7 @@ export async function POST(req: NextRequest) {
         org_id: orgId,
         name: p.title || "Unknown",
         asin_reference: p.asin,
+        amazon_url: p.asin ? `https://www.amazon.com/dp/${p.asin}` : null,
         amazon_category: p.category ?? "",
         niche: p.category ?? null,
         competition_level: hasData ? competitionLevelFromScore(scoring.dimensions.competencia.score) : null,

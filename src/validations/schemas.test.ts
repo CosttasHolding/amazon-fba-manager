@@ -253,6 +253,25 @@ describe("researchSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("acepta URLs validas de amazon y alibaba", () => {
+    const result = researchSchema.safeParse({
+      name: "Test",
+      amazon_url: "https://www.amazon.com/dp/B0TEST1234",
+      alibaba_url: "https://www.alibaba.com/product-detail/foo.html",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("acepta URL vacia o null", () => {
+    expect(researchSchema.safeParse({ name: "Test", amazon_url: "", alibaba_url: null }).success).toBe(true);
+    expect(researchSchema.safeParse({ name: "Test" }).success).toBe(true);
+  });
+
+  it("rechaza URL invalida", () => {
+    const result = researchSchema.safeParse({ name: "Test", amazon_url: "no-es-una-url" });
+    expect(result.success).toBe(false);
+  });
+
   it("aplica defaults correctamente", () => {
     const result = researchSchema.safeParse({ name: "Test" });
     expect(result.success).toBe(true);

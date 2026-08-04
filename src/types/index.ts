@@ -397,6 +397,8 @@ export interface ProductResearch {
   average_rating: number | null;
   bsr: number | null;
   competition_level: CompetitionLevel | null;
+  amazon_url: string | null;
+  alibaba_url: string | null;
   estimated_cogs: number | null;
   estimated_selling_price: number | null;
   estimated_roi: number | null;

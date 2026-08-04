@@ -17,7 +17,13 @@
 
 ## Ultima sesion
 
-- **Fecha**: 2026-08-04 — **recalcular score al editar + metricas ocultas en el modal**
+- **Fecha**: 2026-08-04 (segunda sesion) — **URLs de Amazon (auto) + Alibaba (manual) en Research**
+  - **Migracion `033_research_urls.sql`** (NUEVA, **PENDIENTE aplicar en prod**): columnas `amazon_url` + `alibaba_url`.
+  - **Capture route** autocompleta `amazon_url` desde el ASIN (`https://www.amazon.com/dp/${asin}`) — URL limpia de producto, no `capture_url`.
+  - **Modal** con 2 inputs URL + **card kanban** con iconos `ExternalLink` (Amazon/Alibaba, target _blank, stopPropagation).
+  - Schema `z.union([url, ""])` (patrón `supplier.alibaba_url`); i18n es/en/ar.
+  - **Verificacion**: tsc 0 | lint sin errores | **304/304 tests** (37 archivos) | build OK (research 31.4 kB). Spec `docs/superpowers/specs/2026-08-04-research-urls-design.md`.
+- **Fecha**: 2026-08-04 (primera sesion) — **recalcular score al editar + metricas ocultas en el modal**
   - **Resumen**: se resolvio el follow-up [MEDIUM] "score stale en ediciones manuales".
   - **NUEVO helper puro** `src/lib/research/recompute.ts` (13 tests): `toScoringInputFromRow` (columnas → ScoringInput, fallback a `source_data` para revenue/fba_fee/seller_count), `rowHasData` (gate = capture), `recomputeScoreForRow` (`calculateScore` + `competitionLevelFromScore`; null si sin datos). `scoring.ts`/`competition.ts` intactos.
   - **`PUT` y `POST /api/research`** recalcular score: PUT busca fila (404 si no existe) → mergea payload → si hay campos de scoring, persiste `score` + `source_data.score_details` + `competition_level` (**override manual respetado**; cambio de estado `{ status }` no toca score). POST crea con score fresco.
@@ -63,7 +69,8 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 ## Proximos pasos
 
 ### 1. USUARIO debe hacer
-- **Aplicar la migracion `032_research_metrics.sql` en Supabase prod** (3 columnas nuevas; mismo patron que 030/031)
+- **Aplicar la migracion `033_research_urls.sql` en Supabase prod** (2 columnas amazon_url/alibaba_url)
+- **Aplicar la migracion `032_research_metrics.sql` en Supabase prod** (si aun no lo hizo)
 - **Aplicar la migracion `031_competition_5_levels.sql` en Supabase prod** (si aun no lo hizo; CHECK constraint 5 niveles)
 - **Verificar la extension E2E**: boton `🔄 Reload` del popup + F5 → abrir un producto con AMZScout logueado, ESPERAR a que cargue → el popup deberia mostrar **1 solo producto** con Ventas/m + Revenue/m + Margen + **Competencia (Very low..Muy alta)** → Enviar → verificar la card kanban con el badge de competencia
 - **Cargar creditos/licencias xAI** — sin esto el deep dive tira 403 (https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c)

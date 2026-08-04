@@ -14,6 +14,8 @@ export const researchSchema = z.object({
   average_rating: z.coerce.number().min(0).max(5).nullable().optional(),
   bsr: z.coerce.number().int().min(0).nullable().optional(),
   competition_level: z.enum(["very_low", "low", "medium", "high", "very_high"]).nullable().optional(),
+  amazon_url: z.union([z.string().url("URL inválida").max(2000), z.literal("")]).nullable().optional(),
+  alibaba_url: z.union([z.string().url("URL inválida").max(2000), z.literal("")]).nullable().optional(),
   estimated_cogs: z.coerce.number().min(0).nullable().optional(),
   estimated_selling_price: z.coerce.number().min(0).nullable().optional(),
   estimated_roi: z.coerce.number().nullable().optional(),
