@@ -267,6 +267,42 @@ describe("researchSchema", () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it("valida las metricas de revenue editables", () => {
+    const result = researchSchema.safeParse({
+      name: "Test",
+      estimated_monthly_revenue: 5000,
+      estimated_fba_fee: 3.5,
+      seller_count_fba: 12,
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.estimated_monthly_revenue).toBe(5000);
+    expect(result.data?.estimated_fba_fee).toBe(3.5);
+    expect(result.data?.seller_count_fba).toBe(12);
+  });
+
+  it("acepta las metricas de revenue como null", () => {
+    const result = researchSchema.safeParse({
+      name: "Test",
+      estimated_monthly_revenue: null,
+      estimated_fba_fee: null,
+      seller_count_fba: null,
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.estimated_monthly_revenue).toBeNull();
+    expect(result.data?.estimated_fba_fee).toBeNull();
+    expect(result.data?.seller_count_fba).toBeNull();
+  });
+
+  it("rechaza valores negativos en las metricas de revenue", () => {
+    const result = researchSchema.safeParse({
+      name: "Test",
+      estimated_monthly_revenue: -100,
+      estimated_fba_fee: -0.5,
+      seller_count_fba: -1,
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 const UUID = "550e8400-e29b-41d4-a716-446655440000";

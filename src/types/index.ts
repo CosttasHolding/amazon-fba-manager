@@ -389,6 +389,9 @@ export interface ProductResearch {
   asin_reference: string | null;
   amazon_category: string | null;
   estimated_monthly_sales: number | null;
+  estimated_monthly_revenue: number | null;
+  estimated_fba_fee: number | null;
+  seller_count_fba: number | null;
   average_price: number | null;
   review_count_competitor: number | null;
   average_rating: number | null;

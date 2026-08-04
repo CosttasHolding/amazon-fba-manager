@@ -17,6 +17,13 @@
 
 ## Ultima sesion
 
+- **Fecha**: 2026-08-04 — **recalcular score al editar + metricas ocultas en el modal**
+  - **Resumen**: se resolvio el follow-up [MEDIUM] "score stale en ediciones manuales".
+  - **NUEVO helper puro** `src/lib/research/recompute.ts` (13 tests): `toScoringInputFromRow` (columnas → ScoringInput, fallback a `source_data` para revenue/fba_fee/seller_count), `rowHasData` (gate = capture), `recomputeScoreForRow` (`calculateScore` + `competitionLevelFromScore`; null si sin datos). `scoring.ts`/`competition.ts` intactos.
+  - **`PUT` y `POST /api/research`** recalcular score: PUT busca fila (404 si no existe) → mergea payload → si hay campos de scoring, persiste `score` + `source_data.score_details` + `competition_level` (**override manual respetado**; cambio de estado `{ status }` no toca score). POST crea con score fresco.
+  - **Migracion `032_research_metrics.sql`** (NUEVA): 3 columnas `estimated_monthly_revenue`/`estimated_fba_fee`/`seller_count_fba` — **PENDIENTE aplicar en prod**.
+  - **Modal** (`page.tsx`): 3 inputs nuevos (con fallback a `source_data` en `openEdit`) + i18n es/en/ar.
+  - **Verificacion**: tsc 0 | lint solo warnings pre-existentes | **300/300 tests** (37 archivos) | build OK (research 31.1 kB). Sin commits todavia.
 - **Fecha**: 2026-08-03 (sesion que cruzo la medianoche del 08-02)
 - **Resumen**:
   - **Commiteo + push de los fixes de extension pendientes** (10ma-13va parte, `c0257b4`): reader AMZScout (tabla+totals), deteccion custom element `amzscout-pro`, observer con `overlayContentFingerprint()`, fix "capturo muchisimos productos" (fallbackAsin en pagina de producto)
@@ -56,7 +63,8 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 ## Proximos pasos
 
 ### 1. USUARIO debe hacer
-- **Aplicar la migracion `031_competition_5_levels.sql` en Supabase prod** (actualiza el CHECK constraint de `competition_level` para aceptar los 5 valores)
+- **Aplicar la migracion `032_research_metrics.sql` en Supabase prod** (3 columnas nuevas; mismo patron que 030/031)
+- **Aplicar la migracion `031_competition_5_levels.sql` en Supabase prod** (si aun no lo hizo; CHECK constraint 5 niveles)
 - **Verificar la extension E2E**: boton `🔄 Reload` del popup + F5 → abrir un producto con AMZScout logueado, ESPERAR a que cargue → el popup deberia mostrar **1 solo producto** con Ventas/m + Revenue/m + Margen + **Competencia (Very low..Muy alta)** → Enviar → verificar la card kanban con el badge de competencia
 - **Cargar creditos/licencias xAI** — sin esto el deep dive tira 403 (https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c)
 - **Agregar XAI_API_KEY en Vercel** (Settings → Environment Variables)
@@ -64,7 +72,8 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 - El `.pem` de firma de la extension esta movido fuera del repo (copia personal `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\`)
 
 ### 2. Agente — follow-ups del research
-- **[MEDIUM] Score stale en ediciones manuales**: `PUT /api/research` y el modal de edicion no recalculan `score` — un producto editado a mano queda con score de captura viejo. Recalcular en PUT (mergear row existente + payload) o documentar como snapshot de captura
+- **[DONE 2026-08-04] Score stale en ediciones manuales** — resuelto: PUT/POST recalcula score + score_details + competition_level; metricas ocultas editables en el modal (migracion 032)
+- **[PENDIENTE] Commitear y pushear la sesion 2026-08-04** (migracion 032, recompute.ts, route.ts, route.test.ts, page.tsx, i18n, vault) → deploy a Vercel
 - **[MEDIUM] Reconsiderar**: los Minor findings del final review — i18n keys no alfabeticas, `key={b.text}` fragil, formatters re-creados, score en digitos occidentales en AR, test solo aserta 2/4 dimensiones, `scoreBadgeClass`/`sourceBadges` inline
 - Verificar que la card kanban renderice bien con datos reales capturados en prod (la migracion ya esta aplicada)
 - **Verificar el kanban redisenado en prod** con datos reales: drag & drop entre estados + filtros combinables (competencia/rango score) + scroll interno de columnas
@@ -81,6 +90,9 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 
 - `src/app/api/research/capture/route.ts` — calcula y persiste `score` + `score_details`; completa `niche` y deriva `competition_level` (5 niveles); gate `hasData` (null si no hay datos)
 - `src/lib/research/scoring.ts` — `calculateScore` (inmutable, solo se consume)
+- `src/lib/research/recompute.ts` — `toScoringInputFromRow` / `rowHasData` / `recomputeScoreForRow` (recalcular score/competencia al editar, fallback source_data)
+- `src/app/api/research/route.ts` — PUT/POST recalcular score + `score_details` + competition_level (override manual respetado); PUT 404 si fila no existe
+- `supabase/migrations/032_research_metrics.sql` — columnas estimated_monthly_revenue/estimated_fba_fee/seller_count_fba (PENDIENTE aplicar en prod)
 - `src/lib/research/competition.ts` — `competitionLevelFromScore` (score de competencia → 5 niveles)
 - `src/lib/research/card-data.ts` — `numField` / `fmtCompact` / `scoreRank` / `competitionBadgeClass` (helpers de color/score)
 - `src/components/research/research-card.tsx` — tarjeta compacta kanban (useSortable dnd-kit, score destacado, badge competencia, drag handle)

@@ -5,6 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { researchSchema } from "@/validations/research";
 import { apiErrorResponse } from "@/lib/api-utils";
 import { getOrgId } from "@/lib/api-handler";
+import { recomputeScoreForRow } from "@/lib/research/recompute";
+import type { ResearchRowLike } from "@/lib/research/recompute";
+import type { CompetitionLevel } from "@/types";
 
 export async function GET(req: NextRequest) {
   try {
@@ -31,6 +34,22 @@ export async function GET(req: NextRequest) {
   }
 }
 
+const SCORING_FIELDS = [
+  "estimated_monthly_sales",
+  "estimated_monthly_revenue",
+  "average_price",
+  "review_count_competitor",
+  "average_rating",
+  "bsr",
+  "estimated_fba_fee",
+  "seller_count_fba",
+  "estimated_cogs",
+] as const;
+
+function hasScoringFields(payload: Record<string, unknown>): boolean {
+  return SCORING_FIELDS.some((field) => payload[field] !== undefined);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
@@ -44,8 +63,20 @@ export async function POST(req: NextRequest) {
     const result = researchSchema.safeParse(body);
     if (!result.success) return NextResponse.json({ error: "Datos inválidos", details: result.error.flatten().fieldErrors }, { status: 400 });
 
-    const clean = { ...result.data, user_id: user.id, org_id: orgId };
-    const { data, error } = await supabase.from("product_research").insert(clean).select().single();
+    const payload = { ...result.data, user_id: user.id, org_id: orgId } as Record<string, unknown>;
+
+    if (hasScoringFields(result.data)) {
+      const rec = recomputeScoreForRow(result.data as unknown as ResearchRowLike);
+      payload.score = rec.score ?? null;
+      payload.competition_level =
+        (result.data.competition_level ??
+          rec.competition_level) as CompetitionLevel | null;
+      payload.source_data = {
+        score_details: rec.score_details ?? undefined,
+      };
+    }
+
+    const { data, error } = await supabase.from("product_research").insert(payload).select().single();
     if (error) {
       return NextResponse.json({ error: "Error interno del servidor", details: error.message, code: error.code }, { status: 500 });
     }
@@ -72,7 +103,34 @@ export async function PUT(req: NextRequest) {
     const result = researchSchema.partial().safeParse(body);
     if (!result.success) return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
 
-    const { data, error } = await supabase.from("product_research").update(result.data).eq("id", id).eq("org_id", orgId).select().single();
+    const { data: existing } = await supabase
+      .from("product_research")
+      .select("*")
+      .eq("id", id)
+      .eq("org_id", orgId)
+      .maybeSingle();
+    if (!existing) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+
+    const updated = { ...result.data } as Record<string, unknown>;
+
+    if (hasScoringFields(result.data)) {
+      const merged = { ...existing, ...result.data } as ResearchRowLike;
+      const rec = recomputeScoreForRow(merged);
+      updated.score = rec.score ?? null;
+      updated.competition_level =
+        result.data.competition_level ?? rec.competition_level ?? null;
+      const sourceData = (existing.source_data ??
+        {}) as Record<string, unknown> | null;
+      const payloadSourceData = (result.data as unknown as Record<string, unknown>)
+        .source_data as Record<string, unknown> | undefined;
+      updated.source_data = {
+        ...(sourceData ?? {}),
+        ...(payloadSourceData ?? {}),
+        score_details: rec.score_details ?? undefined,
+      };
+    }
+
+    const { data, error } = await supabase.from("product_research").update(updated).eq("id", id).eq("org_id", orgId).select().single();
     if (error) {
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }

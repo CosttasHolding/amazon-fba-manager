@@ -1,13 +1,13 @@
 ---
-ultima_actualizacion: 2026-08-03
-estado: estable, main al dia; extension detecta AMZScout (custom element) + reader AMZScout (ventas/revenue/margen/niche_score) + reader H10 (BSR + listing health score) + boton Reload + mode honesto + observer re-colecta cuando el overlay se llena async + captura solo el producto de la pagina en producto (fix "muchisimos productos") + capture route persiste score enriquecido + **competencia en 5 niveles (very_low..very_high)** en capture/UI/popup + **kanban redisenado (grilla compacta 240px con scroll, drag & drop dnd-kit, filtros combinables: búsqueda+estado+competencia+rango score)**
+ultima_actualizacion: 2026-08-04
+estado: estable, main al dia; extension detecta AMZScout (custom element) + reader AMZScout (ventas/revenue/margen/niche_score) + reader H10 (BSR + listing health score) + boton Reload + mode honesto + observer re-colecta cuando el overlay se llena async + captura solo el producto de la pagina en producto (fix "muchisimos productos") + capture route persiste score enriquecido + **competencia en 5 niveles (very_low..very_high)** en capture/UI/popup + **kanban redisenado (grilla compacta 240px con scroll, drag & drop dnd-kit, filtros combinables: búsqueda+estado+competencia+rango score)** + **score/competition_level se recalculan al editar (PUT/POST) + metricas ocultas editables en el modal (revenue/fba_fee/seller_count FBA, migracion 032)**
 version: 2.0.0
 branch: main
 deploy: https://amazon-fba-manager-virid.vercel.app
 build: 0 errores, warnings no bloqueantes
-tests: 275 pasando (vitest)
+tests: 300 pasando (vitest)
 tsc: 0 errores
-db_migrations: aplicadas (source_data + score + 031 competition 5 niveles CONFIRMADAS en prod)
+db_migrations: aplicadas (source_data + score + 031 competition 5 niveles CONFIRMADAS en prod); **032_research_metrics PENDIENTE en prod**
 ---
 
 # App State
@@ -56,6 +56,7 @@ db_migrations: aplicadas (source_data + score + 031 competition 5 niveles CONFIR
 - **Score enriquecido al capturar + source_data visible en cards kanban (2026-08-03)**: `POST /api/research/capture` persiste `score` (columna) + `score_details` (dimensiones) en source_data; cards kanban muestran Score/BSR/ventas/m/revenue/m/margen/health con helpers puros `card-data.ts`
 - **Competencia en 5 niveles + niche (2026-08-03)**: `CompetitionLevel` pasa de 3 a 5 valores (`very_low`/`low`/`medium`/`high`/`very_high`); helper puro `competitionLevelFromScore` + migracion `031`; capture completa `niche` (categoria) y deriva `competition_level`; i18n `research.competition.*` en es/en/ar; modal con 5 opciones + badge kanban traducido; extension parsea `niche_score` de los totals de AMZScout; popup deriva y muestra la competencia localmente (port de `competenciaScore`)
 - **Kanban redisenado con drag & drop (2026-08-03)**: grilla de tarjetas compactas por estado (`ResearchCard` en `research-card.tsx`), columnas `w-[240px] max-h-[calc(100vh-320px)]` con scroll interno, drag & drop entre estados con **@dnd-kit** (`PointerSensor` + `SortableContext` + `rectSortingStrategy`), score destacado (verde ≥70 / curioso / <40 via `scoreBadgeClass`), badge competencia por color (`competitionBadgeClass`, very_low emerald → very_high rose), línea única de metrics (ROI/ventas-m/revenue-m/margen), drag handle `GripVertical`, y **filtros combinables** (búsqueda + estado + competencia + rango de score). Config centralizada en `research-card-config.ts`. Commits `aa51efd` + `c7daede`
+- **Recalcular score al editar + metricas ocultas editables (2026-08-04)**: helper puro `src/lib/research/recompute.ts` (`toScoringInputFromRow`/`rowHasData`/`recomputeScoreForRow`, 13 tests); `PUT` y `POST /api/research` recalculan `score` + `source_data.score_details` + derivan/o respetan `competition_level`; **override manual de competencia respetado** (solo se recalcula si viene null); cambio de estado (`{ status }`) no toca score; `POST` 404 si la fila no existe; migracion `032_research_metrics.sql` agrega columnas `estimated_monthly_revenue`/`estimated_fba_fee`/`seller_count_fba`; el modal expone esos 3 inputs (con fallback a `source_data` para filas capturadas pre-migracion); i18n `research.form.monthly_revenue/fba_fee/seller_count` en es/en/ar. `route.test.ts` nuevo (9 tests) + `recompute.test.ts` (13). **Resuelve el follow-up MEDIUM "score stale en ediciones manuales"**
 
 ## Features en progreso
 
@@ -70,7 +71,7 @@ db_migrations: aplicadas (source_data + score + 031 competition 5 niveles CONFIR
 - **Deep dive Grok bloqueado**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c + agregar XAI_API_KEY en Vercel prod
 - API keys OpenAI y xAI expuestas en chat 2026-08-01 — pendiente rotacion
 - Zod validation en SP-API / Drive / Cron routes (MEDIUM)
-- **Score stale en ediciones manuales (MEDIUM, 2026-08-03)**: `PUT /api/research` y el modal de edicion no recalculan `score` — un producto editado a mano queda con score de captura viejo. Recalcular en PUT o documentar como snapshot
+- Zod validation en SP-API / Drive / Cron routes (MEDIUM)
 - N+1 queries fix + dashboard limits (MEDIUM)
 - Accessibility fixes (MEDIUM)
 - Deuda i18n: `product-analyzer.tsx` strings hardcodeadas (pre-existente Research Bot)

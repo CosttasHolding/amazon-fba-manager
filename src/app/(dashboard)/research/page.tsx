@@ -85,6 +85,9 @@ export default function ResearchPage() {
       asin_reference: "",
       amazon_category: "",
       estimated_monthly_sales: null,
+      estimated_monthly_revenue: null,
+      estimated_fba_fee: null,
+      seller_count_fba: null,
       average_price: null,
       review_count_competitor: null,
       average_rating: null,
@@ -178,6 +181,9 @@ export default function ResearchPage() {
         asin_reference: data.asin_reference || null,
         amazon_category: data.amazon_category || null,
         estimated_monthly_sales: data.estimated_monthly_sales ?? null,
+        estimated_monthly_revenue: data.estimated_monthly_revenue ?? null,
+        estimated_fba_fee: data.estimated_fba_fee ?? null,
+        seller_count_fba: data.seller_count_fba ?? null,
         average_price: data.average_price ?? null,
         review_count_competitor: data.review_count_competitor ?? null,
         average_rating: data.average_rating ?? null,
@@ -202,7 +208,8 @@ export default function ResearchPage() {
         setEditingItem(null);
         reset({
           name: "", niche: "", asin_reference: "", amazon_category: "",
-          estimated_monthly_sales: null, average_price: null, review_count_competitor: null,
+          estimated_monthly_sales: null, estimated_monthly_revenue: null, estimated_fba_fee: null,
+          seller_count_fba: null, average_price: null, review_count_competitor: null,
           average_rating: null, bsr: null, competition_level: null, estimated_cogs: null,
           estimated_selling_price: null, estimated_roi: null, differentiation_notes: "",
           source: "", notes: "", status: "idea", priority: 3,
@@ -254,7 +261,8 @@ export default function ResearchPage() {
 
   const resetForm = () => reset({
     name: "", niche: "", asin_reference: "", amazon_category: "",
-    estimated_monthly_sales: null, average_price: null, review_count_competitor: null,
+    estimated_monthly_sales: null, estimated_monthly_revenue: null, estimated_fba_fee: null,
+    seller_count_fba: null, average_price: null, review_count_competitor: null,
     average_rating: null, bsr: null, competition_level: null, estimated_cogs: null,
     estimated_selling_price: null, estimated_roi: null, differentiation_notes: "",
     source: "", notes: "", status: "idea", priority: 3,
@@ -268,6 +276,9 @@ export default function ResearchPage() {
       asin_reference: item.asin_reference || "",
       amazon_category: item.amazon_category || "",
       estimated_monthly_sales: item.estimated_monthly_sales,
+      estimated_monthly_revenue: item.estimated_monthly_revenue ?? (item.source_data?.estimated_monthly_revenue as number | undefined) ?? null,
+      estimated_fba_fee: item.estimated_fba_fee ?? (item.source_data?.estimated_fba_fee as number | undefined) ?? null,
+      seller_count_fba: item.seller_count_fba ?? (item.source_data?.seller_count_fba as number | undefined) ?? null,
       average_price: item.average_price,
       review_count_competitor: item.review_count_competitor,
       average_rating: item.average_rating,
@@ -522,6 +533,21 @@ export default function ResearchPage() {
             <Label htmlFor="estimated_monthly_sales" className={labelClass}>{t("research.form.monthly_sales", locale)}</Label>
             <Input id="estimated_monthly_sales" type="number" {...register("estimated_monthly_sales", { valueAsNumber: true })} className={inputClass} />
             {errors.estimated_monthly_sales && <p className="text-xs text-destructive mt-1">{errors.estimated_monthly_sales.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="estimated_monthly_revenue" className={labelClass}>{t("research.form.monthly_revenue", locale)}</Label>
+            <Input id="estimated_monthly_revenue" type="number" {...register("estimated_monthly_revenue", { valueAsNumber: true })} className={inputClass} />
+            {errors.estimated_monthly_revenue && <p className="text-xs text-destructive mt-1">{errors.estimated_monthly_revenue.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="estimated_fba_fee" className={labelClass}>{t("research.form.fba_fee", locale)}</Label>
+            <Input id="estimated_fba_fee" type="number" step="0.01" {...register("estimated_fba_fee", { valueAsNumber: true })} className={inputClass} />
+            {errors.estimated_fba_fee && <p className="text-xs text-destructive mt-1">{errors.estimated_fba_fee.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="seller_count_fba" className={labelClass}>{t("research.form.seller_count", locale)}</Label>
+            <Input id="seller_count_fba" type="number" {...register("seller_count_fba", { valueAsNumber: true })} className={inputClass} />
+            {errors.seller_count_fba && <p className="text-xs text-destructive mt-1">{errors.seller_count_fba.message}</p>}
           </div>
           <div>
             <Label htmlFor="average_price" className={labelClass}>{t("research.form.avg_price", locale)}</Label>
