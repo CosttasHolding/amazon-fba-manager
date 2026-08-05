@@ -1,7 +1,7 @@
 ---
 tipo: personal
 tags: [learning, aprendizaje]
-ultima_actualizacion: 2026-08-03
+ultima_actualizacion: 2026-08-04
 ---
 
 # Learning Log
@@ -61,6 +61,17 @@ ultima_actualizacion: 2026-08-03
 
 - **Probar schema real con probe insert/delete**: insertar un registro marcado (`TEST_PROBE_DELETE_ME`) con el payload exacto del endpoint y borrarlo de inmediato valida compatibilidad de schema sin credenciales de usuario. El service role key permite SELECT/INSERT/DELETE via PostgREST.
 - **El vault puede estar desactualizado**: `App State.md` decia "migration pendiente" pero ya estaba aplicada en prod — verificar contra el sistema real antes de asumir.
+
+## Verificar columnas de Supabase con PostgREST (2026-08-04)
+
+- **`@supabase/supabase-js` NO puede consultar `information_schema`**: el cliente REST cachea el schema de tablas de negocio y tira "Could not find the table 'public.information_schema' in the schema cache". Para chequear si una columna existe, hacer un `select=<columna>` directo a `/rest/v1/<tabla>?select=<col>&limit=1` con el header `apikey`/`Authorization` — si la columna no existe, PostgREST devuelve 400 `42703 column ... does not exist`; si existe, 200.
+- **Probar el CHECK constraint de una columna**: insertar una fila de prueba con el valor boundary usando el service role key y borrarla al instante. Si el insert falla con `23514` (check violation) la migracion no esta; si entra, esta. (Ojo: hay que usar un `user_id` que exista en `profiles` o el FK `23503` enmascara el resultado.)
+- **Orden code-vs-db**: al agregar columnas, aplicar la migracion en prod ANTES o a la par del deploy del codigo que las usa — si el codigo se despliega primero, las queries contra la columna nueva rompen en prod (bug detectado con la migracion 033).
+
+## Orquestador con subagentes en paralelo (2026-08-04)
+
+- **Yo como cerebro orquestador**: hacer primero la base compartida (type + schema + tests) y despachar en paralelo subagentes sobre archivos disjuntos (route, capture, modal, card, i18n), luego yo reviso el diff y corro la verificacion final completa (tsc/lint/test/build). Cada subagente verifica lo suyo (tsc + su test + lint) antes de reportar.
+- **Los subagentes mienten menos con briefs cerrados**: dar firma exacta de lo que van a consumir (p. ej. campos del tipo que ya existen) evita que inventen o rompan interfaces.
 
 ## Vercel / Next.js estaticos vs middleware (2026-08-01)
 

@@ -1,7 +1,7 @@
 ---
 tipo: tracking
 tags: [bug, problemas]
-ultima_actualizacion: 2026-08-03
+ultima_actualizacion: 2026-08-04
 ---
 
 # Bugs Conocidos
@@ -20,20 +20,27 @@ ultima_actualizacion: 2026-08-03
 - **Adicional**: XAI_API_KEY solo esta en `.env.local` — falta agregarla en Vercel (prod) o el deep dive fallara en produccion
 - **Seguridad**: las keys de OpenAI y xAI quedaron expuestas en el chat del 2026-08-01. **DECISION**: riesgo bajo (sin creditos hoy), rotar cuando el usuario cargue creditos — ahi generar key nueva en vez de usar la expuesta
 
-### Score no se recalcula al editar el producto manualmente
-- **Fecha**: 2026-08-03
-- **Sintoma**: el score de captura queda "stale" — si se editan ventas/precio/BSR desde el modal de edicion (o via `POST /api/research` del analyzer/deep dive), la columna `score` y `score_details` no se recalculan y la card muestra un score que ya no refleja los datos editados
-- **Causa**: `calculateScore()` solo se invoca en `POST /api/research/capture`. `PUT /api/research` y `POST /api/research` (rutas de edicion) no lo tocan
-- **Estado**: follow-up MEDIUM registrado (fuera de scope del spec original, que solo cubria el capture). Fix propuesto: recalcular en PUT (mergear row existente + payload a traves de `toScoringInput`) o documentar `score` como snapshot de captura. **APLICA TAMBIEN a `competition_level`** (no se recalcula al editar)
-- **Referencia**: final review del 2026-08-03, finding Important #1
+### Score no se recalculaba al editar el producto manualmente → RESUELTO (2026-08-04)
+- **Fecha**: 2026-08-03 / resuelto 2026-08-04
+- **Sintoma**: el score de captura quedaba "stale" — si se editaban ventas/precio/BSR desde el modal de edicion (o via `POST /api/research` del analyzer/deep dive), la columna `score` y `score_details` no se recalculaban y la card mostraba un score que ya no reflejaba los datos editados
+- **Causa**: `calculateScore()` solo se invocaba en `POST /api/research/capture`. `PUT /api/research` y `POST /api/research` (rutas de edicion) no lo tocaban
+- **Fix (2026-08-04)**: helper puro `src/lib/research/recompute.ts` (`toScoringInputFromRow` mergea columnas + `source_data` para revenue/fba_fee/seller_count, `rowHasData` gate, `recomputeScoreForRow`); `PUT` y `POST /api/research` recalculan `score` + `score_details` + derivan o respetan `competition_level` (**override manual respetado**); status-only (`{ status }`) no toca score; PUT 404 si fila no existe. Migracion `032` agrego las columnas de metricas. Commits `60ac69b`
+- **Verificacion**: tsc 0 | 300/300 tests | build OK | migraciones 030/031/032/033 aplicadas en prod
 
 ### Verificacion E2E pendiente: competencia 5 niveles + Niche Score (2026-08-03)
-- **Estado**: la feature esta completa y verificada con tests (268/268), pero falta E2E real con AMZScout logueado
-- **Pendiente**: (1) aplicar migracion `031_competition_5_levels.sql` en Supabase prod; (2) verificar que el Niche Score de los totals de AMZScout se captura y deriva el badge de competencia (very_low..very_high) en el popup y en la card kanban
+- **Estado**: la feature esta completa y verificada con tests (304/304), pero falta E2E real con AMZScout logueado
+- **Pendiente**: verificar que el Niche Score de los totals de AMZScout se captura y deriva el badge de competencia (very_low..very_high) en el popup y en la card kanban (migracion `031` ya aplicada en prod)
 
 ---
 
 ## Resueltos
+
+### Capture fallaria en prod si la migracion 033 no estaba aplicada (2026-08-04)
+- **Fecha**: 2026-08-04
+- **Sintoma**: tras pushear la feature de URLs (commit `e483b48`), la capture route inserta `amazon_url`/`alibaba_url` pero la migracion `033` no se habia aplicado aun en prod
+- **Causa**: orden code-antes-que-db. El deploy a Vercel llego primero; la tabla no tenia las columnas nuevas
+- **Solucion**: verificar contra prod con PostgREST (select de cada columna → 42703 si falta) antes de dar la feature por lista; el usuario aplico la migracion y se re-verifico OK
+- **Leccion**: al agregar columnas nuevas, aplicar la migracion en prod ANTES o a la par del deploy del codigo que las usa
 
 ### La captura traia muchisimos productos: AMZScout tomaba la tabla del nicho en la pagina de producto
 - **Fecha**: 2026-08-01 (13va parte)
