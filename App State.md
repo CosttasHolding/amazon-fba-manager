@@ -1,13 +1,13 @@
 ---
-ultima_actualizacion: 2026-08-04
-estado: estable, main al dia; extension detecta AMZScout (custom element) + reader AMZScout (ventas/revenue/margen/niche_score) + reader H10 (BSR + listing health score) + boton Reload + mode honesto + observer re-colecta cuando el overlay se llena async + captura solo el producto de la pagina en producto (fix "muchisimos productos") + capture route persiste score enriquecido + **competencia en 5 niveles (very_low..very_high)** en capture/UI/popup + **kanban redisenado (grilla compacta 240px con scroll, drag & drop dnd-kit, filtros combinables: búsqueda+estado+competencia+rango score)** + **score/competition_level se recalculan al editar (PUT/POST) + metricas ocultas editables en el modal (revenue/fba_fee/seller_count FBA, migracion 032)** + **URLs de Amazon (auto desde ASIN al capturar) y Alibaba (manual) editables en el modal + iconos ExternalLink en la card (migracion 033)**
+ultima_actualizacion: 2026-08-07
+estado: estable, main al dia; extension detecta AMZScout (custom element) + reader AMZScout (ventas/revenue/margen/niche_score) + reader H10 (BSR + listing health score) + boton Reload + mode honesto + observer re-colecta cuando el overlay se llena async + captura solo el producto de la pagina en producto (fix "muchisimos productos") + capture route persiste score enriquecido + **competencia en 5 niveles (very_low..very_high)** en capture/UI/popup + **kanban redisenado (grilla compacta 240px con scroll, drag & drop dnd-kit, filtros combinables: búsqueda+estado+competencia+rango score)** + **score/competition_level se recalculan al editar (PUT/POST) + metricas ocultas editables en el modal (revenue/fba_fee/seller_count FBA, migracion 032)** + **URLs de Amazon (auto desde ASIN al capturar) y Alibaba (manual) editables en el modal + iconos ExternalLink en la card (migracion 033)** + **TODAS las migraciones (030/031/032/033) APLICADAS en prod + E2E de extension VERIFICADO (2 capturas AMZScout reales 2026-08-05)** + **FIX: readAMZScout mergea niche_score de los totals al match de la tabla (pagina de producto) — 305 tests**
 version: 2.0.0
 branch: main
 deploy: https://amazon-fba-manager-virid.vercel.app
 build: 0 errores, warnings no bloqueantes
 tests: 304 pasando (vitest)
 tsc: 0 errores
-db_migrations: aplicadas (source_data + score + 031 competition 5 niveles + 032 research metrics CONFIRMADAS en prod); **033_research_urls PENDIENTE en prod**
+db_migrations: TODAS aplicadas en prod (source_data + score 030 + 031 competition 5 niveles + 032 research metrics + 033 research urls) — verificadas 2026-08-07
 ---
 
 # App State
@@ -23,8 +23,8 @@ db_migrations: aplicadas (source_data + score + 031 competition 5 niveles + 032 
 ## Git
 
 - **Branch**: main
-- **Last commits**: `c7daede` (kanban redisenado con ResearchCard + dnd-kit + filtros), `aa51efd` (i18n filtros + helpers color competencia/score), `adbcc91` (plan rediseno), `2331831` (spec rediseno), `a6e2658`..`2cc76b1` (competencia 5 niveles + extension) — pendientes de push
-- **Working tree**: vault actualizado (checkpoint + daily 08-03) — sin commits de feature pendientes
+- **Last commits**: `f8a1db7` (vault cierre sesion 08-04), `e483b48` (URLs amazon/alibaba), `60ac69b` (recalcular score + metricas 032), `2197885` (vault), `c7daede` (kanban redisenado), `aa51efd` (i18n filtros) — todos pusheados
+- **Working tree**: limpio; ultima verificacion 2026-08-07 (lectura prod, sin cambios de codigo)
 
 ## Build
 
@@ -66,11 +66,13 @@ db_migrations: aplicadas (source_data + score + 031 competition 5 niveles + 032 
   - **Reader AMZScout (`readAMZScout`)**: tabla de busqueda (`.maintable__row .scout-col.*`) + totals del header (Avg. Mo Sales/Revenue/Rank/Price/Net Margin) con `fallbackAsin` (pagina de producto → solo el ASIN abierto, o totals solo si `Results <= 1`; nunca la tabla del nicho)
   - **Boton `🔄 Reload`** en el popup + **mode honesto** + **observer con `overlayContentFingerprint()`** (re-colecta cuando el overlay se llena async) + deteccion del custom element **`amzscout-pro`**
   - **Scraper de producto**: BSR/categoria/brand gratis del DOM de Amazon (`#prodDetails`, `#bylineInfo`)
-  - **Pendiente**: usuario verifique E2E (Reload + F5 + producto con AMZScout logueado → 1 solo producto con ventas/revenue/margen)
+  - **E2E VERIFICADO (2026-08-05)**: el usuario capturo 2 productos reales AMZScout (B016NE9A2A, B0H38PWZKR) con ventas/revenue/margen/score/comp/URL — datos confirmados en prod
+  - **FIX niche_score (2026-08-07)**: `readAMZScout` con fallbackAsin mergea `niche_score` de los totals del header al match de la tabla (antes el ASIN en la tabla → nunca se leian los totals)
 - **Research con score enriquecido (2026-08-03)**: `POST /api/research/capture` calcula `calculateScore()` con el source_data completo y persiste `score` (columna) + `score_details` (dimensiones en source_data); las cards kanban muestran badge de Score + BSR/ventas/m/revenue/m/margen/listing health solo si existen. Commits `9413ba3`..`ff0c895`
-- **Competencia 5 niveles (2026-08-03, commits `24fce3e`..`85bfcd1`)**: capture + i18n + UI + extension + popup — **PENDIENTE: aplicar migracion `031_competition_5_levels.sql` en prod** y verificacion E2E con AMZScout (Niche Score → badge de competencia)
+- **Competencia 5 niveles (2026-08-03, commits `24fce3e`..`85bfcd1`)**: capture + i18n + UI + extension + popup — **APLICADA en prod** (migracion `031` verificada 2026-08-07); verificacion E2E hecha (2 capturas con comp=low)
 - **Deep dive Grok bloqueado**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c + agregar XAI_API_KEY en Vercel prod
-- API keys OpenAI y xAI expuestas en chat 2026-08-01 — pendiente rotacion
+- **FIX niche_score (2026-08-07)**: `readAMZScout` con fallbackAsin mergea `niche_score` desde los totals del header al match de la tabla (overlay-reader.ts). TDD (test RED → GREEN, fixture tabla+totals). Rebuild extension + sync `exteRB`. 305 tests
+- API keys OpenAI y xAI expuestas en chat 2026-08-01 — **rotadas por el usuario (2026-08-05), confirmado en sesion 08-07**
 - Zod validation en SP-API / Drive / Cron routes (MEDIUM)
 - Zod validation en SP-API / Drive / Cron routes (MEDIUM)
 - N+1 queries fix + dashboard limits (MEDIUM)

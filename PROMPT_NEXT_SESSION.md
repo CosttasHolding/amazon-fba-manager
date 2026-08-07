@@ -17,6 +17,14 @@
 
 ## Ultima sesion
 
+- **Fecha**: 2026-08-07 (verificacion prod + investigacion niche_score)
+  - **PENDIENTES DEL USUARIO: 3/4 CONFIRMADOS** (solo lectura contra prod via PostgREST):
+    1. Migracion `033_research_urls.sql` → **APLICADA** (columnas `amazon_url`/`alibaba_url` existen; 2 filas con amazon_url)
+    2. E2E extension → **VERIFICADO en datos**: 2 capturas AMZScout reales del 2026-08-05 (`B016NE9A2A` Foam Roller score 85 comp=low mo_sales 5840; `B0H38PWZKR` Jujutsu Kaisen score 86 comp=low mo_sales 2041), ambas con amazon_url auto
+    4. Rotacion de keys → **confirmada por el usuario** (no verificable tecnicamente desde aca)
+    3. Creditos xAI → **SIGUE PENDIENTE** (deep dive bloqueado)
+  - **Tambien confirmado**: migracion `032` aplicada (columnas metrics existen); migracion `031` ya estaba (App State la daba por confirmada); 68 filas en product_research, 3 con score
+  - **HALLAZGO [MEDIUM] `niche_score` no se captura en pagina de producto** (0/68 filas con `source_data.niche_score`): `readAmzscoutTable` (overlay-reader.ts:293) no parsea `niche_score`, y `readAMZScout` con `fallbackAsin` devuelve la fila del ASIN abierto desde la tabla (overlay-reader.ts:334-336) → los totals del header (donde vive "Niche Score", leido por `readAmzscoutTotals`:288) quedan sin leer. El parser de totals SI funciona (test `AMZSCOUT_TOTALS_HTML` → 72 pasa). **RESUELTO 2026-08-07**: fix en `readAMZScout` — cuando el ASIN matchea en la tabla, mergea `niche_score` desde los totals del header. TDD (test RED → GREEN, fixture tabla+totals), rebuild extension + sync `exteRB`. 305 tests
 - **Fecha**: 2026-08-04 (segunda sesion) — **URLs de Amazon (auto) + Alibaba (manual) en Research**
   - **Migracion `033_research_urls.sql`** (NUEVA, **PENDIENTE aplicar en prod**): columnas `amazon_url` + `alibaba_url`.
   - **Capture route** autocompleta `amazon_url` desde el ASIN (`https://www.amazon.com/dp/${asin}`) — URL limpia de producto, no `capture_url`.
@@ -59,31 +67,26 @@
 
 Leer `App State.md` para el snapshot completo. Puntos clave:
 - Motor de Investigacion funcional: extension -> capture -> scoring -> deep dive (LLM = xAI Grok `grok-4.5`)
-- **Extension = recolector multi-fuente** (H10/AMZScout/Keepa): lee overlays + BSR/categoria/brand gratis del DOM de Amazon. Fixes 10ma-13va commiteados y pusheados. Copia personal `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\exteRB\` sincronizada (content.js 13.6KB). **Lee el Niche Score de los totals de AMZScout** (`niche_score`)
-- **Score enriquecido ya funciona end-to-end**: capture route calcula y persiste; cards kanban muestran los badges
-- **Competencia en 5 niveles YA esta en el codigo**: capture deriva `competition_level` (very_low..very_high) desde `competenciaScore`; modal + badge kanban traducidos; popup deriva competencia localmente. **PENDIENTE: aplicar migracion `031_competition_5_levels.sql` en prod + verificar E2E**
-- **Kanban redisenado YA esta en el codigo**: grilla compacta 240px con scroll interno, drag & drop entre estados (dnd-kit), filtros combinables (búsqueda+estado+competencia+rango score). Pendiente verificar en prod con datos reales
+- **Extension = recolector multi-fuente** (H10/AMZScout/Keepa): lee overlays + BSR/categoria/brand gratis del DOM de Amazon. **E2E VERIFICADO 2026-08-05**: 2 capturas reales AMZScout con ventas/revenue/margen/score/comp/URL. Copia personal `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\exteRB\` sincronizada (content.js 13.6KB).
+- **TODAS las migraciones aplicadas en prod**: 030 (score) + 031 (competencia 5 niveles) + 032 (metrics) + 033 (urls) — verificadas 2026-08-07
+- **Score enriquecido funciona end-to-end**: capture route calcula y persiste; cards kanban muestran los badges
+- **Competencia en 5 niveles EN PROD**: capture deriva `competition_level`; las 2 capturas E2E salieron comp=low
+- **Kanban redisenado en prod**: grilla compacta 240px, drag & drop (dnd-kit), filtros combinables
+- **HALLAZGO [MEDIUM] `niche_score` no se captura en pagina de producto** — **RESUELTO 2026-08-07** (merge de totals al match de la tabla; ver seccion Ultima sesion)
 - **Bloqueante deep dive**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c
 - **XAI_API_KEY solo en .env.local** — falta agregarla en Vercel (prod)
 
 ## Proximos pasos
 
 ### 1. USUARIO debe hacer
-- **Aplicar la migracion `033_research_urls.sql` en Supabase prod** (2 columnas amazon_url/alibaba_url)
-- **Aplicar la migracion `032_research_metrics.sql` en Supabase prod** (si aun no lo hizo)
-- **Aplicar la migracion `031_competition_5_levels.sql` en Supabase prod** (si aun no lo hizo; CHECK constraint 5 niveles)
-- **Verificar la extension E2E**: boton `🔄 Reload` del popup + F5 → abrir un producto con AMZScout logueado, ESPERAR a que cargue → el popup deberia mostrar **1 solo producto** con Ventas/m + Revenue/m + Margen + **Competencia (Very low..Muy alta)** → Enviar → verificar la card kanban con el badge de competencia
-- **Cargar creditos/licencias xAI** — sin esto el deep dive tira 403 (https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c)
-- **Agregar XAI_API_KEY en Vercel** (Settings → Environment Variables)
-- **Rotar las API keys AL CARGAR CREDITOS** — decision tomada (riesgo bajo hoy, keys sin creditos)
+- **Cargar creditos/licencias xAI** — sin esto el deep dive tira 403 (https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c). **UNICA pendiente de las 4**
+- **Agregar XAI_API_KEY en Vercel** (Settings → Environment Variables) cuando cargue creditos
 - El `.pem` de firma de la extension esta movido fuera del repo (copia personal `C:\Users\Nacho\Desktop\Amazon\IMPORTANTE\`)
 
 ### 2. Agente — follow-ups del research
 - **[DONE 2026-08-04] Score stale en ediciones manuales** — resuelto: PUT/POST recalcula score + score_details + competition_level; metricas ocultas editables en el modal (migracion 032)
-- **[PENDIENTE] Commitear y pushear la sesion 2026-08-04** (migracion 032, recompute.ts, route.ts, route.test.ts, page.tsx, i18n, vault) → deploy a Vercel
+- **[DONE 2026-08-07] niche_score no se captura en pagina de producto** — resuelto: `readAMZScout` mergea `niche_score` de los totals del header al match de la tabla (TDD, 305 tests, rebuild extension + sync `exteRB`). **PENDIENTE**: push + deploy + verificar E2E con una captura nueva
 - **[MEDIUM] Reconsiderar**: los Minor findings del final review — i18n keys no alfabeticas, `key={b.text}` fragil, formatters re-creados, score en digitos occidentales en AR, test solo aserta 2/4 dimensiones, `scoreBadgeClass`/`sourceBadges` inline
-- Verificar que la card kanban renderice bien con datos reales capturados en prod (la migracion ya esta aplicada)
-- **Verificar el kanban redisenado en prod** con datos reales: drag & drop entre estados + filtros combinables (competencia/rango score) + scroll interno de columnas
 - **[LOW/IDEA]** En la tarjeta compacta nueva, el score destacado + badge competencia ya ayudan a detectar oportunidades; considerar si se quiere re-agregar badges extra (source) que la card anterior tenia via `sourceBadges`
 
 ### 3. Backlog (MEDIUM)
@@ -126,7 +129,7 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 npm run dev              # Desarrollo
 npm run build            # Build produccion
 npm run lint             # Linting
-npm run test:run         # Tests (275)
+npm run test:run         # Tests (304)
 npm run build:extension  # Regenerar exteRB (public/exteRB)
 npx tsc --noEmit         # Typecheck (0 errores esperados)
 ```

@@ -216,6 +216,49 @@ const AMZSCOUT_TABLE_NICHE_HTML = `
 </amzscout-pro>
 `;
 
+const AMZSCOUT_TABLE_WITH_TOTALS_HTML = `
+<amzscout-pro class="ng-scope">
+  <header class="l-header">
+    <div class="totals ng-scope">
+      <div class="totals-item ng-scope">
+        <h4 class="totals-item__title ng-binding">Results</h4>
+        <span class="totals-item__val ng-binding">2</span>
+      </div>
+      <div class="totals-item ng-scope totals-item_trial">
+        <h4 class="totals-item__title ng-binding">Avg. Mo Sales</h4>
+        <span class="totals-item__val ng-binding">1,151</span>
+      </div>
+      <div class="totals-item ng-scope" ng-if="options.opScore">
+        <h4 class="totals-item__title ng-binding">Niche Score</h4>
+        <span class="totals-item__val ng-binding">72</span>
+      </div>
+    </div>
+  </header>
+  <div class="maintable__row-wrapper">
+    <div class="maintable__row">
+      <div class="scout-col col-name">
+        <a href="https://www.amazon.com/dp/B0GZYR5LJF" title="Star Wars Action Figure">Star Wars Action Figure</a>
+      </div>
+      <div class="scout-col col-price"><a>$79.99</a></div>
+      <section class="scout-col col-rank"><a>1,240</a></section>
+      <section class="scout-col col-sales"><a><span>1,151</span></a></section>
+      <section class="scout-col col-revenue"><div><span>$91,892</span></div></section>
+    </div>
+  </div>
+  <div class="maintable__row-wrapper">
+    <div class="maintable__row">
+      <div class="scout-col col-name">
+        <a href="https://www.amazon.com/dp/B0H69PVMKC" title="Other Action Figure">Other Action Figure</a>
+      </div>
+      <div class="scout-col col-price"><a>$29.99</a></div>
+      <section class="scout-col col-rank"><a>8,512</a></section>
+      <section class="scout-col col-sales"><a><span>312</span></a></section>
+      <section class="scout-col col-revenue"><div><span>$9,356</span></div></section>
+    </div>
+  </div>
+</amzscout-pro>
+`;
+
 describe("readAMZScout", () => {
   it("lee los totals del header cuando no hay tabla (pagina de producto)", () => {
     const products = readAMZScout(makeContainer(AMZSCOUT_TOTALS_HTML), "B0GZYR5LJF");
@@ -269,6 +312,14 @@ describe("readAMZScout", () => {
     expect(products).toHaveLength(1);
     expect(products[0].asin).toBe("B0GZYR5LJF");
     expect(products[0].estimated_monthly_sales).toBe(1151);
+  });
+
+  it("en pagina de producto con el ASIN en la tabla, mergea el Niche Score desde los totals del header", () => {
+    const products = readAMZScout(makeContainer(AMZSCOUT_TABLE_WITH_TOTALS_HTML), "B0GZYR5LJF");
+    expect(products).toHaveLength(1);
+    expect(products[0].asin).toBe("B0GZYR5LJF");
+    expect(products[0].estimated_monthly_sales).toBe(1151);
+    expect(products[0].niche_score).toBe(72);
   });
 
   it("lee el Niche Score de los totals cuando esta presente", () => {

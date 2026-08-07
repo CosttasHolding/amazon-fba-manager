@@ -1,7 +1,7 @@
 ---
 tipo: tracking
 tags: [bug, problemas]
-ultima_actualizacion: 2026-08-04
+ultima_actualizacion: 2026-08-07
 ---
 
 # Bugs Conocidos
@@ -18,7 +18,7 @@ ultima_actualizacion: 2026-08-04
 - **Causa**: la key `XAI_API_KEY` es VALIDA (autenticacion OK, llega a api.x.ai) pero el team no tiene creditos/licencias cargadas
 - **Solucion**: comprar creditos en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c
 - **Adicional**: XAI_API_KEY solo esta en `.env.local` — falta agregarla en Vercel (prod) o el deep dive fallara en produccion
-- **Seguridad**: las keys de OpenAI y xAI quedaron expuestas en el chat del 2026-08-01. **DECISION**: riesgo bajo (sin creditos hoy), rotar cuando el usuario cargue creditos — ahi generar key nueva en vez de usar la expuesta
+- **Seguridad**: las keys de OpenAI y xAI quedaron expuestas en el chat del 2026-08-01. **RESUELTO 2026-08-05**: el usuario confirmo que las roto
 
 ### Score no se recalculaba al editar el producto manualmente → RESUELTO (2026-08-04)
 - **Fecha**: 2026-08-03 / resuelto 2026-08-04
@@ -27,13 +27,22 @@ ultima_actualizacion: 2026-08-04
 - **Fix (2026-08-04)**: helper puro `src/lib/research/recompute.ts` (`toScoringInputFromRow` mergea columnas + `source_data` para revenue/fba_fee/seller_count, `rowHasData` gate, `recomputeScoreForRow`); `PUT` y `POST /api/research` recalculan `score` + `score_details` + derivan o respetan `competition_level` (**override manual respetado**); status-only (`{ status }`) no toca score; PUT 404 si fila no existe. Migracion `032` agrego las columnas de metricas. Commits `60ac69b`
 - **Verificacion**: tsc 0 | 300/300 tests | build OK | migraciones 030/031/032/033 aplicadas en prod
 
-### Verificacion E2E pendiente: competencia 5 niveles + Niche Score (2026-08-03)
-- **Estado**: la feature esta completa y verificada con tests (304/304), pero falta E2E real con AMZScout logueado
-- **Pendiente**: verificar que el Niche Score de los totals de AMZScout se captura y deriva el badge de competencia (very_low..very_high) en el popup y en la card kanban (migracion `031` ya aplicada en prod)
-
 ---
 
 ## Resueltos
+
+### niche_score no se capturaba en pagina de producto (extension AMZScout) → RESUELTO (2026-08-07)
+- **Fecha**: descubierto 2026-08-07 / resuelto 2026-08-07
+- **Sintoma**: `source_data.niche_score` era null en las 3 capturas reales con score; 0/68 filas con niche_score. La feature de competencia 5 niveles dependia del Niche Score de los totals de AMZScout
+- **Causa raiz**: en pagina de producto con AMZScout logueado, la tabla del nicho SI contiene el ASIN abierto → `readAMZScout` con `fallbackAsin` devolvia esa fila via `readAmzscoutTable` (overlay-reader.ts:293), que **no parsea `niche_score`** (solo `.col-sales/.col-revenue/.col-mi/.col-rank/.col-sellers/etc.`). Los totals del header (donde vive "Niche Score", leido por `readAmzscoutTotals`:288) solo se leian cuando el ASIN NO esta en la tabla y `Results <= 1`. El parser de totals SI funcionaba (test → 72); el problema era que esa ruta no corre en el caso real mas comun
+- **Evidencia**: capturas reales B016NE9A2A (mo_sales 5840, revenue 153310, margin 65, bsr 6, sellers 2) y B0H38PWZKR (mo_sales 2041, revenue 153061, margin 79, bsr 62, sellers 1) — valores de columnas de la tabla del nicho, no de totals
+- **Fix (2026-08-07)**: en `readAMZScout`, cuando hay match en la tabla con fallbackAsin, mergea `niche_score` desde `readAmzscoutTotals` (solo ese campo, del nicho). TDD: test RED primero (fixture tabla+totals, `AMZSCOUT_TABLE_WITH_TOTALS_HTML`), luego GREEN. Rebuild extension + sync `exteRB`
+- **Verificacion**: 305/305 tests | tsc 0 | lint solo warnings pre-existentes | build OK | build:extension OK. **Pendiente**: push + deploy + E2E con una captura nueva para ver niche_score poblado
+
+### Verificacion E2E: competencia 5 niveles + Niche Score → HECHA (2026-08-05, confirmada 08-07)
+- **Estado**: RESUELTA. El E2E con AMZScout logueado se hizo y quedo confirmado con datos reales en prod
+- **Evidencia (2026-08-07, lectura PostgREST)**: 2 capturas AMZScout reales del 2026-08-05 — `B016NE9A2A` Foam Roller (score 85, competition_level=low, niche="Foam Rollers", mo_sales 5840, amazon_url auto) y `B0H38PWZKR` Jujutsu Kaisen (score 86, comp=low, niche="Action Figures", mo_sales 2041, amazon_url auto). Migraciones 031/032/033 todas aplicadas en prod
+- **Matiz**: el **Niche Score** de los totals NO se capturo (ver bug activo `niche_score`). La competencia salio "low" derivada del scoring, no del Niche Score. El badge de competencia y el score funcionaron igual
 
 ### Capture fallaria en prod si la migracion 033 no estaba aplicada (2026-08-04)
 - **Fecha**: 2026-08-04

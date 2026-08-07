@@ -333,7 +333,11 @@ export function readAMZScout(container: Element, fallbackAsin?: string | null): 
 
   if (fallbackAsin) {
     const match = tableProducts.find((p) => p.asin === fallbackAsin);
-    if (match) return [match];
+    if (match) {
+      const totals = readAmzscoutTotals(container, fallbackAsin);
+      if (totals?.niche_score != null) match.niche_score = totals.niche_score;
+      return [match];
+    }
 
     const results = readAmzscoutResults(container);
     if (results != null && results > 1) return [];
