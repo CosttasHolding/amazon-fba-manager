@@ -13,6 +13,7 @@ ultima_actualizacion: 2026-07-22
 ## Documentacion de la App
 
 - [[01 - App Index]] - Arquitectura, base de datos, API, modulos
+- [[GLOSARIO]] - Referencia completa de terminos, campos y metricas de la app
 
 ## Desarrollo
 

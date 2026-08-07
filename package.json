@@ -21,6 +21,7 @@
     "mobile:build": "next build && npx cap sync && npx cap open ios",
     "mobile:build:android": "next build && npx cap sync && npx cap open android",
     "build:extension": "tsx src/scripts/build-extension.ts",
+    "build:glossary": "tsx src/scripts/build-glossary.ts",
     "prepare": "husky"
   },
   "dependencies": {

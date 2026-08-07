@@ -17,14 +17,18 @@
 
 ## Ultima sesion
 
-- **Fecha**: 2026-08-07 (verificacion prod + investigacion niche_score)
+- **Fecha**: 2026-08-07 (verificacion prod + niche_score + glosario + fix categoria)
   - **PENDIENTES DEL USUARIO: 3/4 CONFIRMADOS** (solo lectura contra prod via PostgREST):
     1. Migracion `033_research_urls.sql` → **APLICADA** (columnas `amazon_url`/`alibaba_url` existen; 2 filas con amazon_url)
     2. E2E extension → **VERIFICADO en datos**: 2 capturas AMZScout reales del 2026-08-05 (`B016NE9A2A` Foam Roller score 85 comp=low mo_sales 5840; `B0H38PWZKR` Jujutsu Kaisen score 86 comp=low mo_sales 2041), ambas con amazon_url auto
     4. Rotacion de keys → **confirmada por el usuario** (no verificable tecnicamente desde aca)
     3. Creditos xAI → **SIGUE PENDIENTE** (deep dive bloqueado)
-  - **Tambien confirmado**: migracion `032` aplicada (columnas metrics existen); migracion `031` ya estaba (App State la daba por confirmada); 68 filas en product_research, 3 con score
-  - **HALLAZGO [MEDIUM] `niche_score` no se captura en pagina de producto** (0/68 filas con `source_data.niche_score`): `readAmzscoutTable` (overlay-reader.ts:293) no parsea `niche_score`, y `readAMZScout` con `fallbackAsin` devuelve la fila del ASIN abierto desde la tabla (overlay-reader.ts:334-336) → los totals del header (donde vive "Niche Score", leido por `readAmzscoutTotals`:288) quedan sin leer. El parser de totals SI funciona (test `AMZSCOUT_TOTALS_HTML` → 72 pasa). **RESUELTO 2026-08-07**: fix en `readAMZScout` — cuando el ASIN matchea en la tabla, mergea `niche_score` desde los totals del header. TDD (test RED → GREEN, fixture tabla+totals), rebuild extension + sync `exteRB`. 305 tests
+  - **GLOSARIO COMPLETO + GLOSARIO.md (orquestado con 3 agentes paralelos)**:
+    - `src/lib/help-content.ts` ampliado: `HELP_GLOSSARY` 34 → 55 terminos (Competition Level 5 niveles, Niche Score, Score/Score Details, Listing Health Score, Capture Rate, Unit vs Landed, seller_count, avg_rating, monthly revenue, etc.) + `forms`/`glossary` por seccion desde los schemas Zod (research 24 campos, orders, shipments, suppliers, sales, returns, finances, ads, board-decisions, inventory, members, tasks)
+    - Nuevo `src/scripts/build-glossary.ts` + `npm run build:glossary` → genera `GLOSARIO.md` en la raiz (54 terminos + 30 secciones con KPIs/filtros/acciones/tablas/formularios/glosario/tips)
+    - `AGENTS.md` (seccion `## Glosario`) + `00 - Dashboard.md` (wikilink `[[GLOSARIO]]`) apuntan al MD
+    - **Decision**: TS como fuente de verdad (la app lo muestra en help-modal), MD derivado por script idempotente
+  - **FIX categoria producto**: el campo categoria se completaba con la del producto en vista. Causa raiz: `catMap` hardcodeado con matching EXACTO descartaba las categorias reales de Amazon ("Home & Kitchen", etc.). Nuevo `src/lib/scraping/category.ts` (`mapAmazonCategory`, matching por subcadena, 3 tests) usado en `product-form-modal.tsx` + `products/new/page.tsx`. TDD. **308 tests**
 - **Fecha**: 2026-08-04 (segunda sesion) — **URLs de Amazon (auto) + Alibaba (manual) en Research**
   - **Migracion `033_research_urls.sql`** (NUEVA, **PENDIENTE aplicar en prod**): columnas `amazon_url` + `alibaba_url`.
   - **Capture route** autocompleta `amazon_url` desde el ASIN (`https://www.amazon.com/dp/${asin}`) — URL limpia de producto, no `capture_url`.
@@ -73,6 +77,8 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 - **Competencia en 5 niveles EN PROD**: capture deriva `competition_level`; las 2 capturas E2E salieron comp=low
 - **Kanban redisenado en prod**: grilla compacta 240px, drag & drop (dnd-kit), filtros combinables
 - **HALLAZGO [MEDIUM] `niche_score` no se captura en pagina de producto** — **RESUELTO 2026-08-07** (merge de totals al match de la tabla; ver seccion Ultima sesion)
+- **Glosario completo disponible**: `GLOSARIO.md` en la raiz (54 terminos + 30 secciones) generado desde `src/lib/help-content.ts` con `npm run build:glossary`. **Leerlo antes de trabajar** (AGENTS.md lo indica). Fuente de verdad = TS
+- **FIX categoria producto RESUELTO 2026-08-07**: `mapAmazonCategory` (matching por subcadena) reemplaza el catMap exacto en los forms de producto
 - **Bloqueante deep dive**: team xAI sin creditos/licencias (403). Comprar en https://console.x.ai/team/db62d709-49a7-4db0-a4cd-d58a3921a13c
 - **XAI_API_KEY solo en .env.local** — falta agregarla en Vercel (prod)
 
@@ -86,6 +92,8 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 ### 2. Agente — follow-ups del research
 - **[DONE 2026-08-04] Score stale en ediciones manuales** — resuelto: PUT/POST recalcula score + score_details + competition_level; metricas ocultas editables en el modal (migracion 032)
 - **[DONE 2026-08-07] niche_score no se captura en pagina de producto** — resuelto: `readAMZScout` mergea `niche_score` de los totals del header al match de la tabla (TDD, 305 tests, rebuild extension + sync `exteRB`). **PENDIENTE**: push + deploy + verificar E2E con una captura nueva
+- **[DONE 2026-08-07] Glosario completo + GLOSARIO.md** — `help-content.ts` ampliado (55 terminos globales + forms/glossary por seccion), script `build:glossary` genera el MD, AGENTS.md + Dashboard vinculados. **PENDIENTE**: push
+- **[DONE 2026-08-07] Categoria del producto se completaba con la del producto en vista** — `mapAmazonCategory` por subcadena en los forms (TDD, 308 tests). **PENDIENTE**: push
 - **[MEDIUM] Reconsiderar**: los Minor findings del final review — i18n keys no alfabeticas, `key={b.text}` fragil, formatters re-creados, score en digitos occidentales en AR, test solo aserta 2/4 dimensiones, `scoreBadgeClass`/`sourceBadges` inline
 - **[LOW/IDEA]** En la tarjeta compacta nueva, el score destacado + badge competencia ya ayudan a detectar oportunidades; considerar si se quiere re-agregar badges extra (source) que la card anterior tenia via `sourceBadges`
 
@@ -118,6 +126,10 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 - `src/chrome-extension/popup/popup.ts` — deriva y muestra competencia (badge "Competencia") + boton Reload + tool de debug
 - `src/chrome-extension/popup/competition.ts` — `competitionLevelFromCaptured` (port de `competenciaScore` para el popup, que no puede importar `@/lib`)
 - `src/lib/ai/client.ts` — `getXAIClient()` (OpenAI SDK → xAI baseURL)
+- `src/lib/help-content.ts` — glosario de la app (fuente de verdad; HELP_GLOSSARY 55 terminos + forms/glossary por seccion)
+- `src/scripts/build-glossary.ts` — genera `GLOSARIO.md` (`npm run build:glossary`)
+- `src/lib/scraping/category.ts` — `mapAmazonCategory` (categoria de Amazon → 9 internas, por subcadena)
+- `GLOSARIO.md` — referencia completa generada (54 terminos + 30 secciones)
 - `.env.local` — XAI_API_KEY (gitignored)
 - Spec/plan: `docs/superpowers/specs/2026-08-02-research-score-source-data-ui-design.md` y `docs/superpowers/plans/2026-08-02-research-score-source-data-ui.md`
 - Plan nicho/competencia: `docs/superpowers/plans/2026-08-03-niche-competition-5-levels.md` (spec `7d13429`, base `23f4f99`)
@@ -129,7 +141,7 @@ Leer `App State.md` para el snapshot completo. Puntos clave:
 npm run dev              # Desarrollo
 npm run build            # Build produccion
 npm run lint             # Linting
-npm run test:run         # Tests (304)
+npm run test:run         # Tests (308)
 npm run build:extension  # Regenerar exteRB (public/exteRB)
 npx tsc --noEmit         # Typecheck (0 errores esperados)
 ```

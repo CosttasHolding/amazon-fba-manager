@@ -25,6 +25,7 @@ import { MARKETPLACES, PRODUCT_CATEGORIES, PRODUCT_STATUSES } from "@/lib/consta
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { useUrlScrape } from "@/hooks/use-url-scrape";
+import { mapAmazonCategory } from "@/lib/scraping/category";
 import { inputClass, labelClass } from "@/lib/form-constants";
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -161,19 +162,9 @@ export default function NewProductPage() {
         if (data.price && data.price > 0) setValue("salePrice", data.price);
         if (data.weight_kg && data.weight_kg > 0) setValue("weightKg", data.weight_kg);
         if (data.category) {
-          const catMap: Record<string, string> = {
-            "electronics": "Electronics",
-            "toys": "Toys",
-            "home": "Home",
-            "kitchen": "Kitchen",
-            "health": "Health",
-            "beauty": "Beauty",
-            "sports": "Sports",
-            "books": "Books",
-          };
-          const mapped = catMap[data.category.toLowerCase()] ?? data.category;
-          if (["Electronics","Toys","Home","Kitchen","Health","Beauty","Sports","Books","Other"].includes(mapped)) {
-            setValue("category", mapped as "Electronics" | "Toys" | "Home" | "Kitchen" | "Health" | "Beauty" | "Sports" | "Books" | "Other");
+          const mapped = mapAmazonCategory(data.category);
+          if (mapped) {
+            setValue("category", mapped);
           }
         }
       }

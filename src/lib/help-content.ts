@@ -182,6 +182,111 @@ export const HELP_GLOSSARY: { term: string; definition: string }[] = [
     definition:
       "Guía de inicio para nuevos usuarios. Checklist interactivo con pasos: crear perfil, configurar defaults, agregar primer producto, registrar proveedor, importar ventas. Se muestra automáticamente hasta completar todos los pasos.",
   },
+  {
+    term: "Competition Level (Nivel de Competencia)",
+    definition:
+      "Nivel de competencia de un nicho en Amazon con 5 valores: very_low (muy baja, pocos sellers y alta oportunidad de entrada), low (baja), medium (media), high (alta) y very_high (muy alta, mercado saturado con sellers dominantes). Determina la dificultad de diferenciarse y el presupuesto publicitario necesario.",
+  },
+  {
+    term: "Niche Score",
+    definition:
+      "Puntaje compuesto que prioriza ideas de producto en Research combinando señales de rentabilidad, competencia, demanda y facilidad de diferenciación. Se usa para ordenar el pipeline: a mayor Niche Score, mayor oportunidad relativa del nicho.",
+  },
+  {
+    term: "Score / Score Details (Research)",
+    definition:
+      "Desglose del puntaje de una idea en Research. Muestra cómo se combinan competition_level, estimated_roi, average_rating, review_count_competitor, BSR y demanda mensual estimada para generar el Niche Score. Permite detectar qué factor penaliza o impulsa la oportunidad.",
+  },
+  {
+    term: "Listing Health Score",
+    definition:
+      "Indicador de la salud de un listing en Amazon. Evalúa cantidad y promedio de reviews, BSR, presencia de contenido (fotos, bullets, A+) y tendencia de ventas. Un score bajo sugiere optimizar el listing antes de esperar crecimiento orgánico.",
+  },
+  {
+    term: "Net Margin % (Margen Neto)",
+    definition:
+      "Margen neto porcentual sobre el precio de venta. Fórmula: ((Precio Venta - Costo Total) / Precio Venta) × 100. En Research se estima pre-lanzamiento para validar que el margen cubra fees de Amazon y costos de adquisición.",
+  },
+  {
+    term: "Capture Rate",
+    definition:
+      "Porcentaje del tráfico o de las impresiones de un listing que se convierte en venta. Fórmula: (Pedidos / Impresiones) × 100. En Research se usa para estimar qué porción de la demanda del nicho podés capturar frente a la competencia.",
+  },
+  {
+    term: "Unit Cost vs Landed Cost",
+    definition:
+      "Unit Cost es el precio por unidad que se paga al proveedor (FOB). Landed Cost es ese costo puesto en almacén FBA: unit cost + flete internacional + aduana + prep center + flete local. El ROI realista siempre se calcula sobre Landed Cost.",
+  },
+  {
+    term: "FBA Fee vs Referral Fee",
+    definition:
+      "Referral Fee es la comisión de Amazon por venta (típicamente 15% según categoría). FBA Fee es la tarifa de fulfillment por almacenamiento, picking, packing y envío al cliente según peso y dimensiones. Ambos se descuentan del revenue para obtener la ganancia neta.",
+  },
+  {
+    term: "Marketplace",
+    definition:
+      "Tienda de Amazon donde se vende el producto: US, MX, CA, UK, DE, FR, IT, ES. Cambia precio, moneda, tarifas, impuestos y nivel de competencia.",
+  },
+  {
+    term: "ASIN de Referencia (Research)",
+    definition:
+      "ASIN usado como modelo en Research para estimar demanda, precio, reviews y competencia del nicho antes de lanzar un producto propio. Debe ser representativo del producto que se planea vender.",
+  },
+  {
+    term: "Seller Count FBA (seller_count_fba)",
+    definition:
+      "Cantidad de sellers FBA que venden el ASIN/producto de referencia. A menor cantidad, menor competencia directa. Más de 10-20 sellers FBA suele indicar nicho saturado.",
+  },
+  {
+    term: "Review Count Competidor (review_count_competitor)",
+    definition:
+      "Cantidad de reviews del competidor o ASIN de referencia. Es una barrera de entrada: superar a competidores con miles de reviews exige presupuesto y tiempo de acumulación.",
+  },
+  {
+    term: "Average Rating (average_rating)",
+    definition:
+      "Rating promedio del listing en escala 1 a 5. Un valor menor a 4.0 indica problemas de calidad percibida; 4.5 o más es señal de producto validado por el mercado.",
+  },
+  {
+    term: "Monthly Revenue Estimado (estimated_monthly_revenue)",
+    definition:
+      "Ingreso mensual estimado del nicho. Fórmula: Unidades Mensuales Estimadas × Precio Promedio. Dimensiona el tamaño del mercado y la oportunidad.",
+  },
+  {
+    term: "Monthly Sales Estimado (estimated_monthly_sales)",
+    definition:
+      "Unidades mensuales estimadas que vende el ASIN de referencia. Base para dimensionar la demanda del nicho y proyectar el volumen propio.",
+  },
+  {
+    term: "Estimated FBA Fee",
+    definition:
+      "Tarifa FBA estimada por unidad según peso y dimensiones proyectadas. Se usa en Research para calcular la ganancia neta antes de tener datos reales del producto.",
+  },
+  {
+    term: "Estimated COGS (estimated_cogs)",
+    definition:
+      "Costo de mercadería vendida estimado por unidad (compra al proveedor). Excluye flete y fees. Input clave para estimar ROI en Research.",
+  },
+  {
+    term: "Estimated Selling Price (estimated_selling_price)",
+    definition:
+      "Precio de venta estimado del producto, normalmente alineado al precio promedio del nicho. Input clave para calcular ROI y margen proyectados.",
+  },
+  {
+    term: "Estimated ROI (estimated_roi)",
+    definition:
+      "ROI proyectado del producto calculado con precios y costos estimados. Fórmula: ((Ganancia Neta Estimada / Costo Total Estimado) × 100). En Research se recomienda mayor a 150% para avanzar a Aprobado.",
+  },
+  {
+    term: "Source / Fuente (Research)",
+    definition:
+      "Origen de la idea de producto en Research (ej. Jungle Scout, Helium 10, TikTok, competencia, marketplace). Permite rastrear dónde se descubrió cada oportunidad.",
+  },
+  {
+    term: "Amazon URL / Alibaba URL",
+    definition:
+      "Enlaces de referencia de la idea. Amazon URL apunta al listing/ASIN de referencia para validar demanda; Alibaba URL apunta al proveedor o cotización candidato para estimar costos.",
+  },
 ];
 
 export const HELP_SECTIONS: HelpSection[] = [
@@ -483,6 +588,40 @@ export const HELP_SECTIONS: HelpSection[] = [
       { label: "Nuevo Proveedor", description: "Modal para registrar proveedor" },
       { label: "Exportar Excel", description: "Exporta proveedores filtrados" },
     ],
+    forms: [
+      {
+        label: "Datos del Proveedor",
+        fields: [
+          { name: "Nombre", description: "Nombre comercial del proveedor", required: true },
+          { name: "Alibaba URL", description: "Enlace al perfil en Alibaba o web del proveedor", required: false },
+          { name: "País", description: "País de origen", required: false },
+          { name: "Estado", description: "active / inactive", required: false },
+        ],
+      },
+      {
+        label: "Contacto",
+        fields: [
+          { name: "Nombre de Contacto", description: "Persona de contacto", required: false },
+          { name: "Email", description: "Correo de contacto", required: false },
+          { name: "WhatsApp", description: "Número de WhatsApp", required: false },
+        ],
+      },
+      {
+        label: "Condiciones Comerciales",
+        fields: [
+          { name: "Rating", description: "Calificación 1-5 estrellas", required: false },
+          { name: "Términos de Pago", description: "Ej: 30/70, 50/50, T/T", required: false },
+          { name: "MOQ", description: "Cantidad mínima de orden", required: false },
+          { name: "Lead Time (días)", description: "Días de producción + envío", required: false },
+        ],
+      },
+      {
+        label: "Notas",
+        fields: [
+          { name: "Notas", description: "Observaciones sobre el proveedor", required: false },
+        ],
+      },
+    ],
     tips: [
       "Mantén al menos 2 proveedores por producto para mitigar riesgos de producción.",
       "Un rating < 3 estrellas requiere revisión: inspecciones más frecuentes o búsqueda de alternativas.",
@@ -610,9 +749,57 @@ export const HELP_SECTIONS: HelpSection[] = [
     glossary: [
       { term: "Flujo de Estados", definition: "Borrador → Enviado → Confirmado → Producción → Embarcado → En Tránsito → Aduana → Entregado. Cancelado es terminal." },
       { term: "PO (Purchase Order)", definition: "Número de orden de compra. Puede ser autogenerado o manual." },
+      { term: "Depósito / Balance", definition: "Depósito es el pago inicial (generalmente 30%) y Balance el pago final (generalmente 70%). Total Pagado = Depósito + Balance." },
     ],
     actions: [
       { label: "Nueva Orden", description: "Modal para crear orden de compra" },
+    ],
+    forms: [
+      {
+        label: "Información General",
+        fields: [
+          { name: "Proveedor", description: "Proveedor de la orden", required: false },
+          { name: "Producto", description: "Producto a ordenar", required: false },
+          { name: "N° PO", description: "Número de orden de compra (autogenerado o manual)", required: false },
+          { name: "Cantidad", description: "Unidades a pedir", required: true },
+          { name: "Costo Unitario", description: "Precio por unidad acordado", required: true },
+          { name: "Total", description: "Cantidad × Costo Unitario (se calcula automáticamente)", required: false },
+          { name: "Moneda", description: "USD / CNY / ARS", required: false },
+          { name: "Tipo de Cambio", description: "Tipo de cambio aplicado (default 1)", required: false },
+          { name: "Estado", description: "draft / sent / confirmed / in_production / shipped / in_transit / customs / delivered / cancelled", required: false },
+          { name: "Fecha de Orden", description: "Fecha de emisión de la orden", required: false },
+        ],
+      },
+      {
+        label: "Producción y Logística",
+        fields: [
+          { name: "Deadline Producción", description: "Fecha límite de producción", required: false },
+          { name: "Método de Envío", description: "air / sea / express", required: false },
+          { name: "Costo de Envío", description: "Flete internacional", required: false },
+          { name: "Forwarder", description: "Agente de carga responsable", required: false },
+          { name: "Tracking", description: "Número de seguimiento del envío", required: false },
+          { name: "Costo Aduana", description: "Costos aduaneros del envío", required: false },
+          { name: "Prep Center Cost", description: "Costo de preparación", required: false },
+          { name: "Amazon Shipment ID", description: "ID del shipment creado en Amazon", required: false },
+          { name: "Fecha Envío", description: "Fecha en que se embarcó", required: false },
+          { name: "Llegada Estimada", description: "Fecha estimada de llegada", required: false },
+        ],
+      },
+      {
+        label: "Pagos",
+        fields: [
+          { name: "Depósito", description: "Pago inicial (generalmente 30%)", required: false },
+          { name: "Fecha Depósito", description: "Fecha del pago inicial", required: false },
+          { name: "Balance", description: "Pago final (generalmente 70%)", required: false },
+          { name: "Fecha Balance", description: "Fecha del pago final", required: false },
+        ],
+      },
+      {
+        label: "Notas",
+        fields: [
+          { name: "Notas", description: "Notas internas de la orden", required: false },
+        ],
+      },
     ],
     tips: [
       "Actualiza el estado cada vez que el proveedor confirme un cambio.",
@@ -716,6 +903,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { term: "Stockout", definition: "Fecha calculada en que se agotará el stock. Fórmula: Fecha Actual + (Stock Disponible / Velocidad de Ventas Diaria)." },
       { term: "Días de Stock", definition: "Stock Total / (Ventas últimos 30 días / 30). Recomendado mantener 45-60 días de stock como buffer." },
       { term: "Exceso Stock", definition: "Stock > 120 días de ventas. Genera costos de almacenamiento elevados y riesgo de obsolescencia." },
+      { term: "Movimientos de Stock", definition: "Eventos que modifican inventario: inbound_shipment, received_at_amazon, sale, return, removal, adjustment, damaged, transfer_to_warehouse. Cada uno afecta el stock disponible o en tránsito." },
     ],
     tips: [
       "Días de stock < 15 = CRÍTICO. Ordena inmediatamente.",
@@ -762,6 +950,19 @@ export const HELP_SECTIONS: HelpSection[] = [
       { label: "Importar CSV", description: "Importa archivo CSV con ventas" },
       { label: "Reporte PDF", description: "Genera reporte PDF con resumen mensual" },
       { label: "Exportar Excel", description: "Exporta ventas a Excel" },
+    ],
+    forms: [
+      {
+        label: "Registrar Venta",
+        fields: [
+          { name: "Producto", description: "Producto vendido", required: true },
+          { name: "Fecha", description: "Fecha de la venta", required: true },
+          { name: "Unidades", description: "Cantidad vendida", required: true },
+          { name: "Revenue", description: "Ingresos brutos de la venta", required: true },
+          { name: "Fees Amazon", description: "Tarifas Amazon (FBA + referral). Se calculan si no se ingresan", required: false },
+          { name: "Order ID", description: "ID de orden de Amazon de referencia", required: false },
+        ],
+      },
     ],
     glossary: [
       { term: "CSV Import", definition: "Formato requerido: date, sku, units. Opcional: revenue, fees. Máximo 500 filas, 5MB." },
@@ -905,6 +1106,46 @@ export const HELP_SECTIONS: HelpSection[] = [
     actions: [
       { label: "Nuevo Shipment", description: "Modal para crear shipment" },
     ],
+    forms: [
+      {
+        label: "Datos del Shipment",
+        fields: [
+          { name: "Nombre", description: "Nombre descriptivo del shipment", required: true },
+          { name: "N° PO Vinculado", description: "Orden de compra asociada", required: false },
+          { name: "Shipment ID", description: "ID interno del shipment", required: false },
+          { name: "Amazon Reference ID", description: "ID de referencia de Amazon", required: false },
+          { name: "FC Destino", description: "Fulfillment Center de destino (ej. PHX6)", required: false },
+          { name: "Dirección Destino", description: "Dirección del centro de distribución", required: false },
+          { name: "Estado", description: "working / ready_to_ship / shipped / in_transit / delivered / checked_in / receiving / closed / cancelled", required: false },
+        ],
+      },
+      {
+        label: "Logística",
+        fields: [
+          { name: "Método de Envío", description: "small_parcel / ltl / ftl / air / sea", required: false },
+          { name: "Carrier", description: "Transportista", required: false },
+          { name: "Tracking", description: "Número de seguimiento", required: false },
+          { name: "Cantidad de Cajas", description: "Número de cajas del envío", required: false },
+          { name: "Total Unidades", description: "Unidades totales del shipment", required: false },
+          { name: "Peso Total (kg)", description: "Peso total del envío", required: false },
+          { name: "Costo Envío", description: "Costo del flete", required: false },
+        ],
+      },
+      {
+        label: "Fechas",
+        fields: [
+          { name: "Fecha Envío", description: "Fecha en que salió el envío", required: false },
+          { name: "Llegada Estimada (ETA)", description: "Fecha estimada de llegada a FC", required: false },
+          { name: "Llegada Real", description: "Fecha real de entrega", required: false },
+        ],
+      },
+      {
+        label: "Notas",
+        fields: [
+          { name: "Notas", description: "Notas internas del shipment", required: false },
+        ],
+      },
+    ],
     glossary: [
       { term: "Fulfillment Center (FC)", definition: "Centro de distribución de Amazon. Ejemplos: PHX6, LAX9. Amazon asigna automáticamente." },
       { term: "Inbound Shipment", definition: "Envío de tu inventario hacia los almacenes de Amazon." },
@@ -953,6 +1194,24 @@ export const HELP_SECTIONS: HelpSection[] = [
     ],
     actions: [
       { label: "Registrar Devolución", description: "Formulario inline para nueva devolución" },
+    ],
+    forms: [
+      {
+        label: "Registrar Devolución",
+        fields: [
+          { name: "Producto", description: "Producto devuelto", required: true },
+          { name: "Order ID", description: "Orden de Amazon asociada", required: false },
+          { name: "Amazon Return ID", description: "ID de devolución de Amazon", required: false },
+          { name: "Cantidad", description: "Unidades devueltas", required: true },
+          { name: "Motivo", description: "defective / damaged_by_carrier / no_longer_wanted / not_as_described / other, entre otros", required: true },
+          { name: "Comentario del Cliente", description: "Comentario del cliente", required: false },
+          { name: "Monto Reembolso", description: "Monto reembolsado al cliente", required: false },
+          { name: "Estado", description: "requested / in_transit / received_at_fc / inspected / refunded / reimbursed / disposed", required: false },
+          { name: "Disposición", description: "sellable / unsellable / pending", required: false },
+          { name: "Fecha", description: "Fecha de la devolución", required: true },
+          { name: "Notas", description: "Notas internas", required: false },
+        ],
+      },
     ],
     glossary: [
       { term: "Motivos", definition: "Defectuoso, Dañado por transporte, No coincide descripción, Cliente cambió opinión, Producto incorrecto, Otro." },
@@ -1003,6 +1262,39 @@ export const HELP_SECTIONS: HelpSection[] = [
     actions: [
       { label: "Registrar Gasto", description: "Formulario inline para nuevo gasto" },
     ],
+    forms: [
+      {
+        label: "Registrar Payout (Ingreso Amazon)",
+        fields: [
+          { name: "Período Inicio", description: "Inicio del período de pago", required: true },
+          { name: "Período Fin", description: "Fin del período de pago", required: true },
+          { name: "Monto", description: "Monto del payout recibido", required: true },
+          { name: "Moneda", description: "USD / ARS / EUR, etc.", required: false },
+          { name: "Estado", description: "pending / transferred / failed", required: false },
+          { name: "Referencia Amazon", description: "Referencia del pago en Amazon", required: false },
+          { name: "Últimos 4 del Banco", description: "Últimos 4 dígitos de la cuenta receptora", required: false },
+          { name: "Fecha Transferencia", description: "Fecha en que se acreditó", required: false },
+          { name: "Marketplace", description: "Marketplace origen del pago", required: false },
+        ],
+      },
+      {
+        label: "Registrar Gasto",
+        fields: [
+          { name: "Categoría", description: "ppc / software / va_services / samples / photography / shipping_forwarder / customs / prep_center / storage_3pl / travel / other", required: true },
+          { name: "Subcategoría", description: "Detalle adicional de la categoría", required: false },
+          { name: "Descripción", description: "Descripción del gasto", required: true },
+          { name: "Monto", description: "Valor del gasto", required: true },
+          { name: "Moneda", description: "USD / CNY / ARS, etc.", required: false },
+          { name: "Tipo de Cambio", description: "Tipo de cambio aplicado (default 1)", required: false },
+          { name: "Fecha", description: "Fecha del gasto", required: false },
+          { name: "Recurrente", description: "Indica si el gasto se repite", required: false },
+          { name: "Frecuencia", description: "weekly / monthly / quarterly / yearly", required: false },
+          { name: "Proveedor / Vendor", description: "A quién se pagó", required: false },
+          { name: "Producto", description: "Producto asociado (opcional)", required: false },
+          { name: "Notas", description: "Notas internas", required: false },
+        ],
+      },
+    ],
     glossary: [
       { term: "Categorías de Gasto", definition: "PPC, Software, VA Services, Muestras, Fotografía, Flete/Forwarder, Aduana, Prep Center, Almacén 3PL, Viajes, Otros." },
     ],
@@ -1040,6 +1332,20 @@ export const HELP_SECTIONS: HelpSection[] = [
     ],
     actions: [
       { label: "Nueva Campaña", description: "Formulario inline para crear campaña" },
+    ],
+    forms: [
+      {
+        label: "Nueva Campaña",
+        fields: [
+          { name: "Nombre", description: "Nombre de la campaña", required: true },
+          { name: "Tipo", description: "sp_auto / sp_manual_keyword / sp_manual_product / sb / sd", required: false },
+          { name: "Producto", description: "Producto promocionado (opcional)", required: false },
+          { name: "Campaign ID", description: "ID de campaña de Amazon Ads (opcional)", required: false },
+          { name: "Marketplace", description: "Marketplace donde corre la campaña", required: false },
+          { name: "Status", description: "enabled / paused / archived", required: false },
+          { name: "Budget Diario", description: "Presupuesto diario en USD", required: false },
+        ],
+      },
     ],
     glossary: [
       { term: "SP Auto", definition: "Sponsored Products automático. Amazon elige keywords." },
@@ -1092,8 +1398,63 @@ export const HELP_SECTIONS: HelpSection[] = [
       { label: "Cambiar Estado", description: "Mueve tarjeta entre columnas" },
       { label: "Eliminar", description: "Elimina idea del pipeline" },
     ],
+    forms: [
+      {
+        label: "Idea y Fuente",
+        fields: [
+          { name: "Nombre", description: "Nombre de la idea o producto", required: true },
+          { name: "Nicho", description: "Nicho o subnicho de mercado", required: false },
+          { name: "Source / Fuente", description: "Origen de la idea (Jungle Scout, Helium 10, TikTok, competencia, etc.)", required: false },
+          { name: "Estado", description: "idea / validating / approved / rejected / in_progress / launched", required: false },
+          { name: "Prioridad", description: "P1 (1) a P5 (5). 1 = lanzar ASAP", required: false },
+        ],
+      },
+      {
+        label: "Mercado (Amazon)",
+        fields: [
+          { name: "Categoría Amazon", description: "Categoría objetivo en Amazon", required: false },
+          { name: "ASIN de Referencia", description: "ASIN modelo para estimar demanda y competencia", required: false },
+          { name: "Amazon URL", description: "URL del listing de referencia", required: false },
+          { name: "Competition Level", description: "very_low / low / medium / high / very_high", required: false },
+          { name: "Sellers FBA", description: "Cantidad de sellers FBA en el ASIN de referencia", required: false },
+          { name: "BSR", description: "Best Sellers Rank del ASIN de referencia", required: false },
+        ],
+      },
+      {
+        label: "Demanda y Reviews",
+        fields: [
+          { name: "Ventas Mensuales Est.", description: "Unidades mensuales estimadas del ASIN de referencia", required: false },
+          { name: "Revenue Mensual Est.", description: "Ingreso mensual estimado del nicho", required: false },
+          { name: "Precio Promedio", description: "Precio promedio de venta del nicho", required: false },
+          { name: "Reviews Competidor", description: "Cantidad de reviews del competidor principal", required: false },
+          { name: "Rating Promedio", description: "Rating promedio del listing (0 a 5)", required: false },
+        ],
+      },
+      {
+        label: "Costos y Rentabilidad Estimada",
+        fields: [
+          { name: "COGS Estimado", description: "Costo unitario estimado de fabricación", required: false },
+          { name: "FBA Fee Est.", description: "Tarifa FBA estimada por unidad", required: false },
+          { name: "Precio Venta Est.", description: "Precio de venta estimado", required: false },
+          { name: "ROI Est.", description: "ROI estimado proyectado (%)", required: false },
+          { name: "Alibaba URL", description: "URL del proveedor o cotización en Alibaba", required: false },
+        ],
+      },
+      {
+        label: "Estrategia y Notas",
+        fields: [
+          { name: "Notas de Diferenciación", description: "Cómo te diferenciarías de la competencia", required: false },
+          { name: "Keywords", description: "Palabras clave del producto (separadas por coma)", required: false },
+          { name: "Notas", description: "Notas internas de la investigación", required: false },
+        ],
+      },
+    ],
     glossary: [
       { term: "Prioridad", definition: "P1 = Lanzar ASAP, P2 = Este mes, P3 = Este trimestre, P4 = Este año, P5 = Backlog." },
+      { term: "Pipeline de Estados", definition: "idea → validating → approved → in_progress → launched. rejected es terminal." },
+      { term: "Competition Level", definition: "very_low, low, medium, high, very_high. A mayor competencia, mayor costo de entrada y publicidad." },
+      { term: "Validación", definition: "Fase en la que se estiman demanda, precio, reviews y rentabilidad del nicho antes de comprometer capital." },
+      { term: "Criterio de Aprobación", definition: "Regla interna: ROI estimado > 150% y margen neto > 25% para mover una idea a Aprobado." },
     ],
     tips: [
       "Mantén máximo 5 productos en 'Validando' para enfocar recursos.",
@@ -1253,6 +1614,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     glossary: [
       { term: "Estados de Miembro", definition: "Activo = socio vigente. Retirado = ya no es socio pero mantiene registro histórico. Fallecido = activa el proceso de sucesión." },
       { term: "Albacea", definition: "Persona física designada por el socio para gestionar su patrimonio en caso de fallecimiento. Datos requeridos: nombre y email." },
+      { term: "Rol del Miembro", definition: "admin = gestión completa, editor = edita datos, viewer = solo lectura. Controla los permisos del socio dentro de la app." },
     ],
     tips: [
       "La suma de participaciones de todos los miembros debe ser exactamente 100%.",
@@ -1379,6 +1741,8 @@ export const HELP_SECTIONS: HelpSection[] = [
     ],
     glossary: [
       { term: "Prioridad", definition: "Urgente (rojo) = requiere acción inmediata. Alta (ámbar) = esta semana. Media (azul) = este mes. Baja (gris) = backlog." },
+      { term: "Estados de Tarea", definition: "pending (Pendiente) → in_progress (En Progreso) → completed (Completada). Se actualizan con drag & drop." },
+      { term: "Módulo", definition: "Categoría de la tarea: Documentos, FBA, General. Permite filtrar tareas por área del negocio." },
     ],
     tips: [
       "Arrastrá tarjetas entre columnas para actualizar el estado sin abrir el formulario.",
@@ -1409,6 +1773,20 @@ export const HELP_SECTIONS: HelpSection[] = [
       { label: "Nueva Decisión", description: "Registrar una nueva DEC" },
       { label: "Editar", description: "Modificar decisión existente" },
       { label: "Eliminar", description: "Eliminar decisión" },
+    ],
+    forms: [
+      {
+        label: "Nueva Decisión",
+        fields: [
+          { name: "Título", description: "Nombre de la decisión directiva", required: true },
+          { name: "Referencia Documental", description: "Documento asociado (ej. DEC-NNN)", required: false },
+          { name: "Descripción", description: "Detalle de la resolución", required: false },
+          { name: "Fecha Decisión", description: "Fecha de la resolución", required: false },
+          { name: "Estado", description: "draft / approved / rejected / executed", required: false },
+          { name: "File URL", description: "Enlace al documento en Drive", required: false },
+          { name: "Votación", description: "Registro de votos por miembro", required: false },
+        ],
+      },
     ],
     glossary: [
       { term: "DEC", definition: "Documento de Decisión Directiva. Identificador único tipo DEC-NNN para seguimiento." },

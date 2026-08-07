@@ -31,6 +31,13 @@ ultima_actualizacion: 2026-08-07
 
 ## Resueltos
 
+### Categoria del producto se completaba con la del producto en vista (no la de Amazon) → RESUELTO (2026-08-07)
+- **Fecha**: reportado 2026-08-07 / resuelto 2026-08-07
+- **Sintoma**: en el form de producto (nuevo/editar/modal), el campo categoria se completaba con la categoria del producto en vista, no con la categoria scrapeada de Amazon
+- **Causa raiz**: el scraper extrae la categoria real del breadcrumb de Amazon (ej. "Home & Kitchen", "Sports & Outdoors", "Cell Phones & Accessories") pero los `catMap` hardcodeados en `product-form-modal.tsx` y `products/new/page.tsx` usaban **matching exacto** (`catMap[data.category.toLowerCase()]`) → las categorias reales de Amazon nunca matcheaban → el valor se descartaba → el campo conservaba la categoria previa del producto en vista
+- **Fix (2026-08-07)**: nuevo helper `src/lib/scraping/category.ts` (`mapAmazonCategory`, matching por subcadena/keywords robusto a las 9 categorias internas) usado en ambos flujos en lugar del catMap duplicado. TDD: 3 tests (mapeo exacto, por subcadena, no reconocidas)
+- **Verificacion**: 308/308 tests | tsc 0 | lint solo warnings pre-existentes | build OK. **Pendiente**: push
+
 ### niche_score no se capturaba en pagina de producto (extension AMZScout) → RESUELTO (2026-08-07)
 - **Fecha**: descubierto 2026-08-07 / resuelto 2026-08-07
 - **Sintoma**: `source_data.niche_score` era null en las 3 capturas reales con score; 0/68 filas con niche_score. La feature de competencia 5 niveles dependia del Niche Score de los totals de AMZScout

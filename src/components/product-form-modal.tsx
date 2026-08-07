@@ -24,6 +24,7 @@ import { useLocale } from "@/lib/i18n/locale-context";
 import { FormErrorMessage } from "@/components/ui/announcer";
 import { inputClass, labelClass, sectionLabel } from "@/lib/form-constants";
 import { useUrlScrape } from "@/hooks/use-url-scrape";
+import { mapAmazonCategory } from "@/lib/scraping/category";
 import { FormDialogFooter, FormDialogLayout } from "@/components/ui/form-dialog";
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -82,19 +83,9 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
         if (data.price && data.price > 0) setValue("salePrice", data.price);
         if (data.weight_kg && data.weight_kg > 0) setValue("weightKg", data.weight_kg);
         if (data.category) {
-          const catMap: Record<string, string> = {
-            "electronics": "Electronics",
-            "toys": "Toys",
-            "home": "Home",
-            "kitchen": "Kitchen",
-            "health": "Health",
-            "beauty": "Beauty",
-            "sports": "Sports",
-            "books": "Books",
-          };
-          const mapped = catMap[data.category.toLowerCase()] ?? data.category;
-          if (["Electronics","Toys","Home","Kitchen","Health","Beauty","Sports","Books","Other"].includes(mapped)) {
-            setValue("category", mapped as "Electronics" | "Toys" | "Home" | "Kitchen" | "Health" | "Beauty" | "Sports" | "Books" | "Other");
+          const mapped = mapAmazonCategory(data.category);
+          if (mapped) {
+            setValue("category", mapped);
           }
         }
       }

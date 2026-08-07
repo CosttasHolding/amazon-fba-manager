@@ -118,3 +118,8 @@ src/
   types/              # Tipos TypeScript
   validations/        # Schemas Zod
 ```
+
+## Glosario
+
+- `GLOSARIO.md` — referencia completa de términos y campos de la app (generado desde `src/lib/help-content.ts` con `npm run build:glossary`)
+- Leer antes de trabajar: `GLOSARIO.md` (o su fuente `src/lib/help-content.ts`) para entender cada término, campo y métrica de la app
