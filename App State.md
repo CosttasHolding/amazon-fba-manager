@@ -7,7 +7,7 @@ deploy: https://amazon-fba-manager-virid.vercel.app
 build: 0 errores, warnings no bloqueantes
 tests: 308 pasando (vitest)
 tsc: 0 errores
-db_migrations: TODAS aplicadas en prod (source_data + score 030 + 031 competition 5 niveles + 032 research metrics + 033 research urls) — verificadas 2026-08-07
+db_migrations: TODAS aplicadas en prod (030-035; 034 research_groups + 035 soft delete APLICADAS 2026-08-15 via Management API, 035 corregida sobre 20 tablas existentes)
 ---
 
 # App State
