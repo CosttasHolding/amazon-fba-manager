@@ -106,5 +106,11 @@
     "not dead",
     "not op_mini all",
     "not IE 11"
-  ]
+  ],
+  "allowScripts": {
+    "core-js@3.49.0": true,
+    "esbuild@0.28.1": true,
+    "puppeteer@25.3.0": true,
+    "unrs-resolver@1.11.1": true
+  }
 }
