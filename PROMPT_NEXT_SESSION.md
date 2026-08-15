@@ -2,6 +2,23 @@
 
 ---
 
+## CERRADA 2026-08-15 — Feature en progreso: RESEARCH "GRUPOS POR ITEM" + PAPELERA GLOBAL
+
+**Estado**: spec (851c06e) + plan (e4f6ff2) commiteados. **Tasks 1-2 DONE** (f7b092d, 38b0e23), review clean. **Retomar = Task 3** (`src/lib/research/grouping.ts`, brief listo en `.superpowers/sdd/briefs/task-3-brief.md`).
+
+**CÓMO SE TRABAJA**: flujo SDD como orquestador de subagentes (pedido del usuario):
+- Brief por tarea en `.superpowers/sdd/briefs/` → implementador (subagente `general`) → `git diff` → review package en `.superpowers/sdd/review-packages/` → revisor → ledger `.superpowers/sdd/progress.md`.
+- **Regla**: nunca re-despachar tareas ya marcadas en el ledger. Base del plan: `e4f6ff2`.
+- Comandos windows: no hay bash; para review package usar `git diff -U2 BASE HEAD | Out-File .superpowers/sdd/review-packages/taskN.diff`.
+
+**Plan**: `docs/superpowers/plans/2026-08-14-research-groups-trash.md` (12 tasks). **Spec**: `docs/superpowers/specs/2026-08-14-research-groups-trash-design.md`.
+
+**Resumen feature**: grupo = item; filas = competidores; IA agrupa/completa (fallback heurístico por defecto, xAI sin créditos); vista "Grupos" en /research; papelera global /trash (soft delete en ~21 tablas gestionables, borrado definitivo con doble confirmación, cascada de grupo→productos).
+
+**Pendientes usuario**: aplicar migraciones 034/035 en Supabase prod; cargar créditos xAI (deep dive + enriquecido IA siguen bloqueados hasta entonces).
+
+---
+
 ## FILOSOFIA DE TRABAJO (2026-08-03)
 
 - **Prioridad**: terminar TODA la app primero; los pagos/membresías (xAI, etc.) se pagan DESPUÉS, al final.
@@ -17,6 +34,7 @@
 
 ## Ultima sesion
 
+- **Fecha**: 2026-08-15 (brainstorm + spec + plan + Task 1-2 SDD) — **ver "CERRADA 2026-08-15" arriba**
 - **Fecha**: 2026-08-07 (verificacion prod + niche_score + glosario + fix categoria)
   - **PENDIENTES DEL USUARIO: 3/4 CONFIRMADOS** (solo lectura contra prod via PostgREST):
     1. Migracion `033_research_urls.sql` → **APLICADA** (columnas `amazon_url`/`alibaba_url` existen; 2 filas con amazon_url)
