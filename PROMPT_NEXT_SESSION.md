@@ -2,6 +2,25 @@
 
 ---
 
+## CERRADA 2026-08-21 — Verificacion completa del stack en PC nueva
+
+**Estado**: TODO VERDE con evidencia fresca. tsc 0 | lint 0 errores | 310/310 tests | build OK. Supabase cloud OK (auth health + REST + RLS). Git `main` == `origin/main`. Dev server corriendo (login 200, raiz 307, API 401 sin sesion).
+
+**Pendientes de entorno (usuario)**:
+1. ~~`vercel login` + `vercel link`~~ — **HECHO 2026-08-21** (cuenta `costtasholding-2725`, proyecto linkeado, prod 200)
+2. Seleccionar el vault en Obsidian (app 1.13.7 instalada via winget y lanzada; falta primera seleccion del vault; opcional traer `.obsidian/` de la PC vieja)
+3. ~~Tarea programada `fba-manager-dev`~~ — **HECHA 2026-08-21** (Register-ScheduledTask nivel usuario, trigger AtLogOn, server verificado HTTP 200)
+
+**Extension**: verificada 2026-08-21 — funcionalmente identica al build actual (SHA256 content.js igual; manifest/popup solo diff CRLF). Sin accion requerida.
+
+**Seguridad**: carpeta `env/` untracked con secrets fue detectada y **eliminada por el usuario**. Env reales = `.env`/`.env.local` en raiz (gitignored). Sin exposicion.
+
+**Entorno**: Node v24.19.0, npm 12.0.2, ruta actual `C:\Users\nachc\Documents\amazon-fba-manager` (distinta de la del backup original).
+
+**Retomar feature**: Task 3 (`src/lib/research/grouping.ts`) — ver checkpoint 2026-08-15 abajo.
+
+---
+
 ## CERRADA 2026-08-15 — Feature en progreso: RESEARCH "GRUPOS POR ITEM" + PAPELERA GLOBAL
 
 **Estado**: spec (851c06e) + plan (e4f6ff2) commiteados. **Tasks 1-2 DONE** (f7b092d, 38b0e23), review clean. **Retomar = Task 3** (`src/lib/research/grouping.ts`, brief listo en `.superpowers/sdd/briefs/task-3-brief.md`).

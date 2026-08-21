@@ -80,6 +80,12 @@ Este proyecto usa **Superpowers** para desarrollo de software. El agente debe se
 - Presentar opciones: merge, PR, keep, discard
 - Limpiar worktree
 
+## Comportamiento del Agente (SIEMPRE)
+
+- **Skills/Superpowers siempre**: Antes de CUALQUIER accion, chequear si aplica una skill e invocarla. Brainstorming antes de crear features/modificar comportamiento; systematic-debugging ante cualquier bug o comportamiento inesperado; test-driven-development al implementar; verification-before-completion antes de declarar algo terminado/OK. Nunca racionalizar saltearlas ("es simple", "despues lo miro").
+- **Orquestador de subagentes (SDD)**: El agente principal actua como cerebro orquestador de subagentes. Flujo por tarea: escribir brief en `.superpowers/sdd/briefs/task-N-brief.md` → despachar implementador (subagente `general`) → generar review package (`git diff -U2 BASE HEAD | Out-File .superpowers/sdd/review-packages/taskN.diff`) → despachar revisor (subagente) → registrar resultado en el ledger `.superpowers/sdd/progress.md`. NUNCA re-despachar tareas ya marcadas done en el ledger.
+- **Skills faltantes → skills.sh**: Si falta una skill para la tarea actual, buscarla e instalarla con el CLI de skills.sh: `npx skills find <termino>` (buscar), `npx skills add <repo-o-package>` (instalar), `npx skills list` (ver instaladas). Las skills instaladas deben usarse igual que las de superpowers.
+
 ## Reglas del Proyecto
 
 - **Idioma**: Siempre responder y comunicarse en **español**. Mensajes al usuario siempre en español.

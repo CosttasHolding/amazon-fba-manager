@@ -67,3 +67,5 @@ Obsidian/
 public/exteRB/
 
 # Misc
+.env*
+!.env.example
