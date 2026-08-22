@@ -14,6 +14,13 @@ const mockUpdate = vi.fn();
 const mockUpdateEq = vi.fn();
 const mockUpdateSelect = vi.fn();
 
+const mockGroupSelect = vi.fn();
+const mockGroupEq = vi.fn();
+const mockGroupIs = vi.fn();
+const mockGroupInsert = vi.fn();
+const mockGroupInsertSelect = vi.fn();
+const mockGroupSingle = vi.fn();
+
 const mockSupabase = {
   auth: { getUser: mockGetUser },
   from: mockFrom,
@@ -27,7 +34,23 @@ vi.mock("@/lib/api-handler", () => ({
   getOrgId: vi.fn(() => Promise.resolve("org-1")),
 }));
 
-function setupDbMocks({ existing = null, resultData = [] }: { existing?: { id: string } | null; resultData?: unknown[] }) {
+type GroupEcho = { id: string; name: string; niche: string | null; amazon_category: string | null };
+
+type ExistingGroupRow = GroupEcho & {
+  product_research?: Array<{ asin_reference: string | null }> | null;
+};
+
+function setupDbMocks({
+  existing = null,
+  resultData = [],
+  existingGroups = [],
+  createdGroup = { id: "group-new", name: "Test Product", niche: null, amazon_category: null } as GroupEcho,
+}: {
+  existing?: { id: string } | null;
+  resultData?: unknown[];
+  existingGroups?: ExistingGroupRow[];
+  createdGroup?: GroupEcho | null;
+} = {}) {
   mockMaybeSingle.mockResolvedValue({ data: existing, error: null });
   mockEqAsin.mockReturnValue({ maybeSingle: mockMaybeSingle });
   mockEqOrg.mockReturnValue({ eq: mockEqAsin });
@@ -37,7 +60,21 @@ function setupDbMocks({ existing = null, resultData = [] }: { existing?: { id: s
   mockUpdateSelect.mockResolvedValue({ data: resultData, error: null });
   mockUpdateEq.mockReturnValue({ select: mockUpdateSelect });
   mockUpdate.mockReturnValue({ eq: mockUpdateEq });
-  mockFrom.mockReturnValue({ select: mockSelectIds, insert: mockInsert, update: mockUpdate });
+
+  mockGroupIs.mockResolvedValue({ data: existingGroups, error: null });
+  mockGroupEq.mockReturnValue({ is: mockGroupIs });
+  mockGroupSelect.mockReturnValue({ eq: mockGroupEq });
+  mockGroupSingle.mockResolvedValue({
+    data: createdGroup,
+    error: createdGroup ? null : { message: "No se pudo crear el grupo" },
+  });
+  mockGroupInsertSelect.mockReturnValue({ single: mockGroupSingle });
+  mockGroupInsert.mockReturnValue({ select: mockGroupInsertSelect });
+
+  mockFrom.mockImplementation((table: string) => {
+    if (table === "research_groups") return { select: mockGroupSelect, insert: mockGroupInsert };
+    return { select: mockSelectIds, insert: mockInsert, update: mockUpdate };
+  });
 }
 
 const validPayload = {
@@ -254,5 +291,147 @@ describe("POST /api/research/capture", () => {
     expect(res.status).toBe(201);
     const inserted = mockInsert.mock.calls[0][0];
     expect(inserted.competition_level).toBeNull();
+  });
+
+  it("obtiene grupos vigentes una vez por request con productos sin filtro deleted_at", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({ resultData: [{ id: "new-id", name: "Test Product" }] });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify(validPayload),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(201);
+    expect(mockGroupSelect).toHaveBeenCalledTimes(1);
+    expect(mockGroupEq).toHaveBeenCalledWith("org_id", "org-1");
+    expect(mockGroupIs).toHaveBeenCalledWith("deleted_at", null);
+    expect(String(mockGroupSelect.mock.calls[0][0])).toContain("product_research(asin_reference)");
+  });
+
+  it("crea grupo nuevo cuando no hay match y asigna group_id al insertar", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({ resultData: [{ id: "new-id", name: "Test Product" }] });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify(validPayload),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(201);
+    expect(mockGroupInsert).toHaveBeenCalledTimes(1);
+    expect(mockGroupInsert.mock.calls[0][0]).toEqual({
+      org_id: "org-1",
+      name: "Test Product",
+      niche: "Sports & Fitness",
+      amazon_category: null,
+      search_keyword: null,
+    });
+    const inserted = mockInsert.mock.calls[0][0];
+    expect(inserted.group_id).toBe("group-new");
+  });
+
+  it("reusa el grupo existente cuando hay match por ASIN", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({
+      resultData: [{ id: "new-id", name: "Test Product" }],
+      existingGroups: [{
+        id: "group-1",
+        name: "Grupo A",
+        niche: null,
+        amazon_category: null,
+        product_research: [{ asin_reference: "b0test1234" }],
+      }],
+    });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify(validPayload),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(201);
+    expect(mockGroupInsert).not.toHaveBeenCalled();
+    const inserted = mockInsert.mock.calls[0][0];
+    expect(inserted.group_id).toBe("group-1");
+  });
+
+  it("reusa el grupo existente cuando hay match por nicho y nombre", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({
+      resultData: [{ id: "new-id", name: "Test Product" }],
+      existingGroups: [{
+        id: "group-2",
+        name: "test  product!",
+        niche: "sports & fitness",
+        amazon_category: null,
+        product_research: [],
+      }],
+    });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify(validPayload),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(201);
+    expect(mockGroupInsert).not.toHaveBeenCalled();
+    const inserted = mockInsert.mock.calls[0][0];
+    expect(inserted.group_id).toBe("group-2");
+  });
+
+  it("update de ASIN existente no incluye group_id ni crea grupos", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({ existing: { id: "existing-id" }, resultData: [{ id: "existing-id", name: "Test Product" }] });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify(validPayload),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(201);
+    const updated = mockUpdate.mock.calls[0][0];
+    expect(updated).not.toHaveProperty("group_id");
+    expect(mockGroupInsert).not.toHaveBeenCalled();
+  });
+
+  it("dos productos del mismo batch en el mismo grupo nuevo hacen un solo insert de grupo", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({
+      resultData: [{ id: "new-id" }],
+      createdGroup: { id: "group-new", name: "Yoga Mat Pro", niche: "Fitness", amazon_category: null },
+    });
+
+    const batchPayload = {
+      products: [
+        { asin: "B0AAAA1111", title: "Yoga Mat Pro", category: "Fitness" },
+        { asin: "B0BBBB2222", title: "Yoga Mat Pro", category: "Fitness" },
+      ],
+      mode: "scraper",
+      page_type: "search",
+    };
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify(batchPayload),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(201);
+    expect(mockGroupSelect).toHaveBeenCalledTimes(1);
+    expect(mockGroupInsert).toHaveBeenCalledTimes(1);
+    expect(mockInsert).toHaveBeenCalledTimes(2);
+    expect(mockInsert.mock.calls[0][0].group_id).toBe("group-new");
+    expect(mockInsert.mock.calls[1][0].group_id).toBe("group-new");
+  });
+
+  it("devuelve 500 si falla la creación del grupo nuevo", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+    setupDbMocks({ resultData: [{ id: "new-id" }], createdGroup: null });
+
+    const req = createMockRequest("http://localhost/api/research/capture", {
+      method: "POST",
+      body: JSON.stringify(validPayload),
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(500);
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 });
