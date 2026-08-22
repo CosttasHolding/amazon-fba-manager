@@ -16,6 +16,7 @@ import {
   Filter,
   Trash2,
   Sparkles,
+  Layers,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,14 +47,28 @@ import { t, type Locale } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { FormDialogLayout, FormDialogFooter } from "@/components/ui/form-dialog";
 import { inputClass, labelClass } from "@/lib/form-constants";
+import { GroupCard } from "@/components/research/group-card";
+import { GroupCompetitors } from "@/components/research/group-competitors";
+import {
+  filterGroups,
+  filterLooseItems,
+  sortGroups,
+  type GroupFilters,
+  type GroupSortKey,
+  type ResearchGroupItem,
+  type ResearchGroupWithItems,
+} from "@/lib/research/group-data";
 
-type ViewMode = "kanban" | "list";
+type ViewMode = "kanban" | "list" | "groups";
 type FilterStatus = "all" | ProductResearch["status"];
 
 export default function ResearchPage() {
   const { locale } = useLocale();
   const router = useRouter();
   const [items, setItems] = useState<ProductResearch[]>([]);
+  const [groups, setGroups] = useState<ResearchGroupWithItems[]>([]);
+  const [groupsLoading, setGroupsLoading] = useState(true);
+  const [groupSort, setGroupSort] = useState<GroupSortKey>("best_score");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [view, setView] = useState<ViewMode>("kanban");
@@ -110,15 +125,29 @@ export default function ResearchPage() {
   const formPriority = watch("priority");
   const formCompetition = watch("competition_level");
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      await Promise.all([fetchItems(), fetchGroups()]);
+      setLoading(false);
+    };
+    load();
+  }, []);
 
   const fetchItems = async () => {
-    setLoading(true);
     try {
       const res = await fetch("/api/research");
       if (res.ok) { const data = await res.json(); setItems(data.data || []); }
     } catch { toast.error(t("common.error_loading_research", locale)); }
-    finally { setLoading(false); }
+  };
+
+  const fetchGroups = async () => {
+    setGroupsLoading(true);
+    try {
+      const res = await fetch("/api/research/groups");
+      if (res.ok) { const data = await res.json(); setGroups(data.data || []); }
+    } catch { toast.error(t("common.error", locale)); }
+    finally { setGroupsLoading(false); }
   };
 
   useEffect(() => { setCurrentPage(1); }, [debouncedSearch, filterStatus, filterCompetition, filterScore]);
@@ -157,6 +186,21 @@ export default function ResearchPage() {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filtered.slice(start, start + ITEMS_PER_PAGE);
   }, [filtered, currentPage, ITEMS_PER_PAGE]);
+
+  const groupFilters = useMemo<GroupFilters>(
+    () => ({ q: debouncedSearch, status: filterStatus, competition: filterCompetition, scoreRange: filterScore }),
+    [debouncedSearch, filterStatus, filterCompetition, filterScore]
+  );
+
+  const visibleGroups = useMemo(
+    () => filterGroups(sortGroups(groups, groupSort), groupFilters),
+    [groups, groupSort, groupFilters]
+  );
+
+  const ungroupedItems = useMemo(
+    () => filterLooseItems(items as ResearchGroupItem[], groupFilters).filter((i) => !i.group_id),
+    [items, groupFilters]
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -228,7 +272,7 @@ export default function ResearchPage() {
   const handleDelete = async (id: string) => {
     try {
       const res = await fetch(`/api/research?id=${id}`, { method: "DELETE" });
-      if (res.ok) { toast.success(t("research.toast.deleted", locale)); fetchItems(); }
+      if (res.ok) { toast.success(t("research.toast.deleted", locale)); fetchItems(); fetchGroups(); }
     } catch { toast.error(t("research.toast.error_delete", locale)); }
   };
 
@@ -238,7 +282,19 @@ export default function ResearchPage() {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (res.ok) fetchItems();
+      if (res.ok) { fetchItems(); fetchGroups(); }
+    } catch { toast.error(t("research.toast.error_status", locale)); }
+  };
+
+  const handleMoveGroup = async (item: ResearchGroupItem, groupId: string | null) => {
+    try {
+      const res = await fetch(`/api/research/${item.id}/group`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ group_id: groupId }),
+      });
+      if (res.ok) { fetchItems(); fetchGroups(); }
+      else throw new Error("Error");
     } catch { toast.error(t("research.toast.error_status", locale)); }
   };
 
@@ -317,6 +373,9 @@ export default function ResearchPage() {
               <Button variant={view === "list" ? "secondary" : "ghost"} size="sm" onClick={() => setView("list")}>
                 <List className="h-3.5 w-3.5 me-1" /> {t("research.list_view", locale)}
               </Button>
+              <Button variant={view === "groups" ? "secondary" : "ghost"} size="sm" onClick={() => setView("groups")}>
+                <Layers className="h-3.5 w-3.5 me-1" /> {t("research.groups.view", locale)}
+              </Button>
           </div>
           <Button onClick={() => { resetForm(); setEditingItem(null); setShowModal(true); }}>
             <Plus className="h-4 w-4 me-1.5" /> {t("research.new_product", locale)}
@@ -381,6 +440,19 @@ export default function ResearchPage() {
               <SelectItem value="low">{t("research.filter.score_low", locale)}</SelectItem>
             </SelectContent>
           </Select>
+          {view === "groups" && (
+            <Select value={groupSort} onValueChange={(v) => setGroupSort(v as GroupSortKey)}>
+              <SelectTrigger className="h-9 bg-muted/50 border-border text-sm w-[150px]" aria-label={t("research.groups.sort.best_score", locale)}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="best_score">{t("research.groups.sort.best_score", locale)}</SelectItem>
+                <SelectItem value="competition">{t("research.groups.sort.competition", locale)}</SelectItem>
+                <SelectItem value="name">{t("research.groups.sort.name", locale)}</SelectItem>
+                <SelectItem value="recent">{t("research.groups.sort.recent", locale)}</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -494,6 +566,45 @@ export default function ResearchPage() {
             </div>
           )}
         </DataTableWrapper>
+      )}
+
+      {view === "groups" && (
+        visibleGroups.length === 0 && ungroupedItems.length === 0 ? (
+          <EmptyState
+            icon={Layers}
+            title={t("research.groups.empty", locale)}
+            subtitle={t("research.empty_subtitle", locale)}
+            action={{ label: t("research.new_product", locale), onClick: () => { resetForm(); setEditingItem(null); setShowModal(true); } }}
+          />
+        ) : (
+          <div className="space-y-3">
+            {ungroupedItems.length > 0 && (
+              <DataTableWrapper title={t("research.groups.ungrouped", locale)} icon={Layers}>
+                <GroupCompetitors
+                  items={ungroupedItems}
+                  groups={groups.map((g) => ({ id: g.id, name: g.name }))}
+                  locale={locale}
+                  onEdit={openEdit}
+                  onDeepDive={setDeepDiveProduct}
+                  onStatusChange={handleStatusChange}
+                  onMove={handleMoveGroup}
+                />
+              </DataTableWrapper>
+            )}
+            {visibleGroups.map((g) => (
+              <GroupCard
+                key={g.id}
+                group={g}
+                groups={groups.map((gr) => ({ id: gr.id, name: gr.name }))}
+                locale={locale}
+                onEdit={openEdit}
+                onDeepDive={setDeepDiveProduct}
+                onStatusChange={handleStatusChange}
+                onMove={handleMoveGroup}
+              />
+            ))}
+          </div>
+        )
       )}
 
       <FormDialogLayout
