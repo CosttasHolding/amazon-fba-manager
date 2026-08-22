@@ -29,6 +29,7 @@ type MockChain = Promise<MockResult> & {
   eq: (...args: unknown[]) => MockChain;
   is: (...args: unknown[]) => MockChain;
   in: (...args: unknown[]) => MockChain;
+  gte: (...args: unknown[]) => MockChain;
   order: (...args: unknown[]) => MockChain;
   range: (...args: unknown[]) => MockChain;
   limit: (...args: unknown[]) => MockChain;
@@ -52,6 +53,7 @@ function createChain(table: string, calls: DbCall[], result: MockResult): MockCh
     eq: link("eq"),
     is: link("is"),
     in: link("in"),
+    gte: link("gte"),
     order: link("order"),
     range: link("range"),
     limit: link("limit"),
@@ -285,10 +287,17 @@ describe("DELETE /api/research/groups/[id]", () => {
 });
 
 describe("POST /api/research/groups/restore", () => {
-  it("restaura grupo y sus productos con deleted_at nulo", async () => {
+  it("restaura el grupo y solo los productos borrados junto a él", async () => {
     authOk();
     setupDb({
-      research_groups: { data: { id: "group-1", name: "Grupo A" }, error: null },
+      research_groups: {
+        data: {
+          id: "group-1",
+          name: "Grupo A",
+          deleted_at: "2026-08-20T12:00:00.000Z",
+        },
+        error: null,
+      },
     });
 
     const req = createMockRequest("http://localhost/api/research/groups/restore", {
@@ -308,6 +317,28 @@ describe("POST /api/research/groups/restore", () => {
     expect(callsOf("product_research", "eq")).toContainEqual(
       expect.objectContaining({ args: ["group_id", "group-1"] })
     );
+    const gtes = callsOf("product_research", "gte");
+    expect(gtes).toHaveLength(1);
+    expect(gtes[0].args).toEqual(["deleted_at", "2026-08-20T12:00:00.000Z"]);
+  });
+
+  it("no toca productos si el grupo no está en papelera", async () => {
+    authOk();
+    setupDb({
+      research_groups: {
+        data: { id: "group-1", name: "Grupo A", deleted_at: null },
+        error: null,
+      },
+    });
+
+    const req = createMockRequest("http://localhost/api/research/groups/restore", {
+      method: "POST",
+      body: JSON.stringify({ id: "group-1" }),
+    }) as never;
+    const res = await RESTORE_POST(req);
+    expect(res.status).toBe(200);
+    expect(callsOf("product_research", "update")).toHaveLength(0);
+    expect(callsOf("research_groups", "update")).toHaveLength(1);
   });
 
   it("devuelve 404 si el grupo no existe", async () => {

@@ -10,6 +10,8 @@ const restoreSchema = z.object({
   id: z.string().min(1),
 });
 
+type GroupTrashRow = { deleted_at: string | null };
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
@@ -29,11 +31,13 @@ export async function POST(req: NextRequest) {
 
     const { data: existing } = await supabase
       .from("research_groups")
-      .select("id")
+      .select("id, deleted_at")
       .eq("id", id)
       .eq("org_id", orgId)
       .maybeSingle();
     if (!existing) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+
+    const groupDeletedAt = (existing as GroupTrashRow).deleted_at ?? null;
 
     const { data, error } = await supabase
       .from("research_groups")
@@ -46,13 +50,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
-    const { error: productsError } = await supabase
-      .from("product_research")
-      .update({ deleted_at: null })
-      .eq("group_id", id)
-      .eq("org_id", orgId);
-    if (productsError) {
-      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    if (groupDeletedAt) {
+      const { error: productsError } = await supabase
+        .from("product_research")
+        .update({ deleted_at: null })
+        .eq("group_id", id)
+        .eq("org_id", orgId)
+        .gte("deleted_at", groupDeletedAt);
+      if (productsError) {
+        return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ data });
