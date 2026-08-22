@@ -1828,6 +1828,7 @@
   "trash.confirm_hint": "Escribí BORRAR para confirmar",
   "trash.confirm_word": "BORRAR",
   "trash.empty": "La papelera está vacía",
+  "trash.empty_subtitle": "Los elementos eliminados aparecerán acá",
   "trash.restored_toast": "Elemento restaurado",
   "trash.deleted_toast": "Eliminado definitivamente",
   "trash.error_restore_toast": "Error al restaurar",

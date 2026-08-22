@@ -1828,6 +1828,7 @@
   "trash.confirm_hint": "Type DELETE to confirm",
   "trash.confirm_word": "DELETE",
   "trash.empty": "Trash is empty",
+  "trash.empty_subtitle": "Deleted items will appear here",
   "trash.restored_toast": "Item restored",
   "trash.deleted_toast": "Permanently deleted",
   "trash.error_restore_toast": "Failed to restore",

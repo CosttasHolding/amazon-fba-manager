@@ -21,6 +21,7 @@ import {
   Boxes,
   SlidersHorizontal,
   ShoppingCart,
+  Trash2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -77,6 +78,7 @@ export const navCategories: NavCategory[] = [
       { href: "/sp-api", icon: Link2, label: "Amazon API", labelShort: "API" },
       { href: "/drive", icon: HardDrive, label: "Google Drive" },
       { href: "/team", icon: Shield, label: "Equipo", labelShort: "Equipo" },
+      { href: "/trash", icon: Trash2, label: "Papelera" },
     ],
   },
 ];

@@ -1829,6 +1829,7 @@
   "trash.confirm_hint": "اكتب «احذف» للتأكيد",
   "trash.confirm_word": "احذف",
   "trash.empty": "سلة المهملات فارغة",
+  "trash.empty_subtitle": "ستظهر العناصر المحذوفة هنا",
   "trash.restored_toast": "تمت استعادة العنصر",
   "trash.deleted_toast": "تم الحذف نهائيًا",
   "trash.error_restore_toast": "خطأ في الاستعادة",
