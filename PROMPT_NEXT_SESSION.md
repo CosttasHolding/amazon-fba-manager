@@ -2,6 +2,23 @@
 
 ---
 
+## CERRADA 2026-08-22 — FIX: hidratación muerta en prod por CSP sin nonce
+
+**Estado**: RESUELTO, en prod y confirmado por el usuario ("ya funciona"). Commit `58e8e3b` pusheado → deploy Vercel OK.
+
+**Qué pasaba**: prod servía HTML con **0 nonces** en los scripts mientras la CSP exigía `'strict-dynamic' 'nonce-...'` → todos los scripts bloqueados → React nunca hidrataba. Latente desde el CSP hardening del 28/07 (`4864e85`): en dev la CSP usa `'unsafe-inline'` y las verificaciones previas de prod fueron HTTP/API-level.
+
+**Causa raíz**: el middleware ponía el nonce solo en headers de respuesta; Next.js necesita la CSP/nonce también en headers de request (`NextResponse.next({ request: { headers } })`) para estamparlo en sus bootstrap scripts + render dinámico (layout consumiendo `headers()`).
+
+**Fix**: 3 archivos — `src/middleware.ts`, `src/lib/supabase/middleware.ts` (`updateSession(request, requestHeaders?)`), `src/app/layout.tsx`. Verificación RED→GREEN local (build prod + curl) + suite completa (tsc 0 | lint OK | 391/391 | build) + prod post-deploy (27 nonces match True).
+
+**Pendientes**:
+1. E2E manual de Grupos+Papelera en prod (sigue pendiente del 08-21): capturar → grupo creado; mover competidor; `/trash`.
+2. Commit del vault de hoy (convención `vault:`).
+3. Backlog: ~25 minors del ledger SDD + MEDIUMs (Zod SP-API/Drive/Cron, N+1 queries, accessibility, i18n product-analyzer).
+
+---
+
 ## CERRADA 2026-08-21 (4ta) — FEATURE COMPLETA: Research "Grupos por Item" + Papelera global
 
 **Estado**: **TODAS las 12 tasks DONE** (flujo SDD orquestado, ledger `.superpowers/sdd/progress.md`). Verificación final con evidencia fresca: tsc 0 | lint solo warnings pre-existentes | **391/391 tests** (47 archivos) | build OK (`/trash` en manifest) | build:glossary OK.

@@ -31,6 +31,14 @@ ultima_actualizacion: 2026-08-07
 
 ## Resueltos
 
+### Página de prod sin hidratar: CSP bloqueaba todos los scripts inline → RESUELTO (2026-08-22)
+- **Fecha**: reportado 2026-08-22 / resuelto 2026-08-22
+- **Síntoma**: "no anda la pagina" en prod; consola Chrome: `Executing inline script violates ... script-src 'self' 'strict-dynamic' 'nonce-...' 'unsafe-inline'. Note that 'unsafe-inline' is ignored if either a hash or nonce value is present`
+- **Causa raíz**: el middleware (`src/middleware.ts`) generaba el nonce y lo ponía SOLO en los headers de **respuesta**. Next.js necesita la CSP/nonce también en los headers de **request** (`NextResponse.next({ request: { headers } })`, patrón oficial de la doc) para estampar el nonce en sus bootstrap scripts. Además el layout raíz no leía el nonce ni forzaba render dinámico → `/login` se servía estática/cacheada. Resultado: 0 atributos `nonce=` en el HTML servido + header exigiendo nonce con `strict-dynamic` (que ignora `'self'` y `'unsafe-inline'` para scripts) → TODOS los scripts bloqueados → React nunca hidrataba
+- **Bug latente desde 2026-07-28** (`4864e85`, CSP hardening): en dev la CSP es `'unsafe-inline'` sin nonce → nunca se vio; las verificaciones de prod previas fueron HTTP/API-level (status 200, PostgREST, capturas del extension directo a API) que no ejercitan hidratación
+- **Fix (2026-08-22, commit `58e8e3b`)**: middleware reenvía `x-nonce` + `content-security-policy` en request headers; `updateSession(request, requestHeaders?)` los usa al crear la respuesta; layout raíz consume `headers().get("x-nonce")` para forzar render dinámico global (necesario: nonce por-request es incompatible con HTML cacheado)
+- **Verificación**: RED→GREEN local con build prod (antes: 8 inline/0 nonce; después: 28 nonces, match header==HTML) | tsc 0 | lint OK | 391/391 tests | build OK | prod post-deploy: 27 nonces, match True | **E2E usuario confirmado**
+
 ### Categoria del producto se completaba con la del producto en vista (no la de Amazon) → RESUELTO (2026-08-07)
 - **Fecha**: reportado 2026-08-07 / resuelto 2026-08-07
 - **Sintoma**: en el form de producto (nuevo/editar/modal), el campo categoria se completaba con la categoria del producto en vista, no con la categoria scrapeada de Amazon

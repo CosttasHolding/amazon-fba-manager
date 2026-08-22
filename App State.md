@@ -1,5 +1,5 @@
 ---
-ultima_actualizacion: 2026-08-21
+ultima_actualizacion: 2026-08-22
 estado: PC nueva verificada 2026-08-21 (tsc/lint/tests/build OK, Supabase OK, git sync, dev server via tarea programada OK); Vercel linkeado (login+link OK, prod 200); extension verificada identica al build; Obsidian instalado; extension detecta AMZScout (custom element) + reader AMZScout (ventas/revenue/margen/niche_score) + reader H10 (BSR + listing health score) + boton Reload + mode honesto + observer re-colecta cuando el overlay se llena async + captura solo el producto de la pagina en producto (fix "muchisimos productos") + capture route persiste score enriquecido + **competencia en 5 niveles (very_low..very_high)** en capture/UI/popup + **kanban redisenado (grilla compacta 240px con scroll, drag & drop dnd-kit, filtros combinables)** + **URLs de Amazon/Alibaba editables** + **TODAS las migraciones aplicadas en prod + E2E extension verificado** + **GLOSARIO.md (57 terminos)** + **FEATURE COMPLETA 2026-08-21: Research "Grupos por Item" + Papelera global (12 tasks SDD; grouping fallback + CRUD grupos + capture agrupa + vista Grupos en /research + papelera global /trash con soft delete en 23 tablas + i18n x3; 391 tests; PENDIENTE PUSH ~14 commits)**
 version: 2.0.0
 branch: main
@@ -23,8 +23,8 @@ db_migrations: TODAS aplicadas en prod (030-035; 034 research_groups + 035 soft 
 ## Git
 
 - **Branch**: main
-- **Last commits**: `1f1e838` (pagina papelera), `7080170` (vista grupos research), `92c5acb` (i18n+glosario), `ebb296b` (capture agrupa), `dbbabd3` (API papelera), `161193d`/`f8cd87c` (mover competidor + fix), `839ffbb` (soft delete+restore selectivo) — feature Grupos+Papelera completa
-- **Working tree**: limpio; **TODO PUSHEADO 2026-08-21** (`72a8e6c..bbf2dfb` → origin/main) — deploy Vercel automático disparado; E2E manual en prod pendiente
+- **Last commits**: `58e8e3b` (fix CSP nonce → hidratación en prod, 2026-08-22), `7ca6767`/`bbf2dfb` (vault push 08-21), `1f1e838` (pagina papelera), `7080170` (vista grupos research) — feature Grupos+Papelera completa
+- **Working tree**: solo cambios del vault pendientes de commit (`vault:`); código pusheado hasta `58e8e3b`; E2E Grupos+Papelera en prod sigue pendiente
 
 ## Build
 
@@ -34,6 +34,7 @@ db_migrations: TODAS aplicadas en prod (030-035; 034 research_groups + 035 soft 
 
 ## Features completadas
 
+- **FIX hidratación prod / CSP nonce (2026-08-22, commit `58e8e3b`)**: desde el CSP hardening del 28/07 (`4864e85`), prod servía HTML sin `nonce=` en los scripts mientras la CSP exigía nonce con `strict-dynamic` → TODOS los scripts bloqueados, React nunca hidrataba (latente: en dev no aplica y las verificaciones previas de prod fueron HTTP/API-level). Fix patrón oficial Next.js: middleware reenvía `x-nonce`+CSP en request headers; `updateSession` acepta headers; layout consume `headers().get("x-nonce")` → render dinámico global. Verificado RED→GREEN local y en prod post-deploy (27 nonces match); E2E usuario OK
 - Dashboard con KPIs, graficos, alertas
 - Catalogo de productos FBA
 - Inventario con movimientos
