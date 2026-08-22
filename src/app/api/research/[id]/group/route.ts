@@ -42,6 +42,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       .update({ group_id: result.data.group_id })
       .eq("id", id)
       .eq("org_id", orgId)
+      .is("deleted_at", null)
       .select()
       .single();
     if (error || !data) {

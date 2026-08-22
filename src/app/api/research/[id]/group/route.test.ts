@@ -163,4 +163,26 @@ describe("POST /api/research/[id]/group", () => {
     expect(res.status).toBe(404);
     expect(callsOf("product_research", "update")).toHaveLength(0);
   });
+
+  it("devuelve 404 si el producto está en papelera", async () => {
+    authOk();
+    setupDb({
+      research_groups: { data: { id: "group-2" }, error: null },
+      product_research: { data: null, error: null },
+    });
+
+    const req = createMockRequest("http://localhost/api/research/p-trashed/group", {
+      method: "POST",
+      body: JSON.stringify({ group_id: "group-2" }),
+    }) as never;
+    const res = await POST(req, { params: Promise.resolve({ id: "p-trashed" }) });
+    expect(res.status).toBe(404);
+
+    expect(callsOf("product_research", "is")).toContainEqual(
+      expect.objectContaining({ args: ["deleted_at", null] })
+    );
+    const eqs = callsOf("product_research", "eq");
+    expect(eqs.some((c) => c.args[0] === "id" && c.args[1] === "p-trashed")).toBe(true);
+    expect(eqs.some((c) => c.args[0] === "org_id" && c.args[1] === "org-1")).toBe(true);
+  });
 });
