@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -76,6 +77,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  headers().get("x-nonce");
   return (
     <html lang="es" dir="ltr" suppressHydrationWarning>
       <body

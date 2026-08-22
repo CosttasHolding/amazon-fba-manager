@@ -31,11 +31,16 @@ function buildCsp(nonce: string, isDev: boolean): string {
 }
 
 export async function middleware(request: NextRequest) {
-  const response = await updateSession(request);
-
   const isDev = process.env.NODE_ENV === "development";
   const nonce = generateNonce();
   const csp = buildCsp(nonce, isDev);
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("content-security-policy", csp);
+
+  const response = await updateSession(request, requestHeaders);
+
   response.headers.set("Content-Security-Policy", csp);
   response.headers.set("x-nonce", nonce);
 
