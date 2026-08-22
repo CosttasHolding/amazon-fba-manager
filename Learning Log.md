@@ -1,7 +1,7 @@
 ---
 tipo: personal
 tags: [learning, aprendizaje]
-ultima_actualizacion: 2026-08-04
+ultima_actualizacion: 2026-08-21
 ---
 
 # Learning Log
@@ -32,6 +32,10 @@ ultima_actualizacion: 2026-08-04
 - **Server Actions**: Para mutations simples, usar `src/lib/actions/[entity].ts` con `"use server"`.
 - **API Routes**: Para endpoints complejos, usar `src/app/api/[entity]/route.ts` con `createApiHandler`.
 - **SWR**: Para datos que se refrescan, usar `useSWR` con `refreshInterval` en el hook.
+
+## Windows / PowerShell 5.1 (2026-08-21)
+
+- **`Out-File` sin encoding explícito corrompe no-ASCII**: al generar review packages (`git diff ... | Out-File pkg.diff`), PS 5.1 usa la codepage del sistema → acentos y árabe (i18n JSONs) salen como mojibake y los revisores subagentes ven texto corrupto. Fix: siempre `-Encoding utf8` en cada `Out-File` (incluidos los `-Append`).
 
 ## Chrome Extensions (2026-07-31)
 

@@ -2,6 +2,28 @@
 
 ---
 
+## CERRADA 2026-08-21 (4ta) — FEATURE COMPLETA: Research "Grupos por Item" + Papelera global
+
+**Estado**: **TODAS las 12 tasks DONE** (flujo SDD orquestado, ledger `.superpowers/sdd/progress.md`). Verificación final con evidencia fresca: tsc 0 | lint solo warnings pre-existentes | **391/391 tests** (47 archivos) | build OK (`/trash` en manifest) | build:glossary OK.
+
+**Código**: commits `3ee0f7d..1f1e838` sobre `main` — **PENDIENTE PUSH** (~14 commits locales incluyendo vault matutino). Push → deploy automático Vercel.
+
+**Qué quedó implementado**:
+- Grupos por item: migraciones 034/035 aplicadas en prod (15/08); helper `grouping.ts` (`classifyToGroup`, fallback heurístico, piloto ai="off"); CRUD `/api/research/groups/*`; capture asigna `group_id` automáticamente; vista "Grupos" (tercer toggle) en /research con filtros/orden/bucket Sin grupo; mover/sacar competidor de grupo.
+- Papelera global: soft delete en 23 tablas; `/api/trash` + `/api/trash/restore`; página `/trash` con selector de entidad, búsqueda y borrado definitivo escribiendo BORRAR; nav item Herramientas; restore selectivo (grupo restaurado no resucita productos borrados individualmente).
+- i18n es/en/ar (+47 keys ×3) + glosario (57 términos).
+
+**Pendientes usuario**:
+1. Decidir push a origin/main (deploy Vercel) + E2E manual en prod.
+2. Obsidian: seleccionar el vault (primera apertura).
+3. Histórico: créditos xAI para deep dive (NO recordar hasta que él lo pida — ver FILOSOFIA abajo).
+
+**Backlog técnico**: ~25 minors diferidos documentados en el ledger (`.superpowers/sdd/progress.md`, sección Minor Findings por task).
+
+**Si hay nueva feature**: mismo flujo SDD (brief → implementador → package → revisor → ledger). Nunca re-despachar tasks done.
+
+---
+
 ## CERRADA 2026-08-21 — Verificacion completa del stack en PC nueva
 
 **Estado**: TODO VERDE con evidencia fresca. tsc 0 | lint 0 errores | 310/310 tests | build OK. Supabase cloud OK (auth health + REST + RLS). Git `main` == `origin/main`. Dev server corriendo (login 200, raiz 307, API 401 sin sesion).
