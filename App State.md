@@ -24,7 +24,7 @@ db_migrations: TODAS aplicadas en prod (030-035; 034 research_groups + 035 soft 
 
 - **Branch**: main
 - **Last commits**: `1f1e838` (pagina papelera), `7080170` (vista grupos research), `92c5acb` (i18n+glosario), `ebb296b` (capture agrupa), `dbbabd3` (API papelera), `161193d`/`f8cd87c` (mover competidor + fix), `839ffbb` (soft delete+restore selectivo) — feature Grupos+Papelera completa
-- **Working tree**: limpio tras commit vault; **PENDIENTE PUSH ~14 commits** (incluye `3ee0f7d` vault matutino) — push dispara deploy Vercel
+- **Working tree**: limpio; **TODO PUSHEADO 2026-08-21** (`72a8e6c..bbf2dfb` → origin/main) — deploy Vercel automático disparado; E2E manual en prod pendiente
 
 ## Build
 
@@ -64,7 +64,7 @@ db_migrations: TODAS aplicadas en prod (030-035; 034 research_groups + 035 soft 
 
 ## Features en progreso
 
-- **Deploy pendiente (usuario)**: ~14 commits locales sin push (feature Grupos+Papelera + vault) — push a main dispara deploy Vercel; luego E2E manual en prod.
+- **E2E en prod pendiente (usuario)**: feature Grupos+Papelera pusheada (`bbf2dfb`), Vercel deploya automático — verificar tras deploy: capturar producto → grupo creado; mover competidor; papelera (restore/borrado definitivo).
 - **Extension Chrome — recolector multi-fuente**: reconstruida para leer overlays de **H10 free + AMZScout + Keepa** porque el scraper de busqueda no produce BSR/ventas/nicho. Nuevos `overlay-reader.ts` + `sources.ts`, `content.ts` con merge por ASIN (prioridad h10>amzscout>keepa), scraper arreglado (titulo real, dedupe, moneda) y **tool de debug en el popup**. **COMPLETO (2026-08-01, partes 9na-13va + commiteado 2026-08-03 en `c0257b4`)**:
   - **Reader del widget de producto H10 (`readH10Summary`)**: ASIN + BSR/categoria + `listing_health_score` + Unit Sales / Current Rating desde el **shadow root**
   - **Reader AMZScout (`readAMZScout`)**: tabla de busqueda (`.maintable__row .scout-col.*`) + totals del header (Avg. Mo Sales/Revenue/Rank/Price/Net Margin) con `fallbackAsin` (pagina de producto → solo el ASIN abierto, o totals solo si `Results <= 1`; nunca la tabla del nicho)

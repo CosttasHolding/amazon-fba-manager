@@ -6,7 +6,7 @@
 
 **Estado**: **TODAS las 12 tasks DONE** (flujo SDD orquestado, ledger `.superpowers/sdd/progress.md`). Verificación final con evidencia fresca: tsc 0 | lint solo warnings pre-existentes | **391/391 tests** (47 archivos) | build OK (`/trash` en manifest) | build:glossary OK.
 
-**Código**: commits `3ee0f7d..1f1e838` sobre `main` — **PENDIENTE PUSH** (~14 commits locales incluyendo vault matutino). Push → deploy automático Vercel.
+**Código**: commits `3ee0f7d..bbf2dfb` sobre `main` — **PUSHEADO 2026-08-21** (`72a8e6c..bbf2dfb` → origin/main). Deploy Vercel automático disparado; E2E manual en prod pendiente.
 
 **Qué quedó implementado**:
 - Grupos por item: migraciones 034/035 aplicadas en prod (15/08); helper `grouping.ts` (`classifyToGroup`, fallback heurístico, piloto ai="off"); CRUD `/api/research/groups/*`; capture asigna `group_id` automáticamente; vista "Grupos" (tercer toggle) en /research con filtros/orden/bucket Sin grupo; mover/sacar competidor de grupo.
@@ -14,7 +14,7 @@
 - i18n es/en/ar (+47 keys ×3) + glosario (57 términos).
 
 **Pendientes usuario**:
-1. Decidir push a origin/main (deploy Vercel) + E2E manual en prod.
+1. E2E manual en prod tras el deploy (capturar → grupo creado; mover competidor; papelera).
 2. Obsidian: seleccionar el vault (primera apertura).
 3. Histórico: créditos xAI para deep dive (NO recordar hasta que él lo pida — ver FILOSOFIA abajo).
 
