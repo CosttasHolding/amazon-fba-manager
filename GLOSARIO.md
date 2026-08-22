@@ -100,6 +100,9 @@ npm run build:glossary
 | Estimated ROI (estimated_roi) | ROI proyectado del producto calculado con precios y costos estimados. Fórmula: ((Ganancia Neta Estimada / Costo Total Estimado) × 100). En Research se recomienda mayor a 150% para avanzar a Aprobado. |
 | Source / Fuente (Research) | Origen de la idea de producto en Research (ej. Jungle Scout, Helium 10, TikTok, competencia, marketplace). Permite rastrear dónde se descubrió cada oportunidad. |
 | Amazon URL / Alibaba URL | Enlaces de referencia de la idea. Amazon URL apunta al listing/ASIN de referencia para validar demanda; Alibaba URL apunta al proveedor o cotización candidato para estimar costos. |
+| Research Group | Agrupación de ideas de producto dentro del módulo Research para organizar el pipeline por nicho, proyecto o proveedor. Cada idea pertenece a lo sumo a un grupo y puede moverse entre grupos o quedarse sin grupo ('Sin grupo'). Permite ordenar los grupos por mejor Niche Score, competencia o nombre. |
+| Competidor | Producto o seller que compite en el mismo nicho de Amazon. En Research se mide a través del ASIN de referencia con métricas como seller_count_fba, review_count_competitor, average_rating y BSR: cuantos más competidores consolidados, menor es la oportunidad relativa del nicho. |
+| Papelera / Soft Delete | Mecanismo de borrado lógico: los registros eliminados se marcan con la fecha deleted_at en lugar de borrarse físicamente de la base. Desde la Papelera se pueden restaurar o borrar definitivamente. Cubre las 23 entidades gestionadas por el sistema. |
 
 ## dashboard — Dashboard
 

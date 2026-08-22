@@ -287,6 +287,21 @@ export const HELP_GLOSSARY: { term: string; definition: string }[] = [
     definition:
       "Enlaces de referencia de la idea. Amazon URL apunta al listing/ASIN de referencia para validar demanda; Alibaba URL apunta al proveedor o cotización candidato para estimar costos.",
   },
+  {
+    term: "Research Group",
+    definition:
+      "Agrupación de ideas de producto dentro del módulo Research para organizar el pipeline por nicho, proyecto o proveedor. Cada idea pertenece a lo sumo a un grupo y puede moverse entre grupos o quedarse sin grupo ('Sin grupo'). Permite ordenar los grupos por mejor Niche Score, competencia o nombre.",
+  },
+  {
+    term: "Competidor",
+    definition:
+      "Producto o seller que compite en el mismo nicho de Amazon. En Research se mide a través del ASIN de referencia con métricas como seller_count_fba, review_count_competitor, average_rating y BSR: cuantos más competidores consolidados, menor es la oportunidad relativa del nicho.",
+  },
+  {
+    term: "Papelera / Soft Delete",
+    definition:
+      "Mecanismo de borrado lógico: los registros eliminados se marcan con la fecha deleted_at en lugar de borrarse físicamente de la base. Desde la Papelera se pueden restaurar o borrar definitivamente. Cubre las 23 entidades gestionadas por el sistema.",
+  },
 ];
 
 export const HELP_SECTIONS: HelpSection[] = [
