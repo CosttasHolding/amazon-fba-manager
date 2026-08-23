@@ -3,7 +3,7 @@ import type { DashboardResponse } from "@/types";
 import { calcMetrics } from "@/lib/dashboard/metrics";
 import { buildSalesChart30d, buildSalesChartWeekly, buildCategoryChart, buildProfitChart, buildComparisonChart } from "@/lib/dashboard/charts";
 
-const PRODUCT_FIELDS = "id,name,sku,status,net_profit,sale_price,roi,stock_available,stock_status,unit_cost,category,revenue_last_30d,sales_velocity_30d,reorder_point";
+const PRODUCT_FIELDS = "id,name,sku,status,net_profit,sale_price,roi,stock_available,stock_status,unit_cost,total_cost,category,revenue_last_30d,sales_velocity_30d,reorder_point";
 const SALE_FIELDS = "sale_date,revenue,units_sold,product_id";
 const DASHBOARD_PRODUCT_LIMIT = 500;
 
@@ -18,6 +18,7 @@ interface ProductRow {
   stock_available: number | null;
   stock_status: string | null;
   unit_cost: number | null;
+  total_cost: number | null;
   category: string | null;
   revenue_last_30d: number | null;
   sales_velocity_30d: number | null;

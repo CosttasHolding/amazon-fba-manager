@@ -41,6 +41,22 @@ describe("productSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("normaliza dutyRate ausente o null a cero", () => {
+    expect(productSchema.safeParse({ name: "Test" }).data?.dutyRate).toBe(0);
+    expect(productSchema.safeParse({ name: "Test", dutyRate: null }).data?.dutyRate).toBe(0);
+  });
+
+  it("acepta dutyRate como fraccion entre cero y uno", () => {
+    expect(productSchema.safeParse({ name: "Test", dutyRate: 0.25 }).success).toBe(true);
+    expect(productSchema.safeParse({ name: "Test", dutyRate: 0 }).success).toBe(true);
+    expect(productSchema.safeParse({ name: "Test", dutyRate: 1 }).success).toBe(true);
+  });
+
+  it("rechaza dutyRate negativo o mayor que uno", () => {
+    expect(productSchema.safeParse({ name: "Test", dutyRate: -0.01 }).success).toBe(false);
+    expect(productSchema.safeParse({ name: "Test", dutyRate: 1.01 }).success).toBe(false);
+  });
+
   it("acepta marketplace valido", () => {
     const result = productSchema.safeParse({
       sku: "SKU-001",

@@ -136,6 +136,7 @@
 | `weight_kg` | DECIMAL(10,3) | | Peso en kilogramos |
 | `marketplace` | TEXT | DEFAULT 'US', CHECK(US/MX/CA/UK/DE/FR/IT/ES) | |
 | `unit_cost` | DECIMAL(10,2) | DEFAULT 0 | Costo unitario |
+| `duty_rate` | NUMERIC | DEFAULT 0, NULLABLE, CHECK 0-1 | Tasa de arancel como fracción decimal (0.25 = 25%) |
 | `shipping_cost` | DECIMAL(10,2) | DEFAULT 0 | Costo de envío |
 | `prep_cost` | DECIMAL(10,2) | DEFAULT 0 | Costo de preparación |
 | `taxes` | DECIMAL(10,2) | DEFAULT 0 | Impuestos |
@@ -144,10 +145,10 @@
 | `fba_fee` | DECIMAL(10,2) | DEFAULT 0 | Fee de FBA |
 | `storage_fee_monthly` | DECIMAL(10,2) | DEFAULT 0 | Fee de almacenamiento mensual |
 | `other_fees` | DECIMAL(10,2) | DEFAULT 0 | Otros fees |
-| `total_cost` | DECIMAL(10,2) | **GENERATED ALWAYS** AS (unit_cost+shipping_cost+prep_cost+taxes) | Calculado automáticamente |
+| `total_cost` | DECIMAL(10,2) | **GENERATED ALWAYS** AS (unit_cost+(unit_cost*COALESCE(duty_rate,0))+shipping_cost+prep_cost+taxes) | Calculado automáticamente |
 | `total_fees` | DECIMAL(10,2) | **GENERATED ALWAYS** AS (referral_fee+fba_fee+storage_fee_monthly+other_fees) | Calculado automáticamente |
-| `net_profit` | DECIMAL(10,2) | **GENERATED ALWAYS** AS (sale_price-total_cost-total_fees) | Calculado automáticamente |
-| `roi` | DECIMAL(10,2) | **GENERATED ALWAYS** AS (CASE WHEN total_cost>0 THEN net_profit/total_cost*100 END) | Calculado automáticamente |
+| `net_profit` | DECIMAL(10,2) | **GENERATED ALWAYS** AS (sale_price-(total_cost)-total_fees) | Calculado automáticamente |
+| `roi` | DECIMAL(10,2) | **GENERATED ALWAYS** AS (CASE WHEN total_cost>0 THEN net_profit/total_cost*100 END; total_cost incluye duty) | Calculado automáticamente |
 | `status` | TEXT | DEFAULT 'active', CHECK('active','paused','discontinued') | |
 | `notes` | TEXT | | |
 | `pdf_url` | TEXT | | |
@@ -1172,6 +1173,7 @@ Las siguientes tablas tienen `org_id` añadido en la migración 024:
 | 023 | N+1 query fixes |
 | 024 | **Multi-tenant: org_id en 22 tablas + RLS con is_org_member** |
 | 025 | Fix: products_with_inventory view missing org_id |
+| 040 | Add: products.duty_rate y propagación a métricas generadas |
 
 ---
 

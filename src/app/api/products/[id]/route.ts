@@ -6,6 +6,7 @@ import { getOrgId } from "@/lib/api-handler";
 import { z } from "zod";
 import { apiErrorResponse, isValidUuid } from "@/lib/api-utils";
 import { PRODUCT_STATUS_VALUES } from "@/lib/constants";
+import { dutyRateSchema } from "@/validations/product";
 
 const productUpdateSchema = z.object({
   name: z.string().min(1).max(255).optional(),
@@ -23,6 +24,7 @@ const productUpdateSchema = z.object({
   prep_cost: z.coerce.number().min(0).optional(),
   taxes: z.coerce.number().min(0).optional(),
   other_fees: z.coerce.number().min(0).optional(),
+  duty_rate: dutyRateSchema.optional(),
   weight_kg: z.coerce.number().min(0).nullable().optional(),
   notes: z.string().max(2000).nullable().optional(),
 });
@@ -58,10 +60,12 @@ export async function GET(
     const pc = data.prep_cost ?? 0;
     const tx = data.taxes ?? 0;
     const of2 = data.other_fees ?? 0;
-    const totalCost = uc + sc + pc + tx;
+    const dutyRate = data.duty_rate ?? 0;
+    const dutyCost = uc * dutyRate;
+    const totalCost = data.total_cost ?? uc + dutyCost + sc + pc + tx;
     const totalFees = ff + rf + sf + of2;
-    const profitVal = sp - totalCost - totalFees;
-    const roiVal = totalCost > 0 ? (profitVal / totalCost) * 100 : 0;
+    const profitVal = data.net_profit ?? sp - totalCost - totalFees;
+    const roiVal = data.roi ?? (totalCost > 0 ? (profitVal / totalCost) * 100 : 0);
     const marginVal = sp > 0 ? (profitVal / sp) * 100 : 0;
 
     const enriched = {
@@ -78,6 +82,8 @@ export async function GET(
       prep_cost: pc,
       taxes: tx,
       other_fees: of2,
+      duty_rate: dutyRate,
+      duty_cost: dutyCost,
       weight: data.weight_kg ?? 0,
       weight_kg: data.weight_kg ?? 0,
       units_purchased: data.units_purchased ?? 0,
@@ -137,6 +143,7 @@ export async function PUT(
     if (v.prep_cost !== undefined) dbData.prep_cost = v.prep_cost;
     if (v.taxes !== undefined) dbData.taxes = v.taxes;
     if (v.other_fees !== undefined) dbData.other_fees = v.other_fees;
+    if (v.duty_rate !== undefined) dbData.duty_rate = v.duty_rate;
     if (v.weight_kg !== undefined) dbData.weight_kg = v.weight_kg;
     if (v.notes !== undefined) dbData.notes = v.notes;
 

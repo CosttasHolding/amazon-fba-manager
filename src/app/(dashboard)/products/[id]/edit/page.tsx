@@ -104,6 +104,7 @@ export default function EditProductPage() {
         status: d.status || "active",
         marketplace: d.marketplace || "US",
         unitCost: d.unit_cost ?? 0,
+        dutyRate: d.duty_rate ?? 0,
         salePrice: d.sale_price ?? 0,
         fbaFee: d.fba_fee ?? 0,
         referralFee: d.referral_fee ?? 0,
@@ -182,10 +183,30 @@ export default function EditProductPage() {
   const onSubmit = async (data: ProductFormData) => {
     setSaving(true);
     try {
+      const payload = {
+        name: data.name,
+        sku: data.sku,
+        asin: data.asin,
+        category: data.category,
+        status: data.status,
+        marketplace: data.marketplace,
+        unit_cost: data.unitCost,
+        sale_price: data.salePrice,
+        fba_fee: data.fbaFee,
+        referral_fee: data.referralFee,
+        shipping_cost: data.shippingCost,
+        storage_fee_monthly: data.storageFeeMonthly,
+        prep_cost: data.prepCost,
+        taxes: data.taxes,
+        other_fees: data.otherFees,
+        duty_rate: data.dutyRate,
+        weight_kg: data.weightKg,
+        notes: data.notes,
+      };
       const res = await fetch("/api/products/" + params.id, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -315,6 +336,26 @@ export default function EditProductPage() {
                 <Input id="unitCost" type="number" step="0.01" {...register("unitCost", { valueAsNumber: true })} className={inputClass} />
               </div>
               <div>
+                <Label htmlFor="dutyRate" className={labelClass}>{t("products.duty_rate_field", locale)}</Label>
+                <Input
+                  id="dutyRate"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={(watched.dutyRate ?? 0) * 100}
+                  onChange={(event) => {
+                    const percent = event.target.value === "" ? 0 : Number(event.target.value);
+                    setValue("dutyRate", Number.isFinite(percent) ? percent / 100 : 0, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
+                  }}
+                  className={inputClass}
+                />
+                <p className="text-[10px] text-muted-foreground mt-0.5">{t("products.duty_rate_hint", locale)}</p>
+              </div>
+              <div>
                 <Label htmlFor="salePrice" className={labelClass}>{t("products.sale_price_field", locale)}</Label>
                 <Input id="salePrice" type="number" step="0.01" {...register("salePrice", { valueAsNumber: true })} className={inputClass} />
               </div>
@@ -357,6 +398,7 @@ export default function EditProductPage() {
               weightKg={watched.weightKg || 0}
               storageFeeMonthly={watched.storageFeeMonthly || 0}
               otherFees={watched.otherFees || 0}
+              dutyRate={watched.dutyRate || 0}
             />
           </div>
 

@@ -37,6 +37,7 @@ export async function createProduct(data: ProductInput) {
     fba_fee: validated.fbaFee,
     storage_fee_monthly: validated.storageFeeMonthly,
     other_fees: validated.otherFees,
+    duty_rate: validated.dutyRate,
     status: validated.status,
     notes: validated.notes || null,
   };

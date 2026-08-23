@@ -16,6 +16,7 @@ interface FeeCalculatorInlineProps {
   weightKg: number;
   storageFeeMonthly: number;
   otherFees: number;
+  dutyRate: number;
   className?: string;
 }
 
@@ -28,6 +29,7 @@ export function FeeCalculatorInline({
   weightKg,
   storageFeeMonthly,
   otherFees,
+  dutyRate,
   className,
 }: FeeCalculatorInlineProps) {
   const { locale } = useLocale();
@@ -47,10 +49,11 @@ export function FeeCalculatorInline({
         refFee,
         fbaFee,
         storageFeeMonthly || 0,
-        otherFees || 0
+        otherFees || 0,
+        dutyRate || 0
       ),
     };
-  }, [unitCost, shippingCost, prepCost, taxes, salePrice, weightKg, storageFeeMonthly, otherFees]);
+  }, [unitCost, shippingCost, prepCost, taxes, salePrice, weightKg, storageFeeMonthly, otherFees, dutyRate]);
 
   const hasData = salePrice > 0 && unitCost > 0;
 

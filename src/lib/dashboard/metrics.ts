@@ -9,6 +9,7 @@ interface ProductRow {
   stock_available: number | null;
   stock_status: string | null;
   unit_cost: number | null;
+  total_cost: number | null;
   revenue_last_30d: number | null;
   sales_velocity_30d: number | null;
 }
@@ -34,7 +35,7 @@ export function calcMetrics(products: ProductRow[], currentMonthSales: SaleRow[]
     : 0;
 
   const totalInventoryValue = products.reduce(
-    (sum, p) => sum + ((p.stock_available || 0) * (p.unit_cost || 0)), 0
+    (sum, p) => sum + ((p.stock_available || 0) * (p.total_cost ?? p.unit_cost ?? 0)), 0
   );
 
   const revenueCurrentMonth = currentMonthSales.reduce((sum, s) => sum + (s.revenue || 0), 0);

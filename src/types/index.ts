@@ -76,6 +76,7 @@ export interface Product {
     fba_fee: number;
     storage_fee_monthly: number;
     other_fees: number;
+    duty_rate: number | null;
     total_cost: number;
     total_fees: number;
     net_profit: number;

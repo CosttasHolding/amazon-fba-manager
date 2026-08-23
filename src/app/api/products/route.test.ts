@@ -141,6 +141,26 @@ describe("POST /api/products", () => {
     expect(mockFrom).toHaveBeenCalledWith("products");
   });
 
+  it("persiste dutyRate como duty_rate decimal", async () => {
+    const user = { id: "user-123" };
+    mockSupabase.auth.getUser.mockResolvedValue({ data: { user }, error: null });
+    const chain = buildQueryChain({
+      data: { id: "prod-1", duty_rate: 0.25 },
+      error: null,
+    });
+    mockFrom.mockReturnValue(chain);
+
+    const req = createMockRequest("http://localhost/api/products", {
+      method: "POST",
+      body: JSON.stringify({ name: "Test Product", dutyRate: 0.25 }),
+      headers: { "x-org-id": "test-org-id" },
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(201);
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ duty_rate: 0.25 }));
+  });
+
   it("acepta producto sin SKU (SKU opcional)", async () => {
     const user = { id: "user-123" };
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user }, error: null });

@@ -75,6 +75,7 @@ export const POST = createApiHandler(async ({ supabase, user, orgId, req }) => {
             fba_fee: validated.fbaFee,
             storage_fee_monthly: validated.storageFeeMonthly,
             other_fees: validated.otherFees,
+            duty_rate: validated.dutyRate,
             status: validated.status,
             notes: validated.notes || null,
         };

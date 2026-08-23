@@ -67,6 +67,7 @@ export default function NewProductPage() {
       category: "Other",
       marketplace: "US",
       unitCost: 0,
+      dutyRate: 0,
       salePrice: 0,
       fbaFee: 0,
       referralFee: 0,
@@ -353,6 +354,26 @@ export default function NewProductPage() {
               <Input id="unitCost" type="number" step="0.01" {...register("unitCost", { valueAsNumber: true })} className={inputClass} />
             </div>
             <div>
+              <Label htmlFor="dutyRate" className={labelClass}>{t("products.duty_rate_field", locale)}</Label>
+              <Input
+                id="dutyRate"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={(watched.dutyRate ?? 0) * 100}
+                onChange={(event) => {
+                  const percent = event.target.value === "" ? 0 : Number(event.target.value);
+                  setValue("dutyRate", Number.isFinite(percent) ? percent / 100 : 0, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                }}
+                className={inputClass}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">{t("products.duty_rate_hint", locale)}</p>
+            </div>
+            <div>
               <Label htmlFor="salePrice" className={labelClass}>{t("products.sale_price_field", locale)}</Label>
               <Input id="salePrice" type="number" step="0.01" {...register("salePrice", { valueAsNumber: true })} className={inputClass} />
               <p className="text-[10px] text-muted-foreground mt-1">{t("products.referral_auto_hint", locale)}</p>
@@ -397,6 +418,7 @@ export default function NewProductPage() {
             weightKg={watched.weightKg || 0}
             storageFeeMonthly={watched.storageFeeMonthly || 0}
             otherFees={watched.otherFees || 0}
+            dutyRate={watched.dutyRate || 0}
           />
         </div>
 

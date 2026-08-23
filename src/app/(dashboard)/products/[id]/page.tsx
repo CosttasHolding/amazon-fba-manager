@@ -62,6 +62,12 @@ interface Product {
   fba_fee: number;
   referral_fee: number;
   shipping_cost: number;
+  prep_cost: number;
+  taxes: number;
+  other_fees: number;
+  duty_rate: number | null;
+  duty_cost: number;
+  total_cost?: number;
   storage_cost: number;
   storage_fee_monthly: number;
   weight: number;
@@ -228,11 +234,17 @@ export default function ProductDetailPage() {
   const referralFee = product.referral_fee || 0;
   const shippingCost = product.shipping_cost || 0;
   const storageCost = product.storage_cost || product.storage_fee_monthly || 0;
+  const prepCost = product.prep_cost || 0;
+  const taxes = product.taxes || 0;
+  const otherFees = product.other_fees || 0;
+  const dutyRate = product.duty_rate ?? 0;
+  const dutyCost = product.duty_cost ?? buyCost * dutyRate;
   const productWeight = product.weight || product.weight_kg || 0;
 
-  const totalCost = buyCost + fbaFee + referralFee + shippingCost + storageCost;
-  const profitValue = product.profit ?? (sellPrice - totalCost);
-  const roiValue = product.roi ?? (buyCost > 0 ? (profitValue / buyCost) * 100 : 0);
+  const totalCost = product.total_cost ?? buyCost + dutyCost + shippingCost + prepCost + taxes;
+  const totalFees = fbaFee + referralFee + storageCost + otherFees;
+  const profitValue = product.profit ?? (sellPrice - totalCost - totalFees);
+  const roiValue = product.roi ?? (totalCost > 0 ? (profitValue / totalCost) * 100 : 0);
   const marginValue = product.margin ?? (sellPrice > 0 ? (profitValue / sellPrice) * 100 : 0);
 
   const stockStatus =
@@ -253,10 +265,10 @@ export default function ProductDetailPage() {
 
   const costBreakdown = [
     { label: t("products.cost_purchase", locale), value: buyCost },
-    { label: t("products.fee_fba", locale), value: fbaFee },
-    { label: t("products.fee_referral", locale), value: referralFee },
+    { label: t("products.duty_cost", locale), value: dutyCost },
     { label: t("products.shipping_cost", locale), value: shippingCost },
-    { label: t("products.storage_cost", locale), value: storageCost },
+    { label: t("products.prep_cost_field", locale), value: prepCost },
+    { label: t("products.taxes_field", locale), value: taxes },
   ];
 
   return (
@@ -413,6 +425,10 @@ export default function ProductDetailPage() {
             </h3>
           </div>
           <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">{t("products.duty_rate_field", locale)}</span>
+              <span className="text-sm font-medium text-foreground tabular-nums">{(dutyRate * 100).toFixed(2)}%</span>
+            </div>
             {costBreakdown.map((item) => (
               <div key={item.label} className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">{item.label}</span>

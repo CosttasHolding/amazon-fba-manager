@@ -58,6 +58,7 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
       marketplace: "US",
       status: "active",
       unitCost: 0,
+      dutyRate: 0,
       shippingCost: 0,
       prepCost: 0,
       taxes: 0,
@@ -72,6 +73,7 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
   });
 
   const { setValue } = form;
+  const dutyRate = form.watch("dutyRate") ?? 0;
   const urlScrape = useUrlScrape();
 
   useEffect(() => {
@@ -240,6 +242,27 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
                   placeholder="0.00"
                   className={inputClass}
                 />
+              </div>
+              <div>
+                <Label htmlFor="dutyRate" className={labelClass}>{t("products.duty_rate_field", locale)}</Label>
+                <Input
+                  id="dutyRate"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={dutyRate * 100}
+                  onChange={(event) => {
+                    const percent = event.target.value === "" ? 0 : Number(event.target.value);
+                    setValue("dutyRate", Number.isFinite(percent) ? percent / 100 : 0, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
+                  }}
+                  placeholder="0.00"
+                  className={inputClass}
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">{t("products.duty_rate_hint", locale)}</p>
               </div>
               <div>
                 <Label htmlFor="shippingCost" className={labelClass}>{t("products.form_shipping_label", locale)}</Label>

@@ -50,10 +50,36 @@ describe("calculations", () => {
     it("calcula métricas básicas correctamente", () => {
       const result = calcMetrics(10, 2, 1, 0, 30, 4.5, 3.22, 0, 0);
       expect(result.totalCost).toBe(13); // 10 + 2 + 1 + 0
+      expect(result.dutyRate).toBe(0);
+      expect(result.dutyCost).toBe(0);
       expect(result.totalFees).toBeCloseTo(7.72, 2); // 4.5 + 3.22
       expect(result.netProfit).toBeCloseTo(9.28, 2); // 30 - 13 - 7.72
       expect(result.roi).toBeCloseTo(71.38, 1); // 9.28 / 13 * 100
       expect(result.margin).toBeCloseTo(30.93, 1); // 9.28 / 30 * 100
+    });
+
+    it("aplica dutyRate 0 sin alterar el costo legacy", () => {
+      const result = calcMetrics(10, 2, 1, 0, 30, 4.5, 3.22, 0, 0, 0);
+      expect(result.dutyRate).toBe(0);
+      expect(result.dutyCost).toBe(0);
+      expect(result.totalCost).toBe(13);
+    });
+
+    it("trata dutyRate null como 0", () => {
+      const result = calcMetrics(10, 2, 1, 0, 30, 4.5, 3.22, 0, 0, null);
+      expect(result.dutyRate).toBe(0);
+      expect(result.dutyCost).toBe(0);
+      expect(result.totalCost).toBe(13);
+    });
+
+    it("suma el costo de duty al costo total", () => {
+      const result = calcMetrics(10, 2, 1, 0, 30, 4.5, 3.22, 0, 0, 0.25);
+      expect(result.dutyRate).toBe(0.25);
+      expect(result.dutyCost).toBe(2.5);
+      expect(result.totalCost).toBe(15.5);
+      expect(result.netProfit).toBeCloseTo(6.78, 2);
+      expect(result.roi).toBeCloseTo(43.7419, 4);
+      expect(result.margin).toBeCloseTo(22.6, 2);
     });
 
     it("devuelve ROI 0 cuando totalCost es 0", () => {
