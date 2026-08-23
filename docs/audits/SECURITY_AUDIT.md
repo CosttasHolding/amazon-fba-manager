@@ -50,4 +50,17 @@ Fecha: 2026-08-22 | Método: subagente read-only (`security-reviewer`) sobre HEA
 60/min fijo vía Upstash sliding window, SOLO en routes con `createApiHandler`. Sin cobertura: `auth/*`, `share`, `drive/*`, `export/import/scrape/search`, webhooks POST, `settings/avatar`.
 
 ## Estado
-**NO SE IMPLEMENTARON FIXES.** Cambios de RLS/policies/schemas productivos requieren aprobación explícita del owner y plan por fase (ver AGENTS.md invariantes). Prioridad propuesta: C1 → C3 → C2 → H1 → H2 → MEDIUMs.
+
+**FIXES IMPLEMENTADOS (2026-08-22, aprobados por owner):**
+
+| Finding | Fix | Verificación |
+|---|---|---|
+| C1 | `supabase/migrations/036_fix_org_invitations_rls.sql`: policy `org_inv_update` restringida a invitado (email) u owner/admin de la org + GRANT por columna (solo `status` actualizable) | Migración creada — **PENDIENTE aplicar en prod** (SQL Editor / Management API) |
+| C2 | `src/lib/drive/folder-guard.ts`: contención por cadena de ancestros hasta el root configurado. Aplicado en list/upload/folders/rename/download/delete/update. Residual: si fallback service-account y sin `GOOGLE_DRIVE_FOLDER_ID`, el root es todo My Drive de la SA (aislación total requiere OAuth por usuario) | `folder-guard.test.ts` 9 tests |
+| C3 | Webhook fail-closed: sin `SP_API_WEBHOOK_SECRET` responde 503; comparación timing-safe; suscripción seleccionada por `amazon_subscription_id` del payload (`notificationMetadata`), no `.limit(1)` global | `webhook-auth.test.ts` 7 tests |
+| H1 | `createApiHandler` verifica membership activa del `x-org-id` (403 si no); `getOrgId` ignora header ajeno y cae al org default | `org-resolver.test.ts` 3 tests |
+| H2 | Sin Upstash o ante error de Upstash: límite en memoria por instancia (ventana fija, tope 10k claves). Ya no es fail-open total. Limitación: memoria no compartida entre lambdas | `rate-limit.test.ts` 2 tests |
+
+Suite completa post-fixes: 51 archivos / 412 tests OK · tsc 0 · lint sin errores nuevos · build OK.
+
+**Pendiente:** MEDIUMs M1–M3 y LOWs sin fix (documentados arriba); aplicar migración 036 en producción.

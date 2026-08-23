@@ -26,6 +26,7 @@ function buildListQuery(data: unknown[]) {
     or: mockOr.mockReturnThis(),
     range: mockRange.mockReturnThis(),
     order: mockOrder.mockResolvedValue({ data, count: data.length, error: null }),
+    maybeSingle: vi.fn().mockResolvedValue({ data: { org_id: "test-org-id" }, error: null }),
   };
 }
 

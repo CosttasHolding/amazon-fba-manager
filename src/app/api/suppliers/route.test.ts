@@ -17,6 +17,7 @@ function buildQueryChain(returnValue: unknown): Record<string, unknown> {
   chain.range = vi.fn().mockReturnValue(chain);
   chain.insert = vi.fn().mockReturnValue(chain);
   chain.single = vi.fn().mockResolvedValue(returnValue);
+  chain.maybeSingle = vi.fn().mockResolvedValue({ data: { org_id: "test-org-id" }, error: null });
   chain.then = terminal.then.bind(terminal);
   chain.catch = terminal.catch.bind(terminal);
   chain.finally = terminal.finally.bind(terminal);

@@ -8,7 +8,16 @@ export async function getOrgId(
 ): Promise<string | null> {
   if (req) {
     const headerOrgId = req.headers.get("x-org-id") || null;
-    if (headerOrgId) return headerOrgId;
+    if (headerOrgId) {
+      const { data: membership } = await supabase
+        .from("org_members")
+        .select("org_id")
+        .eq("user_id", userId)
+        .eq("org_id", headerOrgId)
+        .eq("status", "active")
+        .maybeSingle();
+      if (membership) return headerOrgId;
+    }
   }
   return resolveOrgId(supabase, userId);
 }

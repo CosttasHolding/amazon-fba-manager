@@ -52,6 +52,20 @@ export function createApiHandler(handler: ApiHandler, rateLimitOpts?: { limit?: 
         orgId = await resolveOrgId(supabase, user.id);
       }
 
+      if (orgId) {
+        const { data: membership } = await supabase
+          .from("org_members")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("org_id", orgId)
+          .eq("status", "active")
+          .maybeSingle();
+
+        if (!membership) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+      }
+
       return await handler({ supabase, user: { id: user.id, email: user.email }, orgId, req });
     } catch (err) {
       console.error("API Error:", err);

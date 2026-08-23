@@ -26,6 +26,7 @@ function buildQueryChain(returnValue: unknown) {
     order: mockOrder.mockResolvedValue(returnValue),
     insert: mockInsert.mockReturnThis(),
     single: vi.fn().mockResolvedValue(returnValue),
+  maybeSingle: vi.fn().mockResolvedValue({ data: { org_id: "test-org-id" }, error: null }),
   };
   return chain;
 }
