@@ -144,25 +144,25 @@ supabase/
 docs/                       # Full documentation (see below)
 ```
 
-Para una descripcion completa de la arquitectura, ver [ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Para una descripcion completa de la arquitectura, ver [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
 ## Documentacion
 
-El proyecto incluye documentacion tecnica completa en `docs/`:
+Docs tecnicos nucleo en la raiz; historicos en `docs/archive/`; auditorias y QA en `docs/audits/` y `docs/QA_LOG.md`:
 
 | Archivo | Contenido |
 |---------|-----------|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Arquitectura del sistema, patrones, data flow |
-| [DATABASE.md](docs/DATABASE.md) | Esquema completo de base de datos, relaciones |
-| [API.md](docs/API.md) | Guia de API routes, endpoints, auth |
-| [MODULES.md](docs/MODULES.md) | Logica de negocio por modulo |
-| [UI-PATTERNS.md](docs/UI-PATTERNS.md) | Design system y componentes UI |
-| [CONVENTIONS.md](docs/CONVENTIONS.md) | Reglas y convenciones de codigo |
-| [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) | Tokens visuales y estetica |
-| [ROADMAP.md](docs/ROADMAP.md) | Estado actual y roadmap del proyecto |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Arquitectura del sistema, patrones, data flow |
+| [DATABASE.md](DATABASE.md) | Esquema completo de base de datos, relaciones |
+| [API.md](API.md) | Guia de API routes, endpoints, auth |
+| [MODULES.md](MODULES.md) | Logica de negocio por modulo |
+| [UI-PATTERNS.md](UI-PATTERNS.md) | Design system y componentes UI |
+| [CONVENTIONS.md](CONVENTIONS.md) | Reglas y convenciones de codigo |
+| [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) | Tokens visuales y estetica |
 | [AUTOMATIZACIONES.md](docs/AUTOMATIZACIONES.md) | Cron jobs y automation endpoints |
+| [QA_LOG.md](docs/QA_LOG.md) | Testing funcional con datos reales (FASE 11) |
 
 ---
 

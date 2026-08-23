@@ -60,8 +60,15 @@ supabase/.temp/
 # Obsidian portable app (install separately, NOT in project)
 Obsidian/
 
-# Superpowers internal tooling
-.superpowers/
+# Superpowers internal tooling (efímeros); el ledger de backlog viaja con el repo
+.superpowers/*
+!.superpowers/sdd
+.superpowers/sdd/*
+!.superpowers/sdd/progress.md
+
+# Sesiones temporales de QA (contienen JWT — NUNCA al repo)
+.qa-session.tmp
+.jwt.tmp
 
 # Extension build output (carpeta para Load unpacked)
 public/exteRB/

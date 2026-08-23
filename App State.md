@@ -1,5 +1,5 @@
 ---
-ultima_actualizacion: 2026-08-22
+ultima_actualizacion: 2026-08-23
 ---
 
 # App State
@@ -30,4 +30,4 @@ App completa y desplegada. Siguiente frente: QA funcional E2E en prod y pago de 
 
 ## Enlaces útiles
 
-- [[00 - Dashboard]] · [[Bugs Conocidos]] · [[Decisiones Tecnicas]] · `docs/ROADMAP.md`
+- [[00 - Dashboard]] · [[Bugs Conocidos]] · [[Decisiones Tecnicas]] · `docs/archive/ROADMAP.md` (histórico)
