@@ -93,18 +93,18 @@ function out(s) { lines.push(s); console.log(s); }
   r = await api("/api/research");
   check("QA5c GET /api/research -> 200", r.status === 200, `(status ${r.status})`);
 
-  r = await api("/api/products", { method: "POST", body: { name: `QA-CRUD-${stamp}`, unitCost: 5, salePrice: 25 } });
+  r = await api("/api/products", { method: "POST", body: { name: `QA-CRUD-${stamp}`, unitCost: 5, salePrice: 25, dutyRate: 0.25 } });
   const created = r.body || {};
   const pid = created?.product?.id || created?.id || created?.data?.id;
   check("QA6a POST /api/products crea", r.status >= 200 && r.status < 300 && !!pid, `(status ${r.status} ${JSON.stringify(created).slice(0, 250)})`);
   let pidForCleanup = pid;
   if (pid) {
-    const { data: prodRow } = await admin.from("products").select("org_id, name").eq("id", pid).single();
-    check("QA6b org_id correcto en DB", prodRow && prodRow.org_id === ORG_A, JSON.stringify(prodRow || {}));
+    const { data: prodRow } = await admin.from("products").select("org_id, duty_rate, name").eq("id", pid).single();
+    check("QA6b org_id y duty_rate correctos en DB", prodRow && prodRow.org_id === ORG_A && prodRow.duty_rate === 0.25, JSON.stringify(prodRow || {}));
     r = await api(`/api/products/${pid}`, { method: "PUT", body: { name: `QA-CRUD-EDIT-${stamp}` } });
     check("QA6c PUT actualiza", r.status >= 200 && r.status < 300, `(status ${r.status})`);
     r = await api(`/api/products/${pid}`);
-    check("QA6d GET por id -> 200", r.status === 200, `(status ${r.status})`);
+    check("QA6d GET por id -> 200 con costos calculados", r.status === 200 && r.body?.duty_rate === 0.25 && r.body?.duty_cost === 1.25 && r.body?.total_cost === 6.25, `(status ${r.status} ${JSON.stringify(r.body).slice(0, 250)})`);
     r = await api(`/api/products/${pid}`, { method: "DELETE" });
     check("QA6e DELETE ok", r.status < 300, `(status ${r.status})`);
     const { data: stillThere } = await admin.from("products").select("id, deleted_at").eq("id", pid).maybeSingle();
