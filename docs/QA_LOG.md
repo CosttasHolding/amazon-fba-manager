@@ -67,20 +67,51 @@ Migración `037_add_org_id_to_webhook_tables.sql` aplicada en prod el 2026-08-22
 - Layer: ídem
 - Fix propuesto: detectar sufijos K/M/B y multiplicar
 
+### QA autenticado end-to-end con usuario de prueba (2026-08-22/23, Playwright contra prod)
+
+Setup: usuario `qa-agent-temp-20260822@test.local` creado por SQL directo (GoTrue admin API devolvía 500 genérico; filas hand-made requieren tokens vacíos `''` y `provider_id`=UUID para no romper el scan de GoTrue). Login por UI real en `/login` → dashboard. Fetches desde el navegador (cookies SSR), que es el flujo de usuario verdadero.
+
+#### 🚨 Hallazgo CRÍTICO: recursión infinita RLS (42P17) — presente desde migración 024
+
+- Evidencia: `GET /rest/v1/org_members` y `/organizations` con JWT válido → `{"code":"42P17","message":"infinite recursion detected in policy for relation \"org_members\""}`.
+- Causa: `org_members_select` subconsulta su propia tabla; políticas de `organizations` subconsultan `org_members` (recursión cruzada).
+- Impacto histórico: `resolveOrgId` fallaba siempre como usuario → caía al fallback service-role → rutas operaban sin verificar membresía (la vulnerabilidad H1). El fix H1 desplegado expuso el bug: check de membresía vs tabla rota → **403 en todas las rutas con wrapper** (`products/sales/orders/suppliers`) y capture 500. Outage parcial en vivo, detectado y curado en la misma sesión.
+- Fix: migración `038_fix_org_members_rls.sql` — funciones `SECURITY DEFINER STABLE` (`org_is_active_member/org_is_admin/org_is_owner`) + reescritura de las 7 políticas. Aplicada en prod vía Management API con aprobación explícita del owner. Verificado: `pg_policy` muestra las 8 políticas esperadas; PostgREST devuelve filas propias (y SOLO las propias) sin error.
+
+#### Batería final post-fix (12 PASS / 0 FAIL)
+
+| Check | Resultado |
+|---|---|
+| QA0 login UI → dashboard | PASS |
+| QA1 GET /api/products autenticado (pre-fix: 403) | PASS |
+| QA2 H1: x-org-id falso → 403 | PASS |
+| QA3 org huérfana sin membership → 403 | PASS |
+| QA4 drive/list folderId=root | INFO 403 "Carpeta fuera del espacio autorizado" (guard C2 activo; GOOGLE_DRIVE_FOLDER_ID seteado en prod rechaza alias) |
+| QA5a POST research/capture (pre-fix: 500 recursión) | PASS |
+| QA5b fila persistida con org_id correcto (`asin_reference`, source=capture) | PASS |
+| QA5c GET /api/research → 200 | PASS |
+| QA6a POST crea producto | PASS |
+| QA6b org_id correcto en DB | PASS |
+| QA6c PUT actualiza (la ruta usa PUT, no PATCH) | PASS |
+| QA6d GET por id → 200 | PASS |
+| QA6e DELETE ok (eliminación física confirmada en DB) | PASS |
+
+Notas: `products/[id]` exporta GET/PUT/DELETE (no PATCH). Limpieza automática de datos de prueba tras cada corrida.
+
 ## Pendientes manuales (requieren sesión del owner en prod)
 
 | Ítem | Estado | Nota |
 |---|---|---|
 | Extensión con ASINs reales variados (comparar asin/title/price/BSR/reviews/rating/category/brand vs página) | BLOCKED | requiere navegador del owner; verificar los 2 FAILs arriba en datos reales |
-| Research capture → API → Supabase → UI → reload | BLOCKED | verificar persistencia, no fiarse del 200 |
-| Drive upload → list → metadata → delete | BLOCKED | validar también que IDs fuera del root ahora den 403 (fix C2) |
+| Research capture → API → Supabase → UI → reload | PARCIAL | persistencia API→DB verificada por agente (QA5b); falta verificación visual de UI |
+| Drive upload → list → metadata → delete | BLOCKED | validar también que IDs fuera del root ahora den 403 (fix C2); guard verificado con alias root |
 | SP-API vs Seller Central / Keepa | NOT CONFIGURED (si sin conexión activa) | no forzar |
-| Multi-org: Org A jamás ve Org B (UI + API + manipulación de identifiers) | BLOCKED | crear segunda org de prueba; probar x-org-id falso → esperar 403 |
-| CRUD por módulo (20 módulos candidatos) | BLOCKED | priorizar Products/Suppliers/Sales/Inventory con org de prueba |
+| Multi-org: Org A jamás ve Org B (UI + API + manipulación de identifiers) | PARCIAL | QA2/QA3 cubren manipulación de identifiers vía API; falta prueba visual multi-org en UI |
+| CRUD por módulo (20 módulos candidatos) | PARCIAL | Products CRUD completo verificado (QA6); restan Suppliers/Sales/Inventory |
 | Flow A purchase lifecycle + Flow B incident lifecycle | BLOCKED | consistencia matemática en cada salto |
 | Invalid data (vacío/negativos/futuros/malformed IDs) | BLOCKED | esperar error controlado |
 | Offline/PWA | BLOCKED | validar solo lo prometido por el producto |
-| Webhook SP-API sin secret → 503 | BLOCKED | tras deploy: POST sin Bearer debe dar 503, con secret mal → 401 |
+| Webhook SP-API sin secret → 503 | HECHO | verificado en vivo: sin Bearer 401, wrong 401, correcto 200 (secret seteado por owner) |
 
 ## Verificación migración 036 (pegar en Supabase SQL Editor)
 
