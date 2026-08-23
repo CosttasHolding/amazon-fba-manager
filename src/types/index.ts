@@ -661,14 +661,20 @@ export interface FbaShipmentItem {
 export interface Reimbursement {
   id: string;
   user_id: string;
-  case_id: string | null;
-  sku: string | null;
+  org_id: string;
   product_id: string | null;
-  reason: string;
+  return_id: string | null;
+  amazon_case_id: string | null;
+  reimbursement_type: "lost_inbound" | "damaged_inbound" | "lost_warehouse" | "damaged_warehouse" | "customer_return" | "removal_order" | "other";
+  quantity: number;
   amount: number;
-  status: string;
-  filed_date: string | null;
-  resolved_date: string | null;
+  currency: string;
+  status: "pending" | "submitted" | "approved" | "rejected" | "paid";
+  issue_date: string | null;
+  submitted_date: string | null;
+  approved_date: string | null;
+  paid_date: string | null;
+  deleted_at: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

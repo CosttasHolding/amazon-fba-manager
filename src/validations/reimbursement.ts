@@ -8,7 +8,7 @@ export const reimbursementSchema = z.object({
   quantity: z.coerce.number().int().positive("Cantidad requerida"),
   amount: z.coerce.number().positive("Monto requerido"),
   currency: z.string().max(3).default("USD"),
-  status: z.enum(["pending","submitted","approved","rejected","paid"]).default("pending"),
+  status: z.enum(["pending", "submitted"]).default("pending"),
   issue_date: z.string().nullable().optional(),
   notes: z.string().max(2000).nullable().optional(),
 });

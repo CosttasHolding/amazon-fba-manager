@@ -5,8 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { runSync, ensureClient, isTokenExpired } from "@/lib/sp-api/sync-runner";
 import type { SyncResult, ConnRow } from "@/lib/sp-api/sync-runner";
 import { getOrgId } from "@/lib/org-resolver";
+import { hasReimbursementEditorAccess } from "@/lib/reimbursements/access";
 
-const SYNC_TYPES = ["products", "orders", "inventory", "fees", "returns", "payouts"] as const;
+const SYNC_TYPES = ["products", "orders", "inventory", "fees", "returns", "payouts", "reimbursements"] as const;
 
 export async function GET(req: NextRequest) {
   try {
@@ -49,6 +50,10 @@ export async function POST(req: NextRequest) {
 
     if (!SYNC_TYPES.includes(syncType)) {
       return NextResponse.json({ error: "Invalid sync type" }, { status: 400 });
+    }
+
+    if (syncType === "reimbursements" && !await hasReimbursementEditorAccess(supabase, user.id, orgId)) {
+      return NextResponse.json({ error: "Permisos insuficientes" }, { status: 403 });
     }
 
     const { data: connection } = await supabase

@@ -15,7 +15,7 @@ export interface SyncLog {
   id: string;
   user_id: string;
   connection_id: string;
-  sync_type: "products" | "orders" | "inventory" | "fees" | "returns" | "payouts";
+  sync_type: "products" | "orders" | "inventory" | "fees" | "returns" | "payouts" | "reimbursements";
   status: "pending" | "running" | "completed" | "failed";
   items_processed: number;
   items_failed: number;

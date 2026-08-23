@@ -12,6 +12,15 @@ import {
   getReportDocument,
 } from "@/lib/sp-api";
 import type { SpListingItem, SpOrder, SpInventorySummary } from "@/lib/sp-api";
+import {
+  buildAmazonReimbursementSourceKey,
+  deriveReconciliationStatus,
+  resolveReimbursementProduct,
+  selectReimbursementMovementMatches,
+  type AmazonReimbursementRow,
+  type ReimbursementProductCandidate,
+  type ReimbursementMovementCandidate,
+} from "@/lib/reimbursements/reconciliation";
 
 export interface SyncResult {
   success: boolean;
@@ -94,6 +103,7 @@ export async function runSync(
       case "fees": return syncFees(supabase, client, userId, orgId, connection.marketplace);
       case "returns": return syncReturns(supabase, client, userId, orgId, connection.marketplace);
       case "payouts": return syncPayouts(supabase, client, userId, orgId, connection.marketplace, connection.id);
+      case "reimbursements": return syncReimbursements(supabase, client, userId, orgId, connection);
       default: return { success: true, processed: 0, failed: 0 };
     }
   } catch (error) {
@@ -429,6 +439,207 @@ async function syncReturns(
   }
 }
 
+export async function syncReimbursements(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  client: SpApiClient,
+  userId: string,
+  orgId: string,
+  connection: ConnRow,
+): Promise<SyncResult> {
+  try {
+    const marketplaceId = getMarketplaceId(connection.marketplace);
+    const report = await createReport(client, "GET_FBA_REIMBURSEMENTS_DATA", [marketplaceId]);
+    const document = await pollReport(client, report.reportId);
+    if (!document) return { success: true, processed: 0, failed: 0 };
+
+    const lines = document.split("\n").filter((line) => line.trim());
+    if (lines.length < 2) return { success: true, processed: 0, failed: 0 };
+
+    const headers = parseCsvLine(lines[0]);
+    const parsedRows: AmazonReimbursementRow[] = [];
+    let failed = 0;
+
+    for (const line of lines.slice(1)) {
+      const parsed = parseAmazonReimbursementRow(parseCsvLine(line), headers);
+      if (!parsed) {
+        failed++;
+        continue;
+      }
+      parsedRows.push(parsed);
+    }
+
+    if (parsedRows.length === 0) return { success: true, processed: 0, failed };
+
+    const productSkus = new Set(parsedRows.flatMap((row) => row.sku ? [row.sku] : []));
+    const productAsins = new Set(parsedRows.flatMap((row) => row.asin ? [row.asin] : []));
+    const productCandidates: ReimbursementProductCandidate[] = [];
+
+    if (productSkus.size > 0 || productAsins.size > 0) {
+      const predicates = [
+        productSkus.size > 0 ? `sku.in.(${Array.from(productSkus).map(quotePostgrestValue).join(",")})` : null,
+        productAsins.size > 0 ? `asin.in.(${Array.from(productAsins).map(quotePostgrestValue).join(",")})` : null,
+      ].filter((predicate): predicate is string => predicate !== null);
+
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, sku, asin, marketplace")
+        .eq("org_id", orgId)
+        .or(predicates.join(","));
+
+      if (error) return { success: false, processed: 0, failed, error: error.message };
+      productCandidates.push(...((data || []) as ReimbursementProductCandidate[]));
+    }
+
+    const caseIds = Array.from(new Set(parsedRows.flatMap((row) => row.caseId ? [row.caseId] : [])));
+    const existingClaimCases = new Set<string>();
+    if (caseIds.length > 0) {
+      const { data, error } = await supabase
+        .from("reimbursements")
+        .select("amazon_case_id")
+        .eq("org_id", orgId)
+        .is("deleted_at", null)
+        .in("amazon_case_id", caseIds);
+
+      if (error) return { success: false, processed: 0, failed, error: error.message };
+      for (const row of data || []) {
+        if (row.amazon_case_id) existingClaimCases.add(row.amazon_case_id);
+      }
+    }
+
+    const resolvedRows = parsedRows.map((row) => {
+      const productMatch = resolveReimbursementProduct(row, productCandidates, connection.marketplace);
+      return { row, productMatch };
+    });
+
+    const productIds = Array.from(new Set(
+      resolvedRows.flatMap(({ productMatch }) => productMatch.productId ? [productMatch.productId] : []),
+    ));
+    const approvalDates = parsedRows.flatMap((row) => row.approvalDate ? [row.approvalDate] : []);
+    const movementCandidates: ReimbursementMovementCandidate[] = [];
+
+    if (productIds.length > 0 && approvalDates.length > 0) {
+      const minApprovalDate = approvalDates.sort()[0];
+      const maxApprovalDate = approvalDates[approvalDates.length - 1];
+      const { data, error } = await supabase
+        .from("stock_movements")
+        .select("id, product_id, movement_type, quantity, created_at, reference")
+        .eq("org_id", orgId)
+        .in("product_id", productIds)
+        .in("movement_type", ["damaged", "removal"])
+        .gte("created_at", addDaysToDate(minApprovalDate, -30))
+        .lte("created_at", addDaysToDate(maxApprovalDate, 30));
+
+      if (error) return { success: false, processed: 0, failed, error: error.message };
+      movementCandidates.push(...((data || []) as ReimbursementMovementCandidate[]));
+    }
+
+    const sourceKeys = parsedRows.map((row) =>
+      buildAmazonReimbursementSourceKey(connection.id, connection.marketplace, row),
+    );
+    const { data: existingEvents, error: existingEventsError } = await supabase
+      .from("amazon_reimbursement_events")
+      .select("source_key, reconciliation_status, linked_reimbursement_id")
+      .eq("org_id", orgId)
+      .in("source_key", sourceKeys);
+
+    if (existingEventsError) {
+      return { success: false, processed: 0, failed, error: existingEventsError.message };
+    }
+
+    const existingBySourceKey = new Map(
+      (existingEvents || []).map((event) => [event.source_key, event]),
+    );
+    const eventRows = resolvedRows.map(({ row, productMatch }) => {
+      const movements = productMatch.productId
+        ? movementCandidates.filter((movement) => movement.product_id === productMatch.productId)
+        : [];
+      const movementMatch = selectReimbursementMovementMatches(row, movements);
+      const sourceKey = buildAmazonReimbursementSourceKey(connection.id, connection.marketplace, row);
+      const existing = existingBySourceKey.get(sourceKey);
+      const status = existing && ["linked", "dismissed"].includes(existing.reconciliation_status)
+        ? existing.reconciliation_status
+        : deriveReconciliationStatus(movementMatch.status, Boolean(row.caseId && existingClaimCases.has(row.caseId)));
+
+      return {
+        org_id: orgId,
+        user_id: userId,
+        connection_id: connection.id,
+        marketplace: connection.marketplace,
+        report_id: report.reportId,
+        source_key: sourceKey,
+        reimbursement_id: row.reimbursementId,
+        case_id: row.caseId,
+        amazon_order_id: row.amazonOrderId,
+        original_reimbursement_id: row.originalReimbursementId,
+        original_reimbursement_type: row.originalReimbursementType,
+        sku: row.sku,
+        fnsku: row.fnsku,
+        asin: row.asin,
+        reason: row.reason,
+        approval_date: row.approvalDate,
+        amount_per_unit: row.amountPerUnit,
+        amount_total: row.amountTotal,
+        currency: row.currency,
+        quantity_reimbursed_cash: row.quantityReimbursedCash,
+        quantity_reimbursed_inventory: row.quantityReimbursedInventory,
+        quantity_reimbursed_total: row.quantityReimbursedTotal,
+        product_id: productMatch.productId,
+        product_match_status: productMatch.status,
+        movement_match_status: movementMatch.status,
+        reconciliation_status: status,
+        linked_reimbursement_id: existing?.linked_reimbursement_id || null,
+        raw_row: row.rawRow,
+        last_seen_at: new Date().toISOString(),
+      };
+    });
+
+    const { data: savedEvents, error: saveError } = await supabase
+      .from("amazon_reimbursement_events")
+      .upsert(eventRows, { onConflict: "org_id,source_key" })
+      .select("id, source_key");
+
+    if (saveError) return { success: false, processed: 0, failed, error: saveError.message };
+
+    const eventIds = (savedEvents || []).map((event) => event.id);
+    const eventIdBySourceKey = new Map((savedEvents || []).map((event) => [event.source_key, event.id]));
+    const movementMatches = resolvedRows.flatMap(({ row, productMatch }) => {
+      if (!productMatch.productId) return [];
+      const movementMatch = selectReimbursementMovementMatches(
+        row,
+        movementCandidates.filter((movement) => movement.product_id === productMatch.productId),
+      );
+      const eventId = eventIdBySourceKey.get(buildAmazonReimbursementSourceKey(connection.id, connection.marketplace, row));
+      if (!eventId || movementMatch.candidates.length === 0) return [];
+      return movementMatch.candidates.map((movement) => ({
+        event_id: eventId,
+        movement_id: movement.id,
+        match_reason: `${row.reason || "unknown"}:approval_date_30d_quantity`,
+        confidence: movementMatch.status === "candidate" ? "candidate" : "ambiguous",
+      }));
+    });
+
+    if (eventIds.length > 0) {
+      const { error: replaceMatchesError } = await supabase.rpc("replace_amazon_reimbursement_movement_matches", {
+        p_org_id: orgId,
+        p_event_ids: eventIds,
+        p_matches: movementMatches,
+      });
+      if (replaceMatchesError) {
+        return { success: false, processed: 0, failed, error: replaceMatchesError.message };
+      }
+    }
+
+    return { success: true, processed: eventRows.length, failed };
+  } catch (error) {
+    return {
+      success: false,
+      processed: 0,
+      failed: 0,
+      error: error instanceof Error ? error.message : "Reimbursements sync error",
+    };
+  }
+}
+
 export async function syncPayouts(
   supabase: Awaited<ReturnType<typeof createClient>>,
   client: SpApiClient,
@@ -539,7 +750,7 @@ export async function syncPayouts(
     }
 
     const expenseRows = settlementLines
-      .filter((line) => line.transaction_type !== "Order")
+      .filter((line) => line.transaction_type !== "Order" && !isSettlementReimbursementLine(line))
       .map((line) => ({
         user_id: userId,
         org_id: orgId,
@@ -611,6 +822,75 @@ function getField(row: string[], headers: string[], name: string): string {
   return idx >= 0 ? (row[idx] || "").trim() : "";
 }
 
+function parseAmazonReimbursementRow(row: string[], headers: string[]): AmazonReimbursementRow | null {
+  const reimbursementId = getFirstField(row, headers, ["reimbursement-id", "reimbursement_id"]);
+  const caseId = getFirstField(row, headers, ["case-id", "case_id"]);
+  const amazonOrderId = getFirstField(row, headers, ["amazon-order-id", "amazon_order_id"]);
+  const originalReimbursementId = getFirstField(row, headers, ["original-reimbursement-id", "original_reimbursement_id"]);
+  const originalReimbursementType = getFirstField(row, headers, ["original-reimbursement-type", "original_reimbursement_type"]);
+  const sku = getFirstField(row, headers, ["sku"]);
+  const fnsku = getFirstField(row, headers, ["fnsku"]);
+  const asin = getFirstField(row, headers, ["asin"]);
+  const reason = getFirstField(row, headers, ["reason"]);
+  const approvalDate = normalizeSettlementDate(getFirstField(row, headers, ["approval-date", "approval_date"]));
+  const amountPerUnit = parseOptionalNonNegativeNumber(getFirstField(row, headers, ["amount-per-unit", "amount_per_unit"]));
+  const amountTotal = parseOptionalNonNegativeNumber(getFirstField(row, headers, ["amount-total", "amount_total"]));
+  const cashQuantity = parseOptionalNonNegativeInteger(getFirstField(row, headers, ["quantity-reimbursed-cash", "quantity_reimbursed_cash"]));
+  const inventoryQuantity = parseOptionalNonNegativeInteger(getFirstField(row, headers, ["quantity-reimbursed-inventory", "quantity_reimbursed_inventory"]));
+  const totalQuantity = parseOptionalNonNegativeInteger(getFirstField(row, headers, ["quantity-reimbursed-total", "quantity_reimbursed_total"]));
+  const currencyValue = getFirstField(row, headers, ["currency-unit", "currency_unit"]).toUpperCase();
+  const currency = /^[A-Z]{3}$/.test(currencyValue) ? currencyValue : "USD";
+
+  if (amountPerUnit === null || amountTotal === null || cashQuantity === null || inventoryQuantity === null || totalQuantity === null) {
+    return null;
+  }
+
+  return {
+    reimbursementId: reimbursementId || null,
+    caseId: caseId || null,
+    amazonOrderId: amazonOrderId || null,
+    originalReimbursementId: originalReimbursementId || null,
+    originalReimbursementType: originalReimbursementType || null,
+    sku: sku || null,
+    fnsku: fnsku || null,
+    asin: asin || null,
+    reason: reason || null,
+    approvalDate,
+    amountPerUnit,
+    amountTotal,
+    currency,
+    quantityReimbursedCash: cashQuantity,
+    quantityReimbursedInventory: inventoryQuantity,
+    quantityReimbursedTotal: totalQuantity || cashQuantity + inventoryQuantity,
+    rawRow: Object.fromEntries(headers.map((header, index) => [header.trim(), row[index] || ""])),
+  };
+}
+
+function getFirstField(row: string[], headers: string[], names: string[]): string {
+  for (const name of names) {
+    const value = getField(row, headers, name);
+    if (value) return value;
+  }
+  return "";
+}
+
+function parseOptionalNonNegativeNumber(value: string): number | null {
+  if (!value.trim()) return 0;
+  const parsed = Number(value.replace(/,/g, ""));
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function parseOptionalNonNegativeInteger(value: string): number | null {
+  if (!value.trim()) return 0;
+  const parsed = Number(value.replace(/,/g, ""));
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function addDaysToDate(value: string, days: number): string {
+  const timestamp = Date.parse(`${value}T00:00:00.000Z`);
+  return new Date(timestamp + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
 export function getSettlementField(row: string[], headers: string[], aliases: readonly string[]): string {
   for (const alias of aliases) {
     const value = getField(row, headers, alias);
@@ -627,6 +907,17 @@ export function normalizeSettlementFeeType(row: string[], headers: string[]): st
     "amount_description",
     "description",
   ]) || null;
+}
+
+export function isSettlementReimbursementLine(line: {
+  transaction_type: string;
+  fee_type: string | null;
+  raw_row: Record<string, string>;
+}): boolean {
+  const values = [line.transaction_type, line.fee_type || "", ...Object.values(line.raw_row)]
+    .join(" ")
+    .toLowerCase();
+  return values.includes("reimbursement");
 }
 
 export function normalizeSettlementDate(value: string): string | null {

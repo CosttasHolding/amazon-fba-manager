@@ -240,8 +240,9 @@ type HandlerContext = {
 | `DELETE` | `/api/returns` | Eliminar devolución | `?id=` |
 | `GET` | `/api/reimbursements` | Lista reembolsos | `?page=&status=` |
 | `POST` | `/api/reimbursements` | Crear reembolso | `{ product_id, amount, reimbursement_type, ... }` |
-| `PUT` | `/api/reimbursements` | Actualizar reembolso | `{ status?, approved_date?, ... }` |
-| `DELETE` | `/api/reimbursements` | Eliminar reembolso | `?id=` |
+| `GET` | `/api/reimbursements/detected` | Lista eventos Amazon detectados | `?page=&perPage=&status=` |
+| `POST` | `/api/reimbursements/detected/[id]/link` | Vincular evento a reembolso existente | `{ reimbursement_id }` |
+| `POST` | `/api/reimbursements/detected/[id]/dismiss` | Descartar detección | - |
 
 ---
 
@@ -271,9 +272,11 @@ type HandlerContext = {
 | `POST` | `/api/sp-api/webhooks/subscribe` | Crear suscripción | `{ connectionId, notificationType }` |
 | `DELETE` | `/api/sp-api/webhooks/subscribe` | Eliminar suscripción | `?subscriptionId=` |
 
-**Sync Types:** products, orders, inventory, fees, returns, payouts
+**Sync Types:** products, orders, inventory, fees, returns, payouts, reimbursements
 
-El sync `payouts` conserva las líneas detalladas en `amazon_settlement_lines` y crea gastos solo para transacciones distintas de `Order`. Los gastos importados usan una clave `source_key` determinista por organización, liquidación y línea para permitir reintentos seguros y evitar duplicados concurrentes; mantienen el importe absoluto y la moneda del reporte.
+El sync `payouts` conserva las líneas detalladas en `amazon_settlement_lines` y crea gastos solo para transacciones distintas de `Order` que no sean reembolsos. Los gastos importados usan una clave `source_key` determinista por organización, liquidación y línea para permitir reintentos seguros y evitar duplicados concurrentes; mantienen el importe absoluto y la moneda del reporte.
+
+El sync `reimbursements` conserva los eventos de `GET_FBA_REIMBURSEMENTS_DATA` en `amazon_reimbursement_events`. Amazon reporta reembolsos ya registrados/aprobados; la aplicación los muestra como `Amazon detectado, no registrado` hasta su reconciliación manual. El matching de movimientos usa una ventana de 30 días alrededor de `approval-date` y nunca modifica inventory automáticamente.
 
 ---
 

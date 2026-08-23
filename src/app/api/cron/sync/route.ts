@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
     interface ResultItem extends SyncResult { syncType: string; }
     const results: ResultItem[] = [];
-    const syncTypes = ["products", "orders", "inventory", "fees", "returns", "payouts"];
+    const syncTypes = ["products", "orders", "inventory", "fees", "returns", "payouts", "reimbursements"];
 
     for (const connection of connections) {
       try {

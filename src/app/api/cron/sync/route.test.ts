@@ -106,8 +106,8 @@ describe("GET /api/cron/sync", () => {
       success: false,
       error: "Connection user is not an active organization member",
     }));
-    expect(body.results).toHaveLength(7);
-    expect(mocks.runSync).toHaveBeenCalledTimes(6);
+    expect(body.results).toHaveLength(8);
+    expect(mocks.runSync).toHaveBeenCalledTimes(7);
     expect(mocks.refreshAccessToken).not.toHaveBeenCalled();
     expect(membershipQuery.eq).toHaveBeenCalledWith("user_id", "user-1");
     expect(membershipQuery.eq).toHaveBeenCalledWith("org_id", "org-1");

@@ -4,6 +4,7 @@ import type { SpApiClient } from "@/lib/sp-api";
 import {
   getSettlementField,
   hashSettlementLine,
+  isSettlementReimbursementLine,
   normalizeSettlementFeeType,
   parseSettlementAmount,
   runSync,
@@ -141,6 +142,19 @@ describe("syncPayouts settlement lines", () => {
       .toBe(hashSettlementLine("settlement-1", reorderedRow, 0, reorderedRowHeaders));
     expect(hashSettlementLine("settlement-1", row, 0, rowHeaders))
       .not.toBe(hashSettlementLine("settlement-1", row, 1, rowHeaders));
+  });
+
+  it("no convierte reembolsos de settlement en gastos", () => {
+    expect(isSettlementReimbursementLine({
+      transaction_type: "Other-Transaction",
+      fee_type: "FBA Reimbursement",
+      raw_row: { "amount-description": "Inventory reimbursement" },
+    })).toBe(true);
+    expect(isSettlementReimbursementLine({
+      transaction_type: "Refund",
+      fee_type: "FBA fees",
+      raw_row: { "amount-description": "Referral fee" },
+    })).toBe(false);
   });
 
   it("persiste Order y fees, asigna producto por tenant y no duplica expenses en reruns", async () => {

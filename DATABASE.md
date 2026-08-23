@@ -178,8 +178,6 @@
 | `max_stock` | INT | DEFAULT 500 | Stock máximo |
 | `updated_at` | TIMESTAMPTZ | | |
 
----
-
 ### 2.7 `stock_movements`
 
 | Columna | Tipo | Constraints | Notas |
@@ -229,8 +227,6 @@
 | `created_at` | TIMESTAMPTZ | | |
 | `updated_at` | TIMESTAMPTZ | | |
 
----
-
 ### 2.9 `suppliers`
 
 | Columna | Tipo | Constraints | Notas |
@@ -256,8 +252,6 @@
 | `status` | TEXT | DEFAULT 'active', CHECK('active','inactive') | |
 | `created_at` | TIMESTAMPTZ | | |
 | `updated_at` | TIMESTAMPTZ | | |
-
----
 
 ### 2.10 `product_suppliers`
 
@@ -503,6 +497,54 @@ idea → validating → approved → in_progress → launched
 | `notes` | TEXT | | |
 | `created_at` | TIMESTAMPTZ | | |
 | `updated_at` | TIMESTAMPTZ | | |
+
+### 5.3 `amazon_reimbursement_events`
+
+Eventos append-only importados de `GET_FBA_REIMBURSEMENTS_DATA`. No representan
+un nuevo reclamo ni modifican inventory automáticamente.
+
+| Columna | Tipo | Constraints | Notas |
+|---------|------|-------------|-------|
+| `id` | UUID | PK | |
+| `org_id` | UUID | NOT NULL, FK → organizations(id) | Tenant obligatorio |
+| `user_id` | UUID | NOT NULL, FK → profiles(id) | Usuario de la conexión |
+| `connection_id` | UUID | NOT NULL, FK → sp_api_connections(id) | Conexión Amazon origen |
+| `marketplace` | TEXT | NOT NULL | |
+| `report_id` | TEXT | NOT NULL | ID del reporte SP-API |
+| `source_key` | TEXT | NOT NULL, UNIQUE con `org_id` | Idempotencia |
+| `reimbursement_id` | TEXT | | ID externo Amazon |
+| `case_id` | TEXT | | Case ID Amazon |
+| `amazon_order_id` | TEXT | | Pedido Amazon |
+| `original_reimbursement_id` | TEXT | | Reembolso original Amazon |
+| `original_reimbursement_type` | TEXT | | Tipo del reembolso original |
+| `sku`, `fnsku`, `asin` | TEXT | | Identificadores reportados |
+| `reason` | TEXT | | Motivo Amazon |
+| `approval_date` | DATE | | Fecha de aprobación |
+| `amount_per_unit`, `amount_total` | NUMERIC | CHECK >= 0 | Importes del reporte |
+| `currency` | TEXT | 3 caracteres | Moneda del reporte |
+| `quantity_reimbursed_*` | INTEGER | CHECK >= 0 | Cash, inventory y total |
+| `product_id` | UUID | FK → products(id) | Solo si el matching es seguro |
+| `product_match_status` | TEXT | CHECK | matched_sku/matched_asin/unmatched/ambiguous/conflict |
+| `movement_match_status` | TEXT | CHECK | Estado del candidato de inventory |
+| `reconciliation_status` | TEXT | CHECK | unrecorded/possible duplicate/possible claim/linked/dismissed |
+| `linked_reimbursement_id` | UUID | FK → reimbursements(id) | Solo mediante link manual |
+| `raw_row` | JSONB | NOT NULL | Evidencia original |
+| `first_seen_at`, `last_seen_at` | TIMESTAMPTZ | NOT NULL | Control de reintentos |
+
+### 5.4 `amazon_reimbursement_movement_matches`
+
+Evidencia de posibles coincidencias con movimientos existentes. No crea ni
+modifica movimientos y tiene validación tenant/producto mediante trigger.
+
+| Columna | Tipo | Constraints | Notas |
+|---------|------|-------------|-------|
+| `id` | UUID | PK | |
+| `org_id` | UUID | NOT NULL, FK → organizations(id) | Tenant obligatorio |
+| `amazon_reimbursement_event_id` | UUID | NOT NULL, FK | Evento Amazon |
+| `stock_movement_id` | UUID | NOT NULL, FK | Movimiento candidato |
+| `match_reason` | TEXT | NOT NULL | Motivo de coincidencia |
+| `confidence` | TEXT | CHECK | candidate/ambiguous |
+| `created_at` | TIMESTAMPTZ | NOT NULL | |
 
 ---
 

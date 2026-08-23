@@ -214,3 +214,15 @@ Esperado: policy `org_inv_update` con qual que referencie email u org_members (N
 El preflight encontró cuatro filas históricas de `inventory` sin `org_id`; todas
 tenían producto con organización inequívoca y fueron backfilleadas por 050.
 Las filas legacy ambiguas de las demás tablas permanecen inaccesibles por RLS.
+
+## Fase 4: detección de reembolsos Amazon (2026-08-23)
+
+| Área | Resultado | Evidencia |
+|---|---|---|
+| Parser `GET_FBA_REIMBURSEMENTS_DATA` | VERIFICADO | TSV con campos oficiales, importes, cantidades y `raw_row` |
+| Matching SKU/ASIN | VERIFICADO | SKU primero; ASIN solo único por organización/marketplace; conflictos fail-closed |
+| Matching inventory | VERIFICADO | Candidatos `damaged`/`removal` dentro de ventana de 30 días; no modifica stock |
+| Idempotencia | VERIFICADO LOCAL | `UNIQUE(org_id, source_key)` y reemplazo atómico de matches mediante RPC |
+| Seguridad tenant | VERIFICADO LOCAL | RLS, triggers de tenant, role gates y pruebas independientes |
+| Checks | VERIFICADO LOCAL | 76 archivos, 509 tests, typecheck, build y lint sin errores |
+| Migración 051 | PREPARADA, NO APLICADA | Requiere confirmación explícita antes de producción |
