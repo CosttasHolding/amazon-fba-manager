@@ -4,6 +4,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { Readable } from "stream";
 import { createClient } from "@/lib/supabase/server";
 import { getDriveClient, getRootFolderId } from "@/lib/drive";
+import {
+  assertFolderWithinRoot,
+  FolderOutsideRootError,
+} from "@/lib/drive/folder-guard";
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,6 +29,15 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const drive = await getDriveClient();
+
+    try {
+      await assertFolderWithinRoot(drive, folderId, getRootFolderId());
+    } catch (err) {
+      if (err instanceof FolderOutsideRootError) {
+        return NextResponse.json({ error: err.message }, { status: 403 });
+      }
+      throw err;
+    }
 
     const res = await drive.files.create({
       requestBody: {

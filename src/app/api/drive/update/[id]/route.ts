@@ -3,7 +3,11 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { Readable } from "stream";
 import { createClient } from "@/lib/supabase/server";
-import { getDriveClient } from "@/lib/drive";
+import { getDriveClient, getRootFolderId } from "@/lib/drive";
+import {
+  assertFileWithinRoot,
+  FolderOutsideRootError,
+} from "@/lib/drive/folder-guard";
 
 export async function PUT(
   req: NextRequest,
@@ -21,6 +25,14 @@ export async function PUT(
     }
 
     const drive = await getDriveClient();
+    try {
+      await assertFileWithinRoot(drive, params.id, getRootFolderId());
+    } catch (err) {
+      if (err instanceof FolderOutsideRootError) {
+        return NextResponse.json({ error: err.message }, { status: 403 });
+      }
+      throw err;
+    }
     const buffer = Buffer.from(content, "utf-8");
 
     await drive.files.update({

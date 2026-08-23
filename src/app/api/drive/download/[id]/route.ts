@@ -2,7 +2,11 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getDriveClient } from "@/lib/drive";
+import { getDriveClient, getRootFolderId } from "@/lib/drive";
+import {
+  assertFileWithinRoot,
+  FolderOutsideRootError,
+} from "@/lib/drive/folder-guard";
 
 export async function GET(
   _req: NextRequest,
@@ -15,6 +19,14 @@ export async function GET(
     if (!params.id) return NextResponse.json({ error: "Missing file ID" }, { status: 400 });
 
     const drive = await getDriveClient();
+    try {
+      await assertFileWithinRoot(drive, params.id, getRootFolderId());
+    } catch (err) {
+      if (err instanceof FolderOutsideRootError) {
+        return NextResponse.json({ error: err.message }, { status: 403 });
+      }
+      throw err;
+    }
     const fileMeta = await drive.files.get({
       fileId: params.id,
       fields: "name,mimeType",

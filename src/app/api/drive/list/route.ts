@@ -3,6 +3,10 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getDriveClient, getRootFolderId } from "@/lib/drive";
+import {
+  assertFolderWithinRoot,
+  FolderOutsideRootError,
+} from "@/lib/drive/folder-guard";
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,6 +19,14 @@ export async function GET(req: NextRequest) {
     const pageToken = searchParams.get("pageToken");
 
     const drive = await getDriveClient();
+    try {
+      await assertFolderWithinRoot(drive, folderId, getRootFolderId());
+    } catch (err) {
+      if (err instanceof FolderOutsideRootError) {
+        return NextResponse.json({ error: err.message }, { status: 403 });
+      }
+      throw err;
+    }
     const res = await drive.files.list({
       q: `'${folderId}' in parents and trashed = false`,
       fields: "files(id,name,mimeType,size,modifiedTime,createdTime,parents,webViewLink,iconLink),nextPageToken",

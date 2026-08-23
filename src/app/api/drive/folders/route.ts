@@ -3,6 +3,10 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getDriveClient, getRootFolderId } from "@/lib/drive";
+import {
+  assertFolderWithinRoot,
+  FolderOutsideRootError,
+} from "@/lib/drive/folder-guard";
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,11 +20,20 @@ export async function POST(req: NextRequest) {
     }
 
     const drive = await getDriveClient();
+    const targetParent = parentId || getRootFolderId();
+    try {
+      await assertFolderWithinRoot(drive, targetParent, getRootFolderId());
+    } catch (err) {
+      if (err instanceof FolderOutsideRootError) {
+        return NextResponse.json({ error: err.message }, { status: 403 });
+      }
+      throw err;
+    }
     const res = await drive.files.create({
       requestBody: {
         name,
         mimeType: "application/vnd.google-apps.folder",
-        parents: [parentId || getRootFolderId()],
+        parents: [targetParent],
       },
       fields: "id,name,mimeType,createdTime",
     });
