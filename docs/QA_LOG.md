@@ -153,6 +153,8 @@ Batería extendida a 39 checks. Resultado pre-deploy: **38 PASS / 1 FAIL** (el F
 
 Nota QA11b: primer intento usaba clave inexistente (`costo_unitario`) — zod la strippeó y creó producto (falso positivo del script, no bug); el schema real valida camelCase `unitCost.min(0)` correctamente.
 
+Verificación post-deploy (commit `1ab4750`): typecheck ✓ · lint ✓ · 425/425 tests ✓ · build ✓ · batería completa **39 PASS / 0 FAIL** contra prod (QA11d → 400 controlado).
+
 ## Pendientes manuales (requieren sesión del owner en prod)
 
 | Ítem | Estado | Nota |
