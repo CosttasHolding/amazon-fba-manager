@@ -214,14 +214,86 @@ function out(s) { lines.push(s); console.log(s); }
 
   let retId = null;
   if (salePid) {
-    r = await api("/api/returns", { method: "POST", body: { product_id: salePid, quantity: 1, return_reason: "defective", return_date: new Date().toISOString().slice(0, 10), amazon_return_id: `QA-RET-${stamp}` } });
+    r = await api("/api/returns", { method: "POST", body: { product_id: salePid, quantity: 1, return_reason: "defective", return_date: new Date().toISOString().slice(0, 10), amazon_return_id: `QA-RET-${stamp}`, refund_amount: 12.5 } });
     const ret = r.body || {};
     retId = ret?.return?.id || ret?.data?.id || ret?.id;
     check("QA12f POST /api/returns crea", r.status >= 200 && r.status < 300 && !!retId, `(status ${r.status} ${JSON.stringify(ret).slice(0, 250)})`);
     if (retId) {
-      const { data: retRow } = await admin.from("returns").select("org_id").eq("id", retId).single();
-      check("QA12g devolución con org_id correcto", retRow && retRow.org_id === ORG_A, JSON.stringify(retRow || {}));
+      const { data: retRow } = await admin.from("returns").select("org_id, status, refund_amount").eq("id", retId).single();
+      check("QA12g devolución con org_id y estado inicial correctos", retRow && retRow.org_id === ORG_A && retRow.status === "requested" && Number(retRow.refund_amount) === 12.5, JSON.stringify(retRow || {}));
     }
+  }
+
+  // QA13 Flow A: lifecycle de compra + consistencia matemática
+  if (oid) {
+    const expectedProductTotal = 10 * 2.5;
+    const expectedLandedTotal = expectedProductTotal + 15 + 5 + 3;
+    r = await api(`/api/orders/${oid}`, { method: "PUT", body: { shipping_cost: 15, customs_cost: 5, prep_center_cost: 3, status: "draft" } });
+    check("QA13a orden conserva total producto y landed cost", r.status >= 200 && r.status < 300 && Number(r.body?.total_cost) === expectedProductTotal && Number(r.body?.quantity) * Number(r.body?.unit_cost) + Number(r.body?.shipping_cost || 0) + Number(r.body?.customs_cost || 0) + Number(r.body?.prep_center_cost || 0) === expectedLandedTotal, `(status ${r.status} ${JSON.stringify(r.body).slice(0, 180)})`);
+    const orderStatuses = ["sent", "confirmed", "in_production", "shipped", "in_transit", "customs", "delivered"];
+    for (const status of orderStatuses) {
+      r = await api(`/api/orders/${oid}`, { method: "PUT", body: { status } });
+      check(`QA13 lifecycle orden -> ${status}`, r.status >= 200 && r.status < 300 && r.body?.status === status, `(status ${r.status})`);
+    }
+    const { data: finalOrder } = await admin.from("purchase_orders").select("org_id, status, quantity, unit_cost, total_cost, shipping_cost, customs_cost, prep_center_cost").eq("id", oid).single();
+    check("QA13b orden final scoped y consistente", finalOrder && finalOrder.org_id === ORG_A && finalOrder.status === "delivered" && Number(finalOrder.total_cost) === Number(finalOrder.quantity) * Number(finalOrder.unit_cost) && Number(finalOrder.total_cost) + Number(finalOrder.shipping_cost || 0) + Number(finalOrder.customs_cost || 0) + Number(finalOrder.prep_center_cost || 0) === expectedLandedTotal, JSON.stringify(finalOrder || {}));
+  }
+  out("INFO QA13c Flow B: returns crea estado requested y refund_amount consistente; no existe /api/returns/[id] para avanzar estados vía API (gap documentado)");
+
+  // QA14 aislamiento multi-org: membership real + API + UI con Org B
+  let orgBMembership = false, orgBProductId = null;
+  if (orgB) {
+    const { error: membershipError } = await admin.from("org_members").insert({ org_id: orgB.id, user_id: UID, role: "editor", status: "active" });
+    orgBMembership = !membershipError;
+    check("QA14a membership QA en Org B creada", orgBMembership, membershipError?.message || "");
+    if (orgBMembership) {
+      r = await api("/api/products", { headers: { "x-org-id": orgB.id } });
+      check("QA14b Org B lista sin productos de Org A", r.status === 200 && Array.isArray(r.body?.data) && !r.body.data.some((p) => p.org_id === ORG_A), `(status ${r.status})`);
+      const orgBName = `QA-ORG-B-PRODUCT-${stamp}`;
+      r = await api("/api/products", { method: "POST", headers: { "x-org-id": orgB.id }, body: { name: orgBName, unitCost: 3, salePrice: 12 } });
+      orgBProductId = r.body?.product?.id || r.body?.id || r.body?.data?.id || null;
+      check("QA14c producto creado en Org B", r.status >= 200 && r.status < 300 && !!orgBProductId, `(status ${r.status})`);
+      if (orgBProductId) {
+        const { data: orgBProduct } = await admin.from("products").select("org_id, name").eq("id", orgBProductId).single();
+        check("QA14d org_id del producto B correcto", orgBProduct?.org_id === orgB.id && orgBProduct.name === orgBName, JSON.stringify(orgBProduct || {}));
+        r = await api("/api/products");
+        check("QA14e Org A no ve producto de Org B", r.status === 200 && !JSON.stringify(r.body).includes(orgBName), `(status ${r.status})`);
+        await page.goto(BASE + "/products", { waitUntil: "domcontentloaded" });
+        await page.waitForTimeout(1000);
+        const productsPageText = await page.locator("body").innerText();
+        check("QA14f UI Org A no muestra producto de Org B", !productsPageText.includes(orgBName), `url ${page.url()}`);
+      }
+    }
+  }
+
+  // QA15 Drive E2E: upload -> list + metadata -> delete
+  let driveFileId = null;
+  const driveName = `qa-battery-${stamp}.txt`;
+  const driveUpload = await page.evaluate(async (name) => {
+    const form = new FormData();
+    form.append("file", new File(["qa-battery"], name, { type: "text/plain" }));
+    const response = await fetch("/api/drive/upload", { method: "POST", body: form });
+    let body = null;
+    try { body = await response.json(); } catch {}
+    return { status: response.status, body };
+  }, driveName);
+  driveFileId = driveUpload.body?.data?.id || null;
+  const driveAvailable = driveUpload.status >= 200 && driveUpload.status < 300 && !!driveFileId;
+  if (!driveAvailable && driveUpload.status === 500 && JSON.stringify(driveUpload.body).includes("storage quota")) {
+    out("INFO QA15 Drive NOT CONFIGURED: service account sin cuota; requiere Shared Drive u OAuth del owner");
+  } else {
+    check("QA15a Drive upload crea archivo", driveAvailable, `(status ${driveUpload.status} ${JSON.stringify(driveUpload.body).slice(0, 180)})`);
+  }
+  if (driveFileId) {
+    r = await api("/api/drive/list");
+    const driveFiles = r.body?.data?.files || [];
+    const listedDriveFile = driveFiles.find((file) => file.id === driveFileId);
+    check("QA15b Drive list incluye archivo", r.status === 200 && !!listedDriveFile, `(status ${r.status})`);
+    check("QA15c metadata Drive correcta", listedDriveFile?.name === driveName && listedDriveFile?.mimeType === "text/plain" && Number(listedDriveFile?.size) === 10, JSON.stringify(listedDriveFile || {}));
+    r = await api(`/api/drive/delete/${driveFileId}`, { method: "DELETE" });
+    check("QA15d Drive delete ok", r.status >= 200 && r.status < 300, `(status ${r.status})`);
+    r = await api("/api/drive/list");
+    check("QA15e Drive list ya no incluye archivo", r.status === 200 && !(r.body?.data?.files || []).some((file) => file.id === driveFileId), `(status ${r.status})`);
   }
 
   await browser.close();
@@ -234,6 +306,8 @@ function out(s) { lines.push(s); console.log(s); }
   if (saleId) { await admin.from("sales").delete().eq("id", saleId); }
   await admin.from("stock_movements").delete().eq("reference", "qa-battery");
   if (salePid && salePid !== pidForCleanup) { await admin.from("products").delete().eq("id", salePid); }
+  if (orgBProductId) { await admin.from("products").delete().eq("id", orgBProductId); }
+  if (orgBMembership && orgB) { await admin.from("org_members").delete().eq("org_id", orgB.id).eq("user_id", UID); }
   if (pidForCleanup) { await admin.from("products").delete().eq("id", pidForCleanup); }
   await admin.from("product_research").delete().eq("asin_reference", "B0QATEMP001");
   await admin.from("products").delete().like("name", `QA-NEG-${stamp}%`);

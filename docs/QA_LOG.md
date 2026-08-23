@@ -155,17 +155,31 @@ Nota QA11b: primer intento usaba clave inexistente (`costo_unitario`) — zod la
 
 Verificación post-deploy (commit `1ab4750`): typecheck ✓ · lint ✓ · 425/425 tests ✓ · build ✓ · batería completa **39 PASS / 0 FAIL** contra prod (QA11d → 400 controlado).
 
+### Parte E/F/G — lifecycles, multi-org UI y Drive (2026-08-23)
+
+Batería ampliada a **54 PASS / 0 FAIL**, con dos límites funcionales documentados como INFO.
+
+| Grupo | Resultado |
+|---|---|
+| Flow A purchase lifecycle | PASS: orden avanza `draft → sent → confirmed → in_production → shipped → in_transit → customs → delivered`; `total_cost = quantity × unit_cost` y landed cost agrega shipping/customs/prep correctamente; `org_id` conservado |
+| Flow B incident lifecycle | PASS parcial: devolución creada en `requested` con `refund_amount=12.5` y `org_id` correcto. INFO: no existe `/api/returns/[id]` para avanzar estados vía API; requiere decisión/implementación futura |
+| Multi-org API | PASS: membership real QA en Org B (`editor`), Org B no recibe productos de Org A, producto B queda con `org_id` B y Org A no lo lista |
+| Multi-org UI | PASS: página `/products` autenticada en contexto Org A no muestra el producto creado en Org B |
+| Drive upload/list/metadata/delete | INFO **NOT CONFIGURED**: upload alcanzó el cliente real pero Google rechazó `Service Accounts do not have storage quota`; producción requiere Shared Drive o OAuth del owner. No quedó archivo QA creado |
+
+La prueba multi-org UI valida aislamiento desde la vista Org A; el cambio visual explícito de organización queda pendiente de una sesión visual del owner. Seller Central/SP-API queda deliberadamente fuera de esta fase.
+
 ## Pendientes manuales (requieren sesión del owner en prod)
 
 | Ítem | Estado | Nota |
 |---|---|---|
 | Extensión con ASINs reales variados (comparar asin/title/price/BSR/reviews/rating/category/brand vs página) | BLOCKED | requiere navegador del owner; verificar los 2 FAILs arriba en datos reales |
 | Research capture → API → Supabase → UI → reload | PARCIAL | persistencia API→DB verificada por agente (QA5b); falta verificación visual de UI |
-| Drive upload → list → metadata → delete | BLOCKED | validar también que IDs fuera del root ahora den 403 (fix C2); guard verificado con alias root |
+| Drive upload → list → metadata → delete | BLOCKED | guard C2 verificado; upload bloqueado por cuota de service account. Requiere Shared Drive u OAuth del owner |
 | SP-API vs Seller Central / Keepa | NOT CONFIGURED (si sin conexión activa) | no forzar |
-| Multi-org: Org A jamás ve Org B (UI + API + manipulación de identifiers) | PARCIAL | QA2/QA3 cubren manipulación de identifiers vía API; falta prueba visual multi-org en UI |
+| Multi-org: Org A jamás ve Org B (UI + API + manipulación de identifiers) | PARCIAL | Parte E/F cubre membership real, API y UI Org A; falta cambiar explícitamente de org desde el selector visual |
 | CRUD por módulo (20 módulos candidatos) | PARCIAL | Products + Suppliers + Sales CRUD completo verificado (QA6/QA7/QA8); Inventory GET ok, movements BLOCKED por hallazgo #2 (migración 039 pendiente) |
-| Flow A purchase lifecycle + Flow B incident lifecycle | BLOCKED | consistencia matemática en cada salto |
+| Flow A purchase lifecycle + Flow B incident lifecycle | PARCIAL | Flow A completo automatizado; Flow B creación + consistencia verificada, falta endpoint para avanzar estados |
 | Invalid data (vacío/negativos/futuros/malformed IDs) | BLOCKED | esperar error controlado |
 | Offline/PWA | BLOCKED | validar solo lo prometido por el producto |
 | Webhook SP-API sin secret → 503 | HECHO | verificado en vivo: sin Bearer 401, wrong 401, correcto 200 (secret seteado por owner) |
