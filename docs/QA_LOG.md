@@ -42,30 +42,31 @@ Migración `037_add_org_id_to_webhook_tables.sql` aplicada en prod el 2026-08-22
 
 | Módulo | Función | Dato utilizado | Resultado esperado | Resultado obtenido | Estado | Fecha | Evidence |
 |---|---|---|---|---|---|---|---|
-| Suite completa | vitest run | — | todos verdes | 51 archivos / 424 tests OK | PASS | 2026-08-22 | CI local, commits 3899e94..7ca2209 |
+| Suite completa | vitest run | — | todos verdes | 55 archivos / 436 tests OK | PASS | 2026-08-23 | `npm test -- --run` |
 | Tenant isolation | getOrgId ignora x-org-id ajeno | header org-de-victima | fallback a org propia | org-default-provisionada | PASS | 2026-08-22 | src/lib/org-resolver.test.ts |
 | Rate limiting | sin Upstash → memoria | 6 req / límite 5 | bloquea la 6ta | allowed=false, remaining=0 | PASS | 2026-08-22 | src/lib/rate-limit.test.ts |
 | Rate limiting (config real) | Upstash sliding window | código | descubrir límite vigente | 60 req/min fijo SOLO en rutas con createApiHandler; rutas manuales sin cobertura | WARN | 2026-08-22 | docs/audits/SECURITY_AUDIT.md |
 | Extensión Chrome | parseLocalizedNumber $1,299.99 / $9.99 / 1,234 | formatos US | parseo correcto | 1299.99 / 9.99 / 1234 | PASS | 2026-08-22 | src/chrome-extension/content/parse-number.test.ts |
-| Extensión Chrome | parseLocalizedNumber texto compuesto | "4.5 out of 5 stars" | 4.5 | **4.55** (concatena dígitos) | FAIL | 2026-08-22 | test "BUG CONOCIDO" en parse-number.test.ts |
-| Extensión Chrome | parseLocalizedNumber sufijo K/M | "10K+ ratings" | 10000 | **10** (sufijo descartado) | FAIL | 2026-08-22 | idem |
+| Extensión Chrome | parseLocalizedNumber texto compuesto | "4.5 out of 5 stars" | 4.5 | 4.5 | PASS | 2026-08-23 | `parse-number.test.ts` |
+| Extensión Chrome | parseLocalizedNumber sufijo K/M | "10K+ ratings" | 10000 | 10000 | PASS | 2026-08-23 | `parse-number.test.ts` |
 
-### Detalle de FAILs (formato obligatorio)
+### Detalle de fixes del parser
 
-**FAIL 1 — concatenación de números**
+**PASS 1 — concatenación de números corregida**
 - Repro: `parseLocalizedNumber("4.5 out of 5 stars")`
-- Expected: 4.5 · Actual: 4.55
+- Resultado: 4.5
 - Severity: media (afecta average_rating del overlay si cae por esa ruta)
 - Layer: chrome-extension/content (parse-number.ts)
-- Regression candidate: ya fijado en test "BUG CONOCIDO"
-- Fix propuesto: extraer número objetivo por regex contextual antes de parsear
+- Regression test: pasa en `parse-number.test.ts`
+- Fix: extraer el primer token numérico sin concatenar dígitos contextuales posteriores
 
-**FAIL 2 — sufijos K/M descartados**
+**PASS 2 — sufijos K/M/B corregidos**
 - Repro: `parseLocalizedNumber("10K+ ratings")`
-- Expected: 10000 · Actual: 10
+- Resultado: 10000
 - Severity: media (review_count subestimado ×1000)
 - Layer: ídem
-- Fix propuesto: detectar sufijos K/M/B y multiplicar
+- Regression test: pasa en `parse-number.test.ts`
+- Fix: aplicar multiplicadores K/M/B después del parseo numérico
 
 ### QA autenticado end-to-end con usuario de prueba (2026-08-22/23, Playwright contra prod)
 

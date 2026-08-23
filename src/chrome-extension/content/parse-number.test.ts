@@ -18,8 +18,10 @@ describe("parseLocalizedNumber (formatos reales Amazon)", () => {
     expect(parseLocalizedNumber(input)).toBeNull();
   });
 
-  it("BUG CONOCIDO: concatena numeros de texto compuesto", () => {
-    expect(parseLocalizedNumber("4.5 out of 5 stars")).toBe(4.55);
-    expect(parseLocalizedNumber("10K+ ratings")).toBe(10);
+  it("parsea el primer numero y aplica sufijos de magnitud", () => {
+    expect(parseLocalizedNumber("4.5 out of 5 stars")).toBe(4.5);
+    expect(parseLocalizedNumber("10K+ ratings")).toBe(10000);
+    expect(parseLocalizedNumber("2.5M ratings")).toBe(2500000);
+    expect(parseLocalizedNumber("1B+ ratings")).toBe(1000000000);
   });
 });
