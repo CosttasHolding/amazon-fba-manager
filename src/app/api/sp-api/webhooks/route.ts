@@ -3,15 +3,23 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { parseNotificationMessage, type WebhookNotificationType } from "@/lib/sp-api/notifications";
+import {
+  extractAmazonSubscriptionId,
+  isAuthorizedWebhook,
+} from "@/lib/sp-api/webhook-auth";
 
 export async function POST(request: NextRequest) {
   try {
     const webhookSecret = process.env.SP_API_WEBHOOK_SECRET;
-    if (webhookSecret) {
-      const authHeader = request.headers.get("authorization");
-      if (authHeader !== `Bearer ${webhookSecret}`) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+    if (!webhookSecret) {
+      return NextResponse.json(
+        { error: "Webhook no configurado" },
+        { status: 503 }
+      );
+    }
+    const authHeader = request.headers.get("authorization");
+    if (!isAuthorizedWebhook(authHeader, webhookSecret)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.text();
@@ -19,13 +27,25 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceRoleClient();
 
-    const { data: subscription } = await supabase
-      .from("sp_api_webhook_subscriptions")
-      .select("id, user_id, org_id, connection_id")
-      .eq("notification_type", notification.type)
-      .eq("status", "active")
-      .limit(1)
-      .single();
+    const amazonSubscriptionId = extractAmazonSubscriptionId(notification.data);
+
+    let subscription: {
+      id: string;
+      user_id: string;
+      org_id: string;
+      connection_id: string;
+    } | null = null;
+
+    if (amazonSubscriptionId) {
+      const { data } = await supabase
+        .from("sp_api_webhook_subscriptions")
+        .select("id, user_id, org_id, connection_id")
+        .eq("notification_type", notification.type)
+        .eq("status", "active")
+        .eq("amazon_subscription_id", amazonSubscriptionId)
+        .maybeSingle();
+      subscription = data ?? null;
+    }
 
     if (!subscription) {
       await supabase.from("sp_api_webhook_logs").insert({
