@@ -5,7 +5,7 @@ Prompt Maestro FASE 11 · Iniciado 2026-08-22
 ## Ambiente
 
 - Producción: `https://amazon-fba-manager-virid.vercel.app` (único ambiente disponible — **NO existe staging**; CRUD de pruebas solo con org/usuario de prueba dedicado).
-- Migración `036_fix_org_invitations_rls.sql`: aplicada en prod por el owner el 2026-08-22. Verificación pendiente (SQL al final).
+- Migración `036_fix_org_invitations_rls.sql`: aplicada en prod por el owner el 2026-08-22. **VERIFICADA**: `information_schema.column_privileges` confirma que `authenticated` tiene UPDATE solo en `status` (SELECT/INSERT/REFERENCES completos, sin UPDATE en otras columnas). Falta output de `pg_policies` para confirmar qual de la policy (opcional).
 
 ## Inventario real de módulos (fuente: código, no docs viejas)
 
@@ -14,6 +14,21 @@ API: products(+summary/suppliers), suppliers(+quotes/products), inventory(+movem
 Páginas dashboard: ads, alerts, analytics, calculator, dashboard, drive, finances, forecast, import, inventory, members(+edit/new), orders(+[id]), products(+new/edit/[id]), research, returns, sales, settings, shipments, sp-api, suppliers(+compare/new/edit/[id]), tasks, team, trash.
 
 ## Resultados automatizados
+
+### Verificación EN VIVO post-deploy (2026-08-22, commits 5e23457..1052c6d en prod)
+
+| Módulo | Función | Dato utilizado | Resultado esperado | Resultado obtenido | Estado | Fecha | Evidence |
+|---|---|---|---|---|---|---|---|
+| Webhooks SP-API (C3) | POST sin auth pre-deploy | body {} sin Bearer | antes del fix: procesa igual | **200 {received:true}** (vulnerabilidad confirmada en vivo) | WARN* | 2026-08-22 | curl pre-deploy |
+| Webhooks SP-API (C3) | POST sin auth post-deploy | ídem | fail-closed | **503 {"error":"Webhook no configurado"}** | PASS | 2026-08-22 | curl post-deploy |
+| Webhooks SP-API (C3) | POST con Bearer incorrecto | Bearer wrong-secret | 401 si secret configurado; 503 si no | 503 (secret NO está configurado en prod) | WARN | 2026-08-22 | curl |
+| Configuración | SP_API_WEBHOOK_SECRET en prod | env | descubrir estado | **NO CONFIGURADO** → webhooks SP-API deshabilitados hasta setearlo; re-crear destination/subscription si las hay (token random UUID viejo no matcheará) | WARN | 2026-08-22 | respuesta 503 |
+| Rate limiting (H2) | límite real /api/products | 70 GET rápidos sin auth | ~60/min luego 429 | **66×401 + 4×429**, headers `Retry-After: 60`, `X-Ratelimit-Remaining: 0` | PASS | 2026-08-22 | curl loop |
+| Drive (C2) | list sin auth | GET /api/drive/list | 401 | 401 Unauthorized | PASS | 2026-08-22 | curl |
+| Salud general | /login | GET | 200 + CSP nonce | 200, CSP con nonce en respuestas | PASS | 2026-08-22 | curl |
+| RLS C1 (org_invitations) | GRANT por columna | information_schema.column_privileges | UPDATE solo status | UPDATE solo en `status`; sin UPDATE en role/org_id/token/email/expires_at | PASS | 2026-08-22 | output SQL del owner |
+
+\* El WARN pre-deploy documenta el estado vulnerable encontrado; el fix ya estaba en el commit pusheado.
 
 | Módulo | Función | Dato utilizado | Resultado esperado | Resultado obtenido | Estado | Fecha | Evidence |
 |---|---|---|---|---|---|---|---|
