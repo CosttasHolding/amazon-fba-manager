@@ -1,3 +1,5 @@
+﻿import { parseLocalizedNumber } from "./parse-number";
+
 export interface OverlayProduct {
   asin: string;
   title: string;
@@ -16,35 +18,6 @@ export interface OverlayProduct {
   category: string | null;
   listing_health_score: number | null;
   net_margin_percent: number | null;
-}
-
-function parseLocalizedNumber(text: string): number | null {
-  const cleaned = text.replace(/[^0-9.,]/g, "");
-  if (!cleaned) return null;
-  const lastComma = cleaned.lastIndexOf(",");
-  const lastDot = cleaned.lastIndexOf(".");
-  const hasComma = lastComma !== -1;
-  const hasDot = lastDot !== -1;
-  if (hasComma && hasDot) {
-    const normalized =
-      lastComma > lastDot
-        ? cleaned.replace(/\./g, "").replace(",", ".")
-        : cleaned.replace(/,/g, "");
-    const num = parseFloat(normalized);
-    return isNaN(num) ? null : num;
-  }
-  if (hasDot) {
-    const decimals = cleaned.length - lastDot - 1;
-    const num = decimals >= 3 ? parseFloat(cleaned.replace(/\./g, "")) : parseFloat(cleaned);
-    return isNaN(num) ? null : num;
-  }
-  if (hasComma) {
-    const decimals = cleaned.length - lastComma - 1;
-    const num = decimals >= 3 ? parseFloat(cleaned.replace(/,/g, "")) : parseFloat(cleaned.replace(",", "."));
-    return isNaN(num) ? null : num;
-  }
-  const num = parseFloat(cleaned);
-  return isNaN(num) ? null : num;
 }
 
 function extractText(parent: Element, selector: string): string {
@@ -72,8 +45,8 @@ function extractAsinFromRow(row: Element): string | null {
 function detectCurrency(text: string): string | null {
   const upper = text.toUpperCase();
   if (upper.includes("ARS")) return "ARS";
-  if (upper.includes("EUR") || upper.includes("€")) return "EUR";
-  if (upper.includes("GBP") || upper.includes("£")) return "GBP";
+  if (upper.includes("EUR") || upper.includes("â‚¬")) return "EUR";
+  if (upper.includes("GBP") || upper.includes("Â£")) return "GBP";
   if (upper.includes("CAD") || upper.includes("CA$")) return "CAD";
   if (upper.includes("MXN") || upper.includes("MX$")) return "MXN";
   if (upper.includes("USD") || upper.includes("US$")) return "USD";
