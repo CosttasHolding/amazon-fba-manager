@@ -76,3 +76,4 @@ public/exteRB/
 # Misc
 .env*
 !.env.example
+.qa-results.tmp.txt
