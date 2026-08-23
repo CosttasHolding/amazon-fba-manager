@@ -3,14 +3,16 @@ import { createMockRequest } from "@/lib/test-utils/mock-request";
 
 const mockCreateClient = vi.hoisted(() => vi.fn());
 const mockGetOrgId = vi.hoisted(() => vi.fn());
+const mockHasOrgRole = vi.hoisted(() => vi.fn());
 const mockGetDriveClient = vi.hoisted(() => vi.fn());
-const mockGetOrgRootFolderId = vi.hoisted(() => vi.fn());
+const mockGetDriveRootFolderId = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mockCreateClient }));
 vi.mock("@/lib/org-resolver", () => ({ getOrgId: mockGetOrgId }));
+vi.mock("@/lib/api-handler", () => ({ hasOrgRole: mockHasOrgRole }));
 vi.mock("@/lib/drive", () => ({
   getDriveClient: mockGetDriveClient,
-  getOrgRootFolderId: mockGetOrgRootFolderId,
+  getDriveRootFolderId: mockGetDriveRootFolderId,
 }));
 
 import { POST } from "./route";
@@ -36,7 +38,8 @@ describe("POST /api/drive/backup", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetOrgId.mockResolvedValue("org-1");
-    mockGetOrgRootFolderId.mockResolvedValue("org-root-1");
+    mockHasOrgRole.mockResolvedValue(true);
+    mockGetDriveRootFolderId.mockResolvedValue("shared-root");
     mockGetDriveClient.mockResolvedValue({
       files: {
         list: vi.fn().mockResolvedValue({ data: { files: [] } }),
@@ -47,7 +50,7 @@ describe("POST /api/drive/backup", () => {
     });
   });
 
-  it.each(DATA_TYPES)("filters %s data by org_id and writes below its org root", async (type) => {
+  it.each(DATA_TYPES)("filters %s data by org_id and writes below the shared Drive root", async (type) => {
     const dataEqCalls: Array<[string, string]> = [];
     const supabase = {
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }) },
@@ -72,7 +75,7 @@ describe("POST /api/drive/backup", () => {
     expect(dataEqCalls).toEqual(expect.arrayContaining([["org_id", "org-1"]]));
     expect(dataEqCalls).not.toEqual(expect.arrayContaining([["user_id", "user-1"]]));
     expect(mockGetDriveClient).toHaveBeenCalledWith("user-1");
-    expect(mockGetOrgRootFolderId).toHaveBeenCalledWith(expect.anything(), "org-1");
+    expect(mockGetDriveRootFolderId).toHaveBeenCalledWith(expect.anything(), "org-1");
   });
 
   it("rejects a requested organization that is not the resolved tenant", async () => {

@@ -8,8 +8,7 @@ import { ProfitabilityHeatmap } from "@/components/charts/profitability-heatmap"
 import { RevenueProjection } from "@/components/charts/revenue-projection";
 import { ReportGenerator } from "@/components/charts/report-generator";
 import { useProducts, useSales } from "@/hooks/use-data";
-import { BarChart3, TrendingUp, FileText, Link2, Calendar, Receipt } from "lucide-react";
-import { ShareDashboard } from "@/components/share-dashboard";
+import { BarChart3, TrendingUp, FileText, Calendar, Receipt } from "lucide-react";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
@@ -174,13 +173,6 @@ export function AnalyticsClient() {
 
       {activeTab === "fees" && <FeesAnalytics />}
 
-      <div className="mt-8">
-        <DataTableWrapper title={t("share.title", locale)} icon={Link2}>
-          <div className="p-4">
-            <ShareDashboard />
-          </div>
-        </DataTableWrapper>
-      </div>
     </div>
   );
 }

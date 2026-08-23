@@ -4,7 +4,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createApiHandler, getOrgId } from "@/lib/api-handler";
 
-export const GET = createApiHandler(async ({ supabase, user, orgId }) => {
+const SHARING_DISABLED = true;
+
+function sharingDisabledResponse() {
+  return NextResponse.json(
+    { error: "La función de compartir está temporalmente deshabilitada" },
+    { status: 503 },
+  );
+}
+
+const getShareLinks = createApiHandler(async ({ supabase, user, orgId }) => {
   if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
   const { data, error } = await supabase
@@ -18,7 +27,7 @@ export const GET = createApiHandler(async ({ supabase, user, orgId }) => {
   return NextResponse.json({ data });
 });
 
-export const POST = createApiHandler(async ({ supabase, user, orgId, req }) => {
+const createShareLink = createApiHandler(async ({ supabase, user, orgId, req }) => {
   if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
   const body = await req.json();
@@ -34,7 +43,7 @@ export const POST = createApiHandler(async ({ supabase, user, orgId, req }) => {
   return NextResponse.json({ data });
 });
 
-export async function DELETE(req: NextRequest) {
+async function deleteShareLink(req: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -60,4 +69,19 @@ export async function DELETE(req: NextRequest) {
     const message = err instanceof Error ? err.message : "Error interno";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+export async function GET(req: NextRequest) {
+  if (SHARING_DISABLED) return sharingDisabledResponse();
+  return getShareLinks(req);
+}
+
+export async function POST(req: NextRequest) {
+  if (SHARING_DISABLED) return sharingDisabledResponse();
+  return createShareLink(req);
+}
+
+export async function DELETE(req: NextRequest) {
+  if (SHARING_DISABLED) return sharingDisabledResponse();
+  return deleteShareLink(req);
 }

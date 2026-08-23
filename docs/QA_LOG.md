@@ -88,6 +88,8 @@ Setup: usuario `qa-agent-temp-20260822@test.local` creado por SQL directo (GoTru
 | QA2 H1: x-org-id falso → 403 | PASS |
 | QA3 org huérfana sin membership → 403 | PASS |
 | QA4 drive/list folderId=root | INFO 403 "Carpeta fuera del espacio autorizado" (guard C2 activo; GOOGLE_DRIVE_FOLDER_ID seteado en prod rechaza alias) |
+
+Nota posterior: desde el despliegue del workspace compartido, `folderId=root` es válido únicamente para las organizaciones incluidas en `GOOGLE_DRIVE_SHARED_ORG_IDS`; las demás siguen recibiendo `403`.
 | QA5a POST research/capture (pre-fix: 500 recursión) | PASS |
 | QA5b fila persistida con org_id correcto (`asin_reference`, source=capture) | PASS |
 | QA5c GET /api/research → 200 | PASS |
@@ -163,12 +165,22 @@ Batería ampliada a **54 PASS / 0 FAIL**, con dos límites funcionales documenta
 | Grupo | Resultado |
 |---|---|
 | Flow A purchase lifecycle | PASS: orden avanza `draft → sent → confirmed → in_production → shipped → in_transit → customs → delivered`; `total_cost = quantity × unit_cost` y landed cost agrega shipping/customs/prep correctamente; `org_id` conservado |
-| Flow B incident lifecycle | PASS parcial: devolución creada en `requested` con `refund_amount=12.5` y `org_id` correcto. INFO: no existe `/api/returns/[id]` para avanzar estados vía API; requiere decisión/implementación futura |
+| Flow B incident lifecycle | PASS parcial: devolución creada en `requested` con `refund_amount=12.5` y `org_id` correcto. La ruta `/api/returns/[id]` ya existe para avanzar estados; falta repetir el flujo completo en producción |
 | Multi-org API | PASS: membership real QA en Org B (`editor`), Org B no recibe productos de Org A, producto B queda con `org_id` B y Org A no lo lista |
 | Multi-org UI | PASS: página `/products` autenticada en contexto Org A no muestra el producto creado en Org B |
-| Drive upload/list/metadata/delete | INFO **NOT CONFIGURED**: upload alcanzó el cliente real pero Google rechazó `Service Accounts do not have storage quota`; producción requiere Shared Drive o OAuth del owner. No quedó archivo QA creado |
+| Drive OAuth conexión | PASS producción: cuenta autorizada y carpeta `backup` visible en la app |
+| Drive upload/list/metadata/delete | PENDIENTE: ejecutar CRUD de un archivo de prueba y eliminar el secret OAuth antiguo |
 
 La prueba multi-org UI valida aislamiento desde la vista Org A; el cambio visual explícito de organización queda pendiente de una sesión visual del owner. Seller Central/SP-API queda deliberadamente fuera de esta fase.
+
+### Parte H — endurecimiento final (2026-08-23)
+
+| Verificación | Resultado |
+|---|---|
+| Migraciones 052-056 en producción | PASS: `fba_shipments` 0/1 filas sin `org_id`, `fba_shipment_items` 0/0; RLS activa; policies con roles/relaciones tenant, triggers product/supplier, RPC restringida e índices presentes |
+| OAuth Drive | PASS producción: redirect URI, state CSRF, Vercel y autorización de cuenta verificados; falta CRUD de archivo |
+| Roles de mutación | PASS local: órdenes, reorder rules, shipments y supplier quotes rechazan `viewer` |
+| Verificación local | PASS: 524 tests, typecheck, build y E2E 16/16; lint solo conserva warnings preexistentes |
 
 ## Pendientes manuales (requieren sesión del owner en prod)
 
@@ -176,12 +188,12 @@ La prueba multi-org UI valida aislamiento desde la vista Org A; el cambio visual
 |---|---|---|
 | Extensión con ASINs reales variados (comparar asin/title/price/BSR/reviews/rating/category/brand vs página) | BLOCKED | requiere navegador del owner; verificar los 2 FAILs arriba en datos reales |
 | Research capture → API → Supabase → UI → reload | PARCIAL | persistencia API→DB verificada por agente (QA5b); falta verificación visual de UI |
-| Drive upload → list → metadata → delete | BLOCKED | guard C2 verificado; upload bloqueado por cuota de service account. Requiere Shared Drive u OAuth del owner |
+| Drive upload → list → metadata → delete | PENDIENTE EXTERNO | Código OAuth listo con state CSRF; requiere configuración Google/Vercel y autorización del owner |
 | SP-API vs Seller Central / Keepa | NOT CONFIGURED (si sin conexión activa) | no forzar |
 | Multi-org: Org A jamás ve Org B (UI + API + manipulación de identifiers) | PARCIAL | Parte E/F cubre membership real, API y UI Org A; falta cambiar explícitamente de org desde el selector visual |
-| CRUD por módulo (20 módulos candidatos) | PARCIAL | Products + Suppliers + Sales CRUD completo verificado (QA6/QA7/QA8); Inventory GET ok, movements BLOCKED por hallazgo #2 (migración 039 pendiente) |
-| Flow A purchase lifecycle + Flow B incident lifecycle | PARCIAL | Flow A completo automatizado; Flow B creación + consistencia verificada, falta endpoint para avanzar estados |
-| Invalid data (vacío/negativos/futuros/malformed IDs) | BLOCKED | esperar error controlado |
+| CRUD por módulo (20 módulos candidatos) | PARCIAL | Products + Suppliers + Sales CRUD completo verificado (QA6/QA7/QA8); Inventory GET/movements y Returns detail cubiertos localmente; falta prueba live de Returns |
+| Flow A purchase lifecycle + Flow B incident lifecycle | PARCIAL | Flow A completo automatizado; Flow B ya tiene endpoint para avanzar estados, falta repetir flujo completo en producción |
+| Invalid data (vacío/negativos/futuros/malformed IDs) | PARCIAL | Guards y tests locales verdes; falta repetir batería live tras los últimos cambios |
 | Offline/PWA | BLOCKED | validar solo lo prometido por el producto |
 | Webhook SP-API sin secret → 503 | HECHO | verificado en vivo: sin Bearer 401, wrong 401, correcto 200 (secret seteado por owner) |
 
@@ -224,5 +236,23 @@ Las filas legacy ambiguas de las demás tablas permanecen inaccesibles por RLS.
 | Matching inventory | VERIFICADO | Candidatos `damaged`/`removal` dentro de ventana de 30 días; no modifica stock |
 | Idempotencia | VERIFICADO LOCAL | `UNIQUE(org_id, source_key)` y reemplazo atómico de matches mediante RPC |
 | Seguridad tenant | VERIFICADO LOCAL | RLS, triggers de tenant, role gates y pruebas independientes |
-| Checks | VERIFICADO LOCAL | 76 archivos, 509 tests, typecheck, build y lint sin errores |
-| Migración 051 | PREPARADA, NO APLICADA | Requiere confirmación explícita antes de producción |
+| Checks | VERIFICADO LOCAL | 80 archivos, 517 tests, typecheck, build y lint sin errores nuevos |
+| Migración 051 | APLICADA Y VERIFICADA | Tablas, 4 policies y RPC confirmados en producción el 2026-08-23 |
+| Returns detail | VERIFICADO LOCAL | GET/PUT `[id]`, UUID guard, org scope, editor+ role gate y product ownership en POST |
+
+## Auditoría de referencias tenant (2026-08-23)
+
+| Consulta | Resultado |
+|---|---|
+| `returns.product_id` con `products.org_id` distinto | 0 filas |
+| `reimbursements.product_id/return_id` con org distinta | 0 filas |
+| Policies de `reimbursements` | `delete`, `insert`, `select`, `update`; sin policies legacy adicionales |
+
+## Share deshabilitado por M1 (2026-08-23)
+
+| Superficie | Resultado | Evidencia |
+|---|---|---|
+| `/api/share` GET/POST/DELETE | DESHABILITADO | Devuelve 503 antes de autenticación o consultas |
+| `/api/share/[token]` | DESHABILITADO | Devuelve 404 antes de crear service role client |
+| `/share/[token]` | DESHABILITADO | Devuelve not-found antes de consultar Supabase |
+| Analytics Share UI | OCULTO | `ShareDashboard` y sus datos permanecen intactos para futura reactivación |

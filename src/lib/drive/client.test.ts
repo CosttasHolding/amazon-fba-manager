@@ -6,13 +6,14 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: mockCreateClient,
 }));
 
-import { getDriveClient, getOrgRootFolderId } from "./client";
+import { getDriveClient, getDriveRootFolderId, getOrgRootFolderId } from "./client";
 
 describe("getDriveClient", () => {
   beforeEach(() => {
     delete process.env.GOOGLE_OAUTH_CLIENT_ID;
     delete process.env.GOOGLE_OAUTH_CLIENT_SECRET;
     delete process.env.GOOGLE_DRIVE_FOLDER_ID;
+    delete process.env.GOOGLE_DRIVE_SHARED_ORG_IDS;
     process.env.GOOGLE_SERVICE_ACCOUNT_KEY = '{"client_email":"global@example.com"}';
     mockCreateClient.mockReset();
   });
@@ -61,5 +62,24 @@ describe("getDriveClient", () => {
     await getOrgRootFolderId(drive, "org'1");
 
     expect(list.mock.calls[0][0].q).toContain("Amazon FBA Manager - org\\'1");
+  });
+
+  it("usa el root configurado para las organizaciones autorizadas en workspace compartido", async () => {
+    process.env.GOOGLE_DRIVE_FOLDER_ID = "shared-root";
+    process.env.GOOGLE_DRIVE_SHARED_ORG_IDS = "org-1, org-2";
+    const list = vi.fn();
+    const drive = { files: { list, create: vi.fn() } } as never;
+
+    await expect(getDriveRootFolderId(drive, "org-2")).resolves.toBe("shared-root");
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it("rechaza organizaciones fuera de la allowlist del workspace compartido", async () => {
+    process.env.GOOGLE_DRIVE_SHARED_ORG_IDS = "org-1,org-2";
+    const list = vi.fn();
+    const drive = { files: { list, create: vi.fn() } } as never;
+
+    await expect(getDriveRootFolderId(drive, "org-3")).resolves.toBeNull();
+    expect(list).not.toHaveBeenCalled();
   });
 });

@@ -10,6 +10,8 @@ interface Props {
   params: Promise<{ token: string }>;
 }
 
+const SHARING_DISABLED = true;
+
 async function fetchSharedData(token: string) {
   const supabase = createServiceRoleClient();
 
@@ -129,6 +131,8 @@ function StatCard({ label, value, icon, delta }: { label: string; value: string;
 }
 
 export default async function SharedDashboardPage({ params }: Props) {
+  if (SHARING_DISABLED) notFound();
+
   const { token } = await params;
   const data = await fetchSharedData(token);
 

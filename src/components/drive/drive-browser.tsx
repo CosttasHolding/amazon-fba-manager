@@ -17,6 +17,8 @@ export function DriveBrowser() {
   const { locale } = useLocale();
   const [files, setFiles] = useState<DriveFile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [currentFolderId, setCurrentFolderId] = useState<string>("root");
   const [path, setPath] = useState<DriveFolder[]>([]);
   const [showUpload, setShowUpload] = useState(false);
@@ -24,15 +26,23 @@ export function DriveBrowser() {
   const [editingFile, setEditingFile] = useState<DriveFile | null>(null);
   const [viewingImage, setViewingImage] = useState<DriveFile | null>(null);
 
-  const fetchFiles = useCallback(async (folderId: string) => {
-    setLoading(true);
+  const fetchFiles = useCallback(async (folderId: string, pageToken?: string, append = false) => {
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+      setNextPageToken(null);
+    }
     try {
       const params = new URLSearchParams();
       if (folderId !== "root") params.set("folderId", folderId);
+      if (pageToken) params.set("pageToken", pageToken);
       const res = await fetch(`/api/drive/list?${params}`);
       if (res.ok) {
         const json = await res.json();
-        setFiles(json.data.files || []);
+        const pageFiles = json.data.files || [];
+        setFiles((current) => append ? [...current, ...pageFiles] : pageFiles);
+        setNextPageToken(json.data.nextPageToken || null);
       } else {
         toast.error(t("drives.error_load", locale));
       }
@@ -40,6 +50,7 @@ export function DriveBrowser() {
       toast.error(t("drives.error_load", locale));
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [locale]);
 
@@ -53,6 +64,10 @@ export function DriveBrowser() {
       setPath([]);
     } else {
       setCurrentFolderId(folderId);
+      setPath((current) => {
+        const index = current.findIndex((folder) => folder.id === folderId);
+        return index >= 0 ? current.slice(0, index + 1) : current;
+      });
     }
   }, []);
 
@@ -149,6 +164,11 @@ export function DriveBrowser() {
           }
         }}
         onDownload={handleDownload}
+        hasMore={Boolean(nextPageToken)}
+        loadingMore={loadingMore}
+        onLoadMore={() => {
+          if (nextPageToken) fetchFiles(currentFolderId, nextPageToken, true);
+        }}
       />
 
       {editingFile && (

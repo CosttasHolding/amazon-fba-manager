@@ -43,8 +43,8 @@ export const POST = createApiHandler(async ({ supabase, user, orgId, req }) => {
 
 1. **Rate limiting** → 60 req/min por IP+route (configurable)
 2. **Auth** → `createClient()` → `getUser()` → 401 si no hay user
-3. **Org resolution** → Header `x-org-id` → membership lookup → auto-create org
-4. **Handler execution** → Pasa `{ supabase, user, orgId, req }`
+3. **Org resolution** → Header `x-org-id` validado contra membership activa; fallback a la primera membership activa
+4. **Handler execution** → Pasa `{ supabase, user, orgId, role, req }`
 5. **Error handling** → Catch-all retorna 500 con mensaje genérico
 
 ### Contexto del handler:
@@ -53,7 +53,8 @@ export const POST = createApiHandler(async ({ supabase, user, orgId, req }) => {
 type HandlerContext = {
   supabase: SupabaseClient;           // Cliente server-side con cookies
   user: { id: string; email?: string }; // Usuario autenticado
-  orgId: string | null;               // Org actual (resuelta automáticamente)
+  orgId: string | null;               // Org actual validada contra membership
+  role: string | null;                // Rol activo dentro de la org
   req: NextRequest;                   // Request original
 };
 ```
@@ -236,8 +237,8 @@ type HandlerContext = {
 |--------|------|-----------|-------------|
 | `GET` | `/api/returns` | Lista devoluciones | `?page=&status=` |
 | `POST` | `/api/returns` | Crear devolución | `{ product_id, quantity, return_reason, ... }` |
-| `PUT` | `/api/returns` | Actualizar devolución | `{ status?, disposition?, ... }` |
-| `DELETE` | `/api/returns` | Eliminar devolución | `?id=` |
+| `GET` | `/api/returns/[id]` | Obtener devolución | UUID |
+| `PUT` | `/api/returns/[id]` | Avanzar/actualizar devolución | `{ status?, disposition?, ... }` |
 | `GET` | `/api/reimbursements` | Lista reembolsos | `?page=&status=` |
 | `POST` | `/api/reimbursements` | Crear reembolso | `{ product_id, amount, reimbursement_type, ... }` |
 | `GET` | `/api/reimbursements/detected` | Lista eventos Amazon detectados | `?page=&perPage=&status=` |
@@ -366,9 +367,8 @@ El sync `reimbursements` conserva los eventos de `GET_FBA_REIMBURSEMENTS_DATA` e
 | `DELETE` | `/api/comments` | Eliminar comentario | `?id=` |
 | `GET` | `/api/audit-log` | Obtener audit log | `?entity=&action=` |
 | `POST` | `/api/audit-log` | Crear entrada | `{ entity, entity_id, action, changes }` |
-| `GET` | `/api/share` | Listar links compartidos | - |
-| `POST` | `/api/share` | Crear link | `{ title?, expiresAt? }` |
-| `GET` | `/api/share/[token]` | Obtener data de link público | - |
+| `GET/POST/DELETE` | `/api/share` | **Deshabilitado temporalmente por M1** | Devuelve `503` |
+| `GET` | `/api/share/[token]` | **Deshabilitado temporalmente por M1** | Devuelve `404` |
 | `GET` | `/api/analytics/comparison` | Comparación de períodos | `?period=&compareWith=` |
 | `GET` | `/api/analytics/fees` | Resumen de fees de settlement | `?startDate=&endDate=&marketplace=&productId=&feeType=` |
 | `GET` | `/api/forecasting` | Sugerencias de reorden | - |
@@ -408,9 +408,9 @@ La respuesta agrupa las mismas líneas en paralelo por moneda: `summary.currency
 4. Resolver org_id:
    a. Header x-org-id (del frontend)
    b. Lookup en org_members
-   c. Auto-crear org si no existe
+   c. Fallback a membership activa; el onboarding crea la org explícitamente
    ↓
-5. Ejecutar handler({ supabase, user, orgId, req })
+5. Ejecutar handler({ supabase, user, orgId, role, req })
    ↓ (si hay error)
 6. Return { error: "Error interno del servidor" }, status: 500
 ```
@@ -421,7 +421,7 @@ La respuesta agrupa las mismas líneas en paralelo por moneda: `summary.currency
 |------|--------|
 | `/api/push/subscribe` | Usa createClient() directo (diferente pattern) |
 | `/api/push/unsubscribe` | Igual |
-| `/api/share/[token]` | Ruta pública (no requiere auth) |
+| `/api/share/[token]` | Ruta pública deshabilitada; devuelve `404` sin consultar datos |
 
 ---
 

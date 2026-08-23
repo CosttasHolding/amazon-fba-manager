@@ -1,11 +1,24 @@
 import { google, drive_v3 } from "googleapis";
 import { createClient } from "@/lib/supabase/server";
+import { getDriveRedirectUri } from "@/lib/drive/oauth";
 
 export function getRootFolderId(): string {
   return process.env.GOOGLE_DRIVE_FOLDER_ID || "root";
 }
 
 const ORG_ROOT_PREFIX = "Amazon FBA Manager - ";
+
+export function getSharedDriveOrgIds(): string[] {
+  return (process.env.GOOGLE_DRIVE_SHARED_ORG_IDS || "")
+    .split(/[\s,]+/)
+    .map((id) => id.trim())
+    .filter(Boolean);
+}
+
+export function isDriveOrgAllowed(orgId: string): boolean {
+  const sharedOrgIds = getSharedDriveOrgIds();
+  return sharedOrgIds.length === 0 || sharedOrgIds.includes(orgId);
+}
 
 function escapeDriveQueryValue(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
@@ -40,6 +53,19 @@ export async function getOrgRootFolderId(
     throw new Error("Drive no conectado: no se pudo crear la carpeta de organización");
   }
   return folder.data.id;
+}
+
+export async function getDriveRootFolderId(
+  drive: drive_v3.Drive,
+  orgId: string
+): Promise<string | null> {
+  if (!isDriveOrgAllowed(orgId)) return null;
+
+  if (getSharedDriveOrgIds().length > 0) {
+    return getRootFolderId();
+  }
+
+  return getOrgRootFolderId(drive, orgId);
 }
 
 export async function getDriveClient(userId?: string): Promise<drive_v3.Drive> {
@@ -86,7 +112,7 @@ export async function getDriveClient(userId?: string): Promise<drive_v3.Drive> {
       throw new Error("Drive no conectado: conecta tu cuenta de Google Drive");
     }
 
-    const redirectUri = `${appUrl}/api/drive/auth/callback`;
+    const redirectUri = getDriveRedirectUri(appUrl);
     const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
     oauth2Client.setCredentials({ refresh_token: refreshToken });
     return google.drive({ version: "v3", auth: oauth2Client });

@@ -39,35 +39,11 @@ export async function resolveOrgId(
     return membership.org_id;
   }
 
+  return null;
+}
+
+export async function ensureDefaultOrg(userId: string): Promise<string | null> {
   const admin = createServiceRoleClient();
-  const slug = "org-" + userId.replace(/-/g, "") + "-default";
-
-  const { data: existing } = await admin
-    .from("organizations")
-    .select("id")
-    .eq("slug", slug)
-    .maybeSingle();
-
-  if (existing) {
-    await admin
-      .from("org_members")
-      .insert({ org_id: existing.id, user_id: userId, role: "owner", status: "active" });
-    return existing.id;
-  }
-
-  const { data: newOrg } = await admin
-    .from("organizations")
-    .insert({ name: "Mi Organización", slug, owner_id: userId })
-    .select("id")
-    .single();
-
-  if (!newOrg) {
-    return null;
-  }
-
-  await admin
-    .from("org_members")
-    .insert({ org_id: newOrg.id, user_id: userId, role: "owner", status: "active" });
-
-  return newOrg.id;
+  const { data, error } = await admin.rpc("ensure_default_org", { target_user_id: userId });
+  return error || typeof data !== "string" ? null : data;
 }

@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getDriveClient, getOrgRootFolderId } from "@/lib/drive";
+import { getDriveClient, getDriveRootFolderId } from "@/lib/drive";
 import { getOrgId } from "@/lib/org-resolver";
 import {
   assertFileWithinRoot,
@@ -22,7 +22,8 @@ export async function GET(
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
     const drive = await getDriveClient(user.id);
-    const rootId = await getOrgRootFolderId(drive, orgId);
+    const rootId = await getDriveRootFolderId(drive, orgId);
+    if (!rootId) return NextResponse.json({ error: "Drive no habilitado para esta organización" }, { status: 403 });
     try {
       await assertFileWithinRoot(drive, params.id, rootId);
     } catch (err) {

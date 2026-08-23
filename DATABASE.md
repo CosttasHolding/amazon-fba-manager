@@ -385,6 +385,7 @@ idea → validating → approved → in_progress → launched
 |---------|------|-------------|-------|
 | `id` | UUID | PK | |
 | `user_id` | UUID | NOT NULL | |
+| `org_id` | UUID | FK → organizations(id) | Tenant; rows sin organización quedan bloqueadas por RLS |
 | `org_id` | UUID | FK → organizations(id) | Migración 024 |
 | `source_key` | TEXT | Nullable, UNIQUE(`org_id`, `source_key`) | Clave de idempotencia de importaciones externas |
 | `product_id` | UUID | FK → products(id) | Opcional |
@@ -556,6 +557,7 @@ modifica movimientos y tiene validación tenant/producto mediante trigger.
 |---------|------|-------------|-------|
 | `id` | UUID | PK | |
 | `user_id` | UUID | NOT NULL | |
+| `org_id` | UUID | FK → organizations(id) | Tenant; rows sin organización quedan bloqueadas por RLS |
 | `po_id` | UUID | FK → purchase_orders(id) | |
 | `shipment_name` | TEXT | NOT NULL | |
 | `shipment_id` | TEXT | | ID del shipment en Amazon |
@@ -584,12 +586,15 @@ modifica movimientos y tiene validación tenant/producto mediante trigger.
 | `id` | UUID | PK | |
 | `shipment_id` | UUID | NOT NULL, FK → fba_shipments(id) | |
 | `product_id` | UUID | NOT NULL, FK → products(id) | |
+| `org_id` | UUID | FK → organizations(id) | Tenant; rows sin organización quedan bloqueadas por RLS |
 | `quantity` | INTEGER | NOT NULL, CHECK > 0 | |
 | `quantity_received` | INTEGER | DEFAULT 0 | Recibido en FC |
 | `msKU` | TEXT | | Merchant SKU |
 | `fnSKU` | TEXT | | Fulfilled SKU |
 | `created_at` | TIMESTAMPTZ | | |
 | `updated_at` | TIMESTAMPTZ | | |
+
+**RLS:** migraciones 052-056 reemplazan las policies legacy basadas en `user_id` por policies `is_org_member(org_id)`, roles de mutación, validación de relaciones tenant y triggers de integridad. Migración 055 hace idempotente el onboarding inicial.
 
 ---
 
@@ -1274,6 +1279,8 @@ las filas sin organización quedan inaccesibles hasta una asignación segura.
 | 047 | Compatibilidad de schema y scope tenant de `comments`, sin backfill ambiguo |
 | 048 | Scope RLS de las ocho tablas legacy añadidas por 039, sin backfill ambiguo |
 | 049 | Compatibilidad de schema: crea automation tables ausentes (`alert_rules`, `reorder_rules`, `scheduled_reports`) con `org_id` nullable, índices y RLS fail-closed |
+| 050 | Backfill determinista de `inventory.org_id` desde `products.org_id` |
+| 051 | Detección de reembolsos Amazon, matches de movimientos, RLS, triggers tenant y RPC atómica |
 
 Las migraciones 044, 047 y 049 incluyen `CREATE TABLE IF NOT EXISTS` como
 compatibilidad de schema para instalaciones donde las tablas históricas no

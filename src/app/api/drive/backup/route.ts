@@ -3,8 +3,9 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { Readable } from "stream";
 import { createClient } from "@/lib/supabase/server";
-import { getDriveClient, getOrgRootFolderId } from "@/lib/drive";
+import { getDriveClient, getDriveRootFolderId } from "@/lib/drive";
 import { getOrgId } from "@/lib/org-resolver";
+import { hasOrgRole } from "@/lib/api-handler";
 import type { BackupType } from "@/lib/drive";
 import * as XLSX from "xlsx";
 
@@ -90,15 +91,9 @@ export async function POST(req: NextRequest) {
     if (requestedOrgId && requestedOrgId !== orgId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-
-    const { data: membership } = await supabase
-      .from("org_members")
-      .select("org_id")
-      .eq("user_id", user.id)
-      .eq("org_id", orgId)
-      .eq("status", "active")
-      .maybeSingle();
-    if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!(await hasOrgRole(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: "Permisos insuficientes" }, { status: 403 });
+    }
 
     const { type } = await req.json();
     if (typeof type !== "string" || !["products", "sales", "orders", "inventory", "suppliers"].includes(type)) {
@@ -117,7 +112,8 @@ export async function POST(req: NextRequest) {
     const fileName = `${type}_${timestamp}.xlsx`;
 
     const drive = await getDriveClient(user.id);
-    const rootId = await getOrgRootFolderId(drive, orgId);
+    const rootId = await getDriveRootFolderId(drive, orgId);
+    if (!rootId) return NextResponse.json({ error: "Drive no habilitado para esta organización" }, { status: 403 });
     const backupFolderId = await ensureBackupFolder(drive, rootId);
 
     const file = await drive.files.create({

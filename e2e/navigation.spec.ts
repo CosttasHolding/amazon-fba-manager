@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Navigation and layout", () => {
   test("login page has correct meta and theme", async ({ page }) => {
     await page.goto("/login");
-    await expect(page).toHaveTitle(/FBA Manager|Login/);
+    await expect(page).toHaveTitle(/CosttasHolding Manager/);
   });
 
   test("responsive mobile layout on login", async ({ page }) => {
@@ -13,8 +13,9 @@ test.describe("Navigation and layout", () => {
     await expect(page.locator('input[type="password"]')).toBeVisible();
   });
 
-  test("404 page renders for unknown routes", async ({ page }) => {
+  test("unauthenticated unknown routes redirect to login", async ({ page }) => {
     await page.goto("/nonexistent-page");
-    await expect(page.locator("text=404").or(page.locator("text=Not Found")).or(page.locator("text=No se encontr"))).toBeVisible();
+    await page.waitForURL("**/login");
+    await expect(page.locator('input[type="email"]')).toBeVisible();
   });
 });

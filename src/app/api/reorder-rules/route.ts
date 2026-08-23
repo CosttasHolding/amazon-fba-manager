@@ -19,14 +19,16 @@ export const GET = createApiHandler(async ({ supabase, orgId }) => {
         .from("products_with_inventory")
         .select("name, sku, stock_available, sales_velocity_30d")
         .eq("id", rule.product_id)
+        .eq("org_id", orgId)
         .single();
 
       let supplierName: string | null = null;
       if (rule.supplier_id) {
-        const { data: supplier } = await supabase
+          const { data: supplier } = await supabase
           .from("suppliers")
           .select("name")
           .eq("id", rule.supplier_id)
+          .eq("org_id", orgId)
           .single();
         supplierName = supplier?.name || null;
       }
@@ -54,13 +56,34 @@ export const GET = createApiHandler(async ({ supabase, orgId }) => {
   return NextResponse.json({ data: withProducts });
 });
 
-export const POST = createApiHandler(async ({ supabase, user, orgId, req }) => {
+export const POST = createApiHandler(async ({ supabase, user, orgId, role, req }) => {
   if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+  if (!role || !["owner", "admin", "editor"].includes(role)) {
+    return NextResponse.json({ error: "Permisos insuficientes" }, { status: 403 });
+  }
   const body = await req.json();
   const { product_id, supplier_id, min_stock, max_stock, auto_po, lead_time_days, safety_stock_days, notes } = body;
 
   if (!product_id) {
     return NextResponse.json({ error: "product_id es requerido" }, { status: 400 });
+  }
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("id")
+    .eq("id", product_id)
+    .eq("org_id", orgId)
+    .maybeSingle();
+  if (!product) return NextResponse.json({ error: "Producto no pertenece a la organización" }, { status: 400 });
+
+  if (supplier_id) {
+    const { data: supplier } = await supabase
+      .from("suppliers")
+      .select("id")
+      .eq("id", supplier_id)
+      .eq("org_id", orgId)
+      .maybeSingle();
+    if (!supplier) return NextResponse.json({ error: "Proveedor no pertenece a la organización" }, { status: 400 });
   }
 
   const { data, error } = await supabase
@@ -84,8 +107,11 @@ export const POST = createApiHandler(async ({ supabase, user, orgId, req }) => {
   return NextResponse.json({ data });
 });
 
-export const PATCH = createApiHandler(async ({ supabase, orgId, req }) => {
+export const PATCH = createApiHandler(async ({ supabase, orgId, role, req }) => {
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+    if (!role || !["owner", "admin", "editor"].includes(role)) {
+      return NextResponse.json({ error: "Permisos insuficientes" }, { status: 403 });
+    }
     const body = await req.json();
     const { id, ...rawUpdates } = body;
     if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
@@ -94,6 +120,26 @@ export const PATCH = createApiHandler(async ({ supabase, orgId, req }) => {
     const updates: Record<string, unknown> = {};
     for (const key of ALLOWED_FIELDS) {
       if (key in rawUpdates) updates[key] = rawUpdates[key];
+    }
+
+    if (typeof updates.product_id === "string") {
+      const { data: product } = await supabase
+        .from("products")
+        .select("id")
+        .eq("id", updates.product_id)
+        .eq("org_id", orgId)
+        .maybeSingle();
+      if (!product) return NextResponse.json({ error: "Producto no pertenece a la organización" }, { status: 400 });
+    }
+
+    if (typeof updates.supplier_id === "string") {
+      const { data: supplier } = await supabase
+        .from("suppliers")
+        .select("id")
+        .eq("id", updates.supplier_id)
+        .eq("org_id", orgId)
+        .maybeSingle();
+      if (!supplier) return NextResponse.json({ error: "Proveedor no pertenece a la organización" }, { status: 400 });
     }
 
     const { data, error } = await supabase
@@ -108,8 +154,11 @@ export const PATCH = createApiHandler(async ({ supabase, orgId, req }) => {
     return NextResponse.json({ data });
 });
 
-export const DELETE = createApiHandler(async ({ supabase, orgId, req }) => {
+export const DELETE = createApiHandler(async ({ supabase, orgId, role, req }) => {
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+    if (!role || !["owner", "admin", "editor"].includes(role)) {
+      return NextResponse.json({ error: "Permisos insuficientes" }, { status: 403 });
+    }
     const { searchParams } = req.nextUrl;
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });

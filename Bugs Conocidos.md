@@ -12,6 +12,22 @@ ultima_actualizacion: 2026-08-07
 
 ## Activos
 
+### Share deshabilitado por hallazgo M1
+- **Fecha**: 2026-08-23
+- **Estado**: DESHABILITADO OPERACIONALMENTE
+- **Síntoma**: el feature de links compartidos podía exponer datos mediante tokens públicos y usaba `service_role` para leer datos tenant-scoped.
+- **Mitigación**: `/api/share`, `/api/share/[token]` y `/share/[token]` devuelven error sin consultar datos; la entrada de Share fue retirada de Analytics. Se conserva el código y la tabla para una futura corrección estructural.
+- **Pendiente para reactivar**: diseño seguro de tokens (hash, expiración obligatoria, revocación), rate limit público y regression tests cross-tenant.
+
+### Drive OAuth pendiente
+- **Fecha**: 2026-08-23
+- **Estado**: OAUTH Y VERCEL VERIFICADOS EN PRODUCCIÓN; CRUD DE ARCHIVOS PENDIENTE
+- **Motivo**: la configuración actual fail-closed requiere OAuth por usuario; la service account no tiene cuota de almacenamiento para upload en producción.
+- **Progreso**: Vercel tiene `NEXT_PUBLIC_APP_URL`, redirect URI de producción y secret actualizado; deploy publicado.
+- **Progreso**: conexión autorizada y carpeta `backup` visible en la app de producción.
+- **Próximo paso**: verificar upload/list/metadata/delete y eliminar el secret OAuth antiguo en Google Cloud.
+- **Regla**: nunca pegar client secrets, refresh tokens ni credenciales en el chat; deben permanecer en `.env.local` o el gestor de secretos de producción.
+
 ### Deep dive falla por falta de creditos/licencias en xAI (BLOQUEADO)
 - **Fecha**: 2026-08-01
 - **Sintoma**: `/api/research/analyze-deep` y `/api/research/analyze` devuelven `403 Your newly created team doesn't have any credits or licenses yet`

@@ -12,7 +12,7 @@ export async function getOrgId(): Promise<string> {
   const orgId = await resolveOrgId(supabase, user.id);
 
   if (!orgId) {
-    throw new Error("No se pudo crear la organización");
+    throw new Error("No hay una organización activa");
   }
 
   return orgId;

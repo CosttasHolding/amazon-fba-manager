@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getOrgId } from "@/lib/api-handler";
+import { getOrgId, hasOrgRole } from "@/lib/api-handler";
 import { z } from "zod";
 
 const quoteSchema = z.object({
@@ -34,6 +34,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const orgId = await getOrgId(supabase, user.id, request);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+
+    const { data: supplier } = await supabase
+      .from("suppliers")
+      .select("id")
+      .eq("id", id)
+      .eq("org_id", orgId)
+      .maybeSingle();
+    if (!supplier) return NextResponse.json({ error: "Proveedor no pertenece a la organización" }, { status: 404 });
 
     const { data, error } = await supabase
       .from("supplier_quotes")
@@ -67,6 +75,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const orgId = await getOrgId(supabase, user.id, request);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+    if (!(await hasOrgRole(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: "Permisos insuficientes" }, { status: 403 });
+    }
+
+    const { data: supplier } = await supabase
+      .from("suppliers")
+      .select("id")
+      .eq("id", id)
+      .eq("org_id", orgId)
+      .maybeSingle();
+    if (!supplier) return NextResponse.json({ error: "Proveedor no pertenece a la organización" }, { status: 400 });
 
     const body = await request.json();
     const result = quoteSchema.safeParse({ ...body, supplier_id: id });
@@ -76,6 +95,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { error: "Datos inválidos", details: result.error.flatten().fieldErrors },
         { status: 400 }
       );
+    }
+
+    if (result.data.product_id) {
+      const { data: product } = await supabase
+        .from("products")
+        .select("id")
+        .eq("id", result.data.product_id)
+        .eq("org_id", orgId)
+        .maybeSingle();
+      if (!product) return NextResponse.json({ error: "Producto no pertenece a la organización" }, { status: 400 });
     }
 
     const cleanData = {
@@ -121,6 +150,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     const orgId = await getOrgId(supabase, user.id, request);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+    if (!(await hasOrgRole(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: "Permisos insuficientes" }, { status: 403 });
+    }
 
     const { searchParams } = new URL(request.url);
     const quoteId = searchParams.get("quoteId");

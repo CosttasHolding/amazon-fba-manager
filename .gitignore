@@ -77,3 +77,7 @@ public/exteRB/
 .env*
 !.env.example
 .qa-results.tmp.txt
+
+# Playwright generated artifacts
+test-results/
+playwright-report/

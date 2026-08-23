@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 /* logo uses native img to avoid CSP issues */
 import { createClient } from "@/lib/supabase/server";
-import { getOrgId } from "@/lib/actions/get-org-id";
+import { ensureDefaultOrg, resolveOrgId } from "@/lib/org-resolver";
 import "../animations.css";
 import "../ui-overrides.css";
 import { LogOut, Settings } from "lucide-react";
@@ -32,7 +32,12 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/login");
 
-  try { await getOrgId(); } catch (e) { console.error("ERROR getting org ID on mount", e); }
+  try {
+    const orgId = await resolveOrgId(supabase, user.id);
+    if (!orgId) await ensureDefaultOrg(user.id);
+  } catch (e) {
+    console.error("ERROR getting org ID on mount", e);
+  }
 
   const handleLogout = async () => {
     "use server";

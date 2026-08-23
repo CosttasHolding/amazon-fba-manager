@@ -23,7 +23,7 @@ function buildQueryChain(returnValue: unknown) {
     range: mockOrder.mockResolvedValue(returnValue),
     insert: mockInsert.mockReturnThis(),
     single: vi.fn().mockResolvedValue(returnValue),
-  maybeSingle: vi.fn().mockResolvedValue({ data: { org_id: "test-org-id" }, error: null }),
+  maybeSingle: vi.fn().mockResolvedValue({ data: { role: "editor" }, error: null }),
   };
   return chain;
 }

@@ -15,6 +15,9 @@ interface DriveFileListProps {
   onDelete: (file: DriveFile) => void;
   onRename: (file: DriveFile) => void;
   onDownload: (file: DriveFile) => void;
+  hasMore: boolean;
+  loadingMore: boolean;
+  onLoadMore: () => void;
 }
 
 export function DriveFileList({
@@ -26,6 +29,9 @@ export function DriveFileList({
   onDelete,
   onRename,
   onDownload,
+  hasMore,
+  loadingMore,
+  onLoadMore,
 }: DriveFileListProps) {
   const { locale } = useLocale();
   const canEdit = (mime: string) =>
@@ -65,8 +71,9 @@ export function DriveFileList({
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden">
-      <table className="w-full">
+    <div className="space-y-3">
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <table className="w-full">
         <thead>
           <tr className="border-b border-border">
             <th scope="col" className="font-display uppercase text-[11px] tracking-[0.12em] text-muted-foreground px-4 py-3 text-start">
@@ -173,20 +180,36 @@ export function DriveFileList({
                       <FileEdit className="h-3.5 w-3.5" />
                     </button>
                   )}
-                  <button
-                    onClick={() => onDelete(file)}
-                    className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex items-center justify-center"
-                    title={t("drive.action_delete", locale)}
-                    aria-label={t("drive.action_delete_file", locale)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  {!file.isFolder && (
+                    <button
+                      onClick={() => onDelete(file)}
+                      className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex items-center justify-center"
+                      title={t("drive.action_delete", locale)}
+                      aria-label={t("drive.action_delete_file", locale)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
+      {hasMore && (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-muted text-sm text-foreground hover:bg-muted/80 disabled:opacity-50"
+          >
+            {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
+            {t("drive.load_more", locale)}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

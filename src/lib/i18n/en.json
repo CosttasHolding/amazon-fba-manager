@@ -498,6 +498,7 @@
   "drive.files_selected": "{count} file(s) selected",
   "drive.go_home": "Go home",
   "drive.image_viewer_aria": "Image viewer",
+  "drive.load_more": "Load more files",
   "drive.new_folder_aria": "New folder",
   "drive.records": "records",
   "drive.refresh_aria": "Refresh",

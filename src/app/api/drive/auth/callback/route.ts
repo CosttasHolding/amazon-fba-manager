@@ -4,37 +4,54 @@ import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { createClient } from "@/lib/supabase/server";
 import { getOrgId } from "@/lib/org-resolver";
+import { DRIVE_OAUTH_STATE_COOKIE, getDriveRedirectUri } from "@/lib/drive/oauth";
+import { isDriveOrgAllowed } from "@/lib/drive";
+
+function redirectWithError(request: NextRequest, code: string) {
+  const response = NextResponse.redirect(new URL(`/drive?error=${code}`, request.url));
+  response.cookies.delete(DRIVE_OAUTH_STATE_COOKIE);
+  return response;
+}
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
-  if (!code) {
-    return NextResponse.redirect(new URL("/drive?error=no-code", request.url));
-  }
+  const state = request.nextUrl.searchParams.get("state");
+  const expectedState = request.cookies.get(DRIVE_OAUTH_STATE_COOKIE)?.value;
+  if (!code) return redirectWithError(request, "no-code");
+  if (!state || !expectedState || state !== expectedState) return redirectWithError(request, "invalid-state");
 
-  const origin = request.nextUrl.origin;
-  const redirectUri = `${origin}/api/drive/auth/callback`;
+  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return redirectWithError(request, "oauth-not-configured");
+
+  const redirectUri = getDriveRedirectUri(request.nextUrl.origin);
 
   try {
     const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_OAUTH_CLIENT_ID,
-      process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+      clientId,
+      clientSecret,
       redirectUri
     );
 
     const { tokens } = await oauth2Client.getToken(code);
 
     if (!tokens.refresh_token) {
-      return NextResponse.redirect(new URL("/drive?error=no-refresh-token", request.url));
+      return redirectWithError(request, "no-refresh-token");
     }
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      const response = NextResponse.redirect(new URL("/login", request.url));
+      response.cookies.delete(DRIVE_OAUTH_STATE_COOKIE);
+      return response;
     }
     const orgId = await getOrgId(supabase, user.id, request);
     if (!orgId) {
-      return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+      return redirectWithError(request, "no-organization");
+    }
+    if (!isDriveOrgAllowed(orgId)) {
+      return redirectWithError(request, "drive-not-enabled");
     }
 
     const { error } = await supabase
@@ -45,12 +62,14 @@ export async function GET(request: NextRequest) {
       );
 
     if (error) {
-      return NextResponse.redirect(new URL("/drive?error=save-failed", request.url));
+      return redirectWithError(request, "save-failed");
     }
 
-    return NextResponse.redirect(new URL("/drive?connected=true", request.url));
+    const response = NextResponse.redirect(new URL("/drive?connected=true", request.url));
+    response.cookies.delete(DRIVE_OAUTH_STATE_COOKIE);
+    return response;
   } catch (err) {
     console.error("Drive OAuth callback error:", err);
-    return NextResponse.redirect(new URL("/drive?error=auth-failed", request.url));
+    return redirectWithError(request, "auth-failed");
   }
 }

@@ -3,7 +3,13 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
+const SHARING_DISABLED = true;
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  if (SHARING_DISABLED) {
+    return NextResponse.json({ error: "Link no encontrado o expirado" }, { status: 404 });
+  }
+
   try {
     const { token } = await params;
     const supabase = createServiceRoleClient();

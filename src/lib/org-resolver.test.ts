@@ -55,15 +55,10 @@ describe("getOrgId (H1)", () => {
     expect(createServiceRoleClientMock).not.toHaveBeenCalled();
   });
 
-  it("ignora x-org-id ajeno y cae al default provisionado", async () => {
+  it("ignora x-org-id ajeno y no auto-provisiona desde el resolver", async () => {
     const supabase = stubSupabaseByTable({
       org_members: { data: null },
     });
-    createServiceRoleClientMock.mockReturnValue(
-      stubSupabaseByTable({
-        organizations: { data: { id: "org-default-provisionada" } },
-      })
-    );
     const req = {
       headers: { get: (n: string) => (n === "x-org-id" ? "org-de-victima" : null) },
     };
@@ -72,7 +67,8 @@ describe("getOrgId (H1)", () => {
     const result = await getOrgId(supabase, USER_ID, req);
 
     expect(result).not.toBe("org-de-victima");
-    expect(result).toBe("org-default-provisionada");
+    expect(result).toBeNull();
+    expect(createServiceRoleClientMock).not.toHaveBeenCalled();
   });
 
   it("sin header resuelve la org por membresía activa", async () => {
@@ -84,5 +80,18 @@ describe("getOrgId (H1)", () => {
     const result = await getOrgId(supabase, USER_ID);
 
     expect(result).toBe("org-b");
+  });
+
+  it("provisiona solo desde el flujo explícito y usa un slug aleatorio", async () => {
+    const admin = {
+      rpc: vi.fn().mockResolvedValue({ data: "org-new", error: null }),
+    };
+    createServiceRoleClientMock.mockReturnValue(admin);
+
+    const { ensureDefaultOrg } = await importModule();
+    const result = await ensureDefaultOrg(USER_ID);
+
+    expect(result).toBe("org-new");
+    expect(admin.rpc).toHaveBeenCalledWith("ensure_default_org", { target_user_id: USER_ID });
   });
 });

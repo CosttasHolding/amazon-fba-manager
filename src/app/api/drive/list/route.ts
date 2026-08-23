@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getDriveClient, getOrgRootFolderId } from "@/lib/drive";
+import { getDriveClient, getDriveRootFolderId } from "@/lib/drive";
 import { getOrgId } from "@/lib/org-resolver";
 import {
   assertFolderWithinRoot,
@@ -22,7 +22,8 @@ export async function GET(req: NextRequest) {
     const pageToken = searchParams.get("pageToken");
 
     const drive = await getDriveClient(user.id);
-    const rootId = await getOrgRootFolderId(drive, orgId);
+    const rootId = await getDriveRootFolderId(drive, orgId);
+    if (!rootId) return NextResponse.json({ error: "Drive no habilitado para esta organización" }, { status: 403 });
     const folderId = !requestedFolderId || requestedFolderId === "root" ? rootId : requestedFolderId;
     try {
       await assertFolderWithinRoot(drive, folderId, rootId);
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
       q: `'${folderId}' in parents and trashed = false`,
       fields: "files(id,name,mimeType,size,modifiedTime,createdTime,parents,webViewLink,iconLink),nextPageToken",
       orderBy: "folder,name_natural",
-      pageSize: 50,
+      pageSize: 1000,
       pageToken: pageToken || undefined,
     });
 

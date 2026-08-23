@@ -9,6 +9,7 @@ type HandlerContext = {
   supabase: Awaited<ReturnType<typeof createClient>>;
   user: { id: string; email?: string };
   orgId: string | null;
+  role: string | null;
   req: NextRequest;
 };
 
@@ -47,6 +48,7 @@ export function createApiHandler(handler: ApiHandler, rateLimitOpts?: { limit?: 
       }
 
       let orgId: string | null = req.headers.get("x-org-id") || null;
+      let role: string | null = null;
 
       if (!orgId) {
         orgId = await resolveOrgId(supabase, user.id);
@@ -64,14 +66,32 @@ export function createApiHandler(handler: ApiHandler, rateLimitOpts?: { limit?: 
         if (!membership) {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
+        role = membership.role;
       }
 
-      return await handler({ supabase, user: { id: user.id, email: user.email }, orgId, req });
+      return await handler({ supabase, user: { id: user.id, email: user.email }, orgId, role, req });
     } catch (err) {
       console.error("API Error:", err);
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
   };
+}
+
+export async function hasOrgRole(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  orgId: string,
+  allowedRoles: readonly string[] = ["owner", "admin", "editor"],
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("org_members")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("org_id", orgId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  return !error && !!data && allowedRoles.includes(data.role);
 }
 
 export function buildPagination(req: NextRequest, defaultPerPage = 20) {

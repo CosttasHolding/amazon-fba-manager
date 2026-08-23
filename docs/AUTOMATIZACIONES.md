@@ -28,6 +28,7 @@ Los reportes programados usan actualmente solo `format: "excel"`, porque el cron
 Todos aceptan el header:
 - `Authorization: Bearer <CRON_SECRET>`
 - Forecasting también acepta `x-automation-secret` y exige `x-org-id` UUID; nunca devuelve sugerencias detalladas.
+- Los secretos de automatización son exclusivamente server-to-server; nunca deben exponerse a clientes tenant. `weekly-summary` es un job global y devuelve el resumen de las organizaciones al portador del secreto interno.
 
 ### Variables de Entorno Requeridas
 

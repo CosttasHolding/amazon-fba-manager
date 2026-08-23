@@ -498,6 +498,7 @@
   "drive.files_selected": "{count} archivo(s) seleccionado(s)",
   "drive.go_home": "Ir al inicio",
   "drive.image_viewer_aria": "Visor de imagen",
+  "drive.load_more": "Cargar más archivos",
   "drive.new_folder_aria": "Nueva carpeta",
   "drive.records": "registros",
   "drive.refresh_aria": "Actualizar",

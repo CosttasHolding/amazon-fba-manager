@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { fbaShipmentSchema } from "@/validations/fba-shipment";
-import { getOrgId } from "@/lib/api-handler";
+import { getOrgId, hasOrgRole } from "@/lib/api-handler";
 
 export async function GET(req: NextRequest) {
   try {
@@ -42,6 +42,19 @@ export async function POST(req: NextRequest) {
 
     const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+    if (!(await hasOrgRole(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: "Permisos insuficientes" }, { status: 403 });
+    }
+
+    if (result.data.po_id) {
+      const { data: purchaseOrder } = await supabase
+        .from("purchase_orders")
+        .select("id")
+        .eq("id", result.data.po_id)
+        .eq("org_id", orgId)
+        .maybeSingle();
+      if (!purchaseOrder) return NextResponse.json({ error: "Orden no pertenece a la organización" }, { status: 400 });
+    }
 
     const clean = { ...result.data, user_id: user.id, org_id: orgId };
     const { data, error } = await supabase.from("fba_shipments").insert(clean).select().single();

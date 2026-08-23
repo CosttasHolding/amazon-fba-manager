@@ -3,8 +3,9 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { Readable } from "stream";
 import { createClient } from "@/lib/supabase/server";
-import { getDriveClient, getOrgRootFolderId } from "@/lib/drive";
+import { getDriveClient, getDriveRootFolderId } from "@/lib/drive";
 import { getOrgId } from "@/lib/org-resolver";
+import { hasOrgRole } from "@/lib/api-handler";
 import {
   assertFolderWithinRoot,
   FolderOutsideRootError,
@@ -17,6 +18,9 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+    if (!(await hasOrgRole(supabase, user.id, orgId))) {
+      return NextResponse.json({ error: "Permisos insuficientes" }, { status: 403 });
+    }
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
@@ -32,7 +36,8 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const drive = await getDriveClient(user.id);
-    const rootId = await getOrgRootFolderId(drive, orgId);
+    const rootId = await getDriveRootFolderId(drive, orgId);
+    if (!rootId) return NextResponse.json({ error: "Drive no habilitado para esta organización" }, { status: 403 });
     const folderId = !requestedFolderId || requestedFolderId === "root" ? rootId : requestedFolderId;
 
     try {
