@@ -111,9 +111,68 @@ function out(s) { lines.push(s); console.log(s); }
     out(`INFO QA6f post-DELETE: ${stillThere ? (stillThere.deleted_at ? "soft-deleted" : "SIGUE VIVO") : "eliminado fisico"}`);
   }
 
+  // QA7 CRUD proveedores
+  r = await api("/api/suppliers", { method: "POST", body: { name: `QA-SUPP-${stamp}`, country: "AR", rating: 4 } });
+  const supp = r.body || {};
+  const sid = supp?.supplier?.id || supp?.id || supp?.data?.id;
+  check("QA7a POST /api/suppliers crea", r.status >= 200 && r.status < 300 && !!sid, `(status ${r.status} ${JSON.stringify(supp).slice(0, 200)})`);
+  if (sid) {
+    const { data: suppRow } = await admin.from("suppliers").select("org_id, name").eq("id", sid).single();
+    check("QA7b org_id correcto en DB", suppRow && suppRow.org_id === ORG_A, JSON.stringify(suppRow || {}));
+    r = await api(`/api/suppliers/${sid}`, { method: "PUT", body: { name: `QA-SUPP-EDIT-${stamp}`, status: "inactive" } });
+    check("QA7c PUT actualiza", r.status >= 200 && r.status < 300, `(status ${r.status})`);
+  }
+  r = await api("/api/suppliers");
+  check("QA7d GET /api/suppliers -> 200", r.status === 200, `(status ${r.status})`);
+  if (sid) {
+    r = await api(`/api/suppliers/${sid}`, { method: "DELETE" });
+    check("QA7e DELETE ok", r.status < 300, `(status ${r.status})`);
+  }
+
+  // QA8 ventas (producto efímero propio; QA6 ya eliminó el suyo)
+  let salePid = null, saleId = null;
+  r = await api("/api/products", { method: "POST", body: { name: `QA-SALE-PROD-${stamp}` } });
+  salePid = r.body?.product?.id || r.body?.id || r.body?.data?.id || null;
+  check("QA8-0 producto efímero creado", r.status >= 200 && r.status < 300 && !!salePid, `(status ${r.status})`);
+  if (!salePid) {
+    fail++;
+    out("FAIL QA8 sin producto disponible para venta");
+  } else {
+    r = await api("/api/sales", { method: "POST", body: { product_id: salePid, sale_date: new Date().toISOString().slice(0, 10), units_sold: 2, revenue: 49.98 } });
+    const sale = r.body || {};
+    saleId = sale?.sale?.id || sale?.id || sale?.data?.id;
+    check("QA8a POST /api/sales crea", r.status >= 200 && r.status < 300 && !!saleId, `(status ${r.status} ${JSON.stringify(sale).slice(0, 250)})`);
+    if (saleId) {
+      const { data: saleRow } = await admin.from("sales").select("org_id, units_sold").eq("id", saleId).single();
+      check("QA8b org_id correcto en DB", saleRow && saleRow.org_id === ORG_A && saleRow.units_sold === 2, JSON.stringify(saleRow || {}));
+    }
+    r = await api("/api/sales");
+    check("QA8c GET /api/sales -> 200", r.status === 200, `(status ${r.status})`);
+    r = await api("/api/sales/summary");
+    out(`INFO QA8d GET /api/sales/summary -> ${r.status} ${JSON.stringify(r.body).slice(0, 120)}`);
+  }
+
+  // QA9 inventario + movimiento de stock
+  r = await api("/api/inventory");
+  check("QA9a GET /api/inventory -> 200", r.status === 200, `(status ${r.status})`);
+  if (salePid) {
+    r = await api("/api/inventory/movements", { method: "POST", body: { productId: salePid, movementType: "adjustment", quantity: 5, reference: "qa-battery" } });
+    const mv = r.body || {};
+    const mvid = mv?.movement?.id || mv?.id || mv?.data?.id;
+    check("QA9b POST movement adjustment -> 2xx", r.status >= 200 && r.status < 300, `(status ${r.status} ${JSON.stringify(mv).slice(0, 250)})`);
+    if (mvid) {
+      const { data: mvRow } = await admin.from("stock_movements").select("org_id, quantity").eq("id", mvid).single();
+      check("QA9c movimiento con org_id correcto", mvRow && mvRow.org_id === ORG_A && mvRow.quantity === 5, JSON.stringify(mvRow || {}));
+    }
+  }
+
   await browser.close();
 
+  // ===== LIMPIEZA =====
   out("--- LIMPIEZA ---");
+  if (saleId) { await admin.from("sales").delete().eq("id", saleId); }
+  await admin.from("stock_movements").delete().eq("reference", "qa-battery");
+  if (salePid && salePid !== pidForCleanup) { await admin.from("products").delete().eq("id", salePid); }
   if (pidForCleanup) { await admin.from("products").delete().eq("id", pidForCleanup); }
   await admin.from("product_research").delete().eq("asin_reference", "B0QATEMP001");
   if (orgB) { await admin.from("organizations").delete().eq("id", orgB.id); }

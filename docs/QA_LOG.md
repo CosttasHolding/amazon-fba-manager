@@ -98,6 +98,40 @@ Setup: usuario `qa-agent-temp-20260822@test.local` creado por SQL directo (GoTru
 
 Notas: `products/[id]` exporta GET/PUT/DELETE (no PATCH). Limpieza automática de datos de prueba tras cada corrida.
 
+### Parte B — extensión de batería a Suppliers/Sales/Inventory (2026-08-23)
+
+Script permanente `scripts/qa-battery.js` (`npm run qa:battery`, creds en `.env.local`). Resultado final **22 PASS / 1 FAIL**.
+
+| Check | Resultado |
+|---|---|
+| QA0–QA6f (regresión batería original) | 14/14 PASS |
+| QA7a POST /api/suppliers crea | PASS |
+| QA7b org_id correcto en DB (`suppliers`) | PASS |
+| QA7c PUT actualiza (name+status) | PASS |
+| QA7d GET /api/suppliers → 200 | PASS |
+| QA7e DELETE ok | PASS |
+| QA8-0 producto efímero para ventas | PASS |
+| QA8a POST /api/sales crea (product_id, units_sold=2, revenue) | PASS |
+| QA8b org_id correcto en DB (`sales`) | PASS |
+| QA8c GET /api/sales → 200 | PASS |
+| QA8d GET /api/sales/summary refleja la venta (revenue 49.98, units 2) | INFO OK |
+| QA9a GET /api/inventory → 200 | PASS |
+| QA9b POST /api/inventory/movements adjustment qty=5 | **FAIL → 400 "Error interno del servidor"** |
+
+#### Hallazgo CRÍTICO #2: mismatch schema↔código masivo — `org_id` ausente en tablas tenant-scoped
+
+- Causa raíz QA9b: `stock_movements` NO tiene columna `org_id` en prod; la ruta inserta `org_id` → error PostgREST → catch genérico 400. La ruta **nunca funcionó**.
+- Auditoría sistemática (`information_schema` vs código): el código escribe/filtra por `org_id` en estas tablas que NO tienen la columna:
+  - `stock_movements` (movements route) · `inventory` (sync-runner upsert) · `ppc_campaigns` (insert ruta ppc-campaigns) · `amazon_payouts` (GET .eq + insert) · `saved_calculations` (calculator/save) · `supplier_quotes` (quotes route) · `product_suppliers` (products/[id]/suppliers) · hermana no usada aún: `ppc_daily_metrics`.
+- Fix preparado: `supabase/migrations/039_add_org_id_to_tenant_tables.sql` (ADD COLUMN IF NOT EXISTS nullable + FK a organizations + índices). Pendiente aprobación para aplicar en prod.
+- Correctamente SIN org_id (no son tenant tables): `profiles`, `organizations`, `user_settings`, `company_members`.
+
+#### Hallazgo CRÍTICO #3: 9 rutas leen `profiles.org_id` (columna inexistente)
+
+Rutas afectadas (patrón `.from("profiles").select("org_id")`): `amazon-payouts` (×2), `automation/weekly-summary`, `research/analyze`, `sp-api/sync` (×2), `sp-api/webhooks/subscribe` (×3), `sp-api/webhooks` (GET), `sp-api/connections` (+[id]), `sp-api/auth/callback`. Comportamiento probable: PGRST204 → orgId undefined → fallo o resultado vacío; fail-closed esperable por RLS vigente (sin leak cross-tenant confirmado). Requiere decisión owner:
+- **Opción A**: agregar `profiles.org_id` + trigger de sync desde `org_members` (revive 9 rutas sin tocar código; duplica fuente de verdad).
+- **Opción B (recomendada)**: refactor de las 9 rutas al resolvedor estándar `getOrgId` de `src/lib/api-handler.ts`.
+
 ## Pendientes manuales (requieren sesión del owner en prod)
 
 | Ítem | Estado | Nota |
@@ -107,7 +141,7 @@ Notas: `products/[id]` exporta GET/PUT/DELETE (no PATCH). Limpieza automática d
 | Drive upload → list → metadata → delete | BLOCKED | validar también que IDs fuera del root ahora den 403 (fix C2); guard verificado con alias root |
 | SP-API vs Seller Central / Keepa | NOT CONFIGURED (si sin conexión activa) | no forzar |
 | Multi-org: Org A jamás ve Org B (UI + API + manipulación de identifiers) | PARCIAL | QA2/QA3 cubren manipulación de identifiers vía API; falta prueba visual multi-org en UI |
-| CRUD por módulo (20 módulos candidatos) | PARCIAL | Products CRUD completo verificado (QA6); restan Suppliers/Sales/Inventory |
+| CRUD por módulo (20 módulos candidatos) | PARCIAL | Products + Suppliers + Sales CRUD completo verificado (QA6/QA7/QA8); Inventory GET ok, movements BLOCKED por hallazgo #2 (migración 039 pendiente) |
 | Flow A purchase lifecycle + Flow B incident lifecycle | BLOCKED | consistencia matemática en cada salto |
 | Invalid data (vacío/negativos/futuros/malformed IDs) | BLOCKED | esperar error controlado |
 | Offline/PWA | BLOCKED | validar solo lo prometido por el producto |
