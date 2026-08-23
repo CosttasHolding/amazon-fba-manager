@@ -48,14 +48,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (!subscription) {
-      await supabase.from("sp_api_webhook_logs").insert({
-        user_id: "00000000-0000-0000-0000-000000000000",
-        org_id: "00000000-0000-0000-0000-000000000000",
-        notification_type: notification.type,
-        amazon_notification_id: notification.amazonNotificationId,
-        payload: notification.data,
-        status: "received",
-      });
+      const { error: unmatchedLogError } = await supabase
+        .from("sp_api_webhook_logs")
+        .insert({
+          user_id: "00000000-0000-0000-0000-000000000000",
+          org_id: "00000000-0000-0000-0000-000000000000",
+          notification_type: notification.type,
+          amazon_notification_id: notification.amazonNotificationId,
+          payload: notification.data,
+          status: "received",
+        });
+      if (unmatchedLogError) {
+        console.warn("[webhook] notificación sin suscripción no registrada:", unmatchedLogError.message);
+      }
       return NextResponse.json({ received: true });
     }
 
