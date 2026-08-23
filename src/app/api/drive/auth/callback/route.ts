@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { createClient } from "@/lib/supabase/server";
+import { getOrgId } from "@/lib/org-resolver";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
@@ -30,6 +31,10 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.redirect(new URL("/login", request.url));
+    }
+    const orgId = await getOrgId(supabase, user.id, request);
+    if (!orgId) {
+      return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
     }
 
     const { error } = await supabase

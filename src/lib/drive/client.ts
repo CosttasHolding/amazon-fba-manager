@@ -1,16 +1,45 @@
 import { google, drive_v3 } from "googleapis";
 import { createClient } from "@/lib/supabase/server";
 
-function getServiceAccountKey(): string {
-  const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-  if (!key) {
-    throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY no configurada");
-  }
-  return key;
-}
-
 export function getRootFolderId(): string {
   return process.env.GOOGLE_DRIVE_FOLDER_ID || "root";
+}
+
+const ORG_ROOT_PREFIX = "Amazon FBA Manager - ";
+
+function escapeDriveQueryValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+export async function getOrgRootFolderId(
+  drive: drive_v3.Drive,
+  orgId: string
+): Promise<string> {
+  const configuredRootId = getRootFolderId();
+  const folderName = `${ORG_ROOT_PREFIX}${orgId}`;
+  const existing = await drive.files.list({
+    q: `'${escapeDriveQueryValue(configuredRootId)}' in parents and name = '${escapeDriveQueryValue(folderName)}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+    fields: "files(id)",
+    pageSize: 1,
+    spaces: "drive",
+  });
+
+  const existingFolder = existing.data.files?.[0]?.id;
+  if (existingFolder) return existingFolder;
+
+  const folder = await drive.files.create({
+    requestBody: {
+      name: folderName,
+      mimeType: "application/vnd.google-apps.folder",
+      parents: [configuredRootId],
+    },
+    fields: "id",
+  });
+
+  if (!folder.data.id) {
+    throw new Error("Drive no conectado: no se pudo crear la carpeta de organización");
+  }
+  return folder.data.id;
 }
 
 export async function getDriveClient(userId?: string): Promise<drive_v3.Drive> {
@@ -20,7 +49,7 @@ export async function getDriveClient(userId?: string): Promise<drive_v3.Drive> {
   const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    return getServiceAccountDriveClient();
+    throw new Error("Drive no conectado: OAuth de Google no configurado");
   }
 
   async function getRefreshToken(): Promise<string | null> {
@@ -53,28 +82,18 @@ export async function getDriveClient(userId?: string): Promise<drive_v3.Drive> {
 
   try {
     const refreshToken = await getRefreshToken();
-    if (refreshToken) {
-      const redirectUri = `${appUrl}/api/drive/auth/callback`;
-      const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
-      oauth2Client.setCredentials({ refresh_token: refreshToken });
-      return google.drive({ version: "v3", auth: oauth2Client });
-    }
-    } catch (e) {
-      console.error("ERROR getting OAuth2 drive client", e);
+    if (!refreshToken) {
+      throw new Error("Drive no conectado: conecta tu cuenta de Google Drive");
     }
 
-  return getServiceAccountDriveClient();
-}
-
-function getServiceAccountDriveClient(): drive_v3.Drive {
-  const keyRaw = getServiceAccountKey();
-  const key = JSON.parse(keyRaw);
-
-  const auth = new google.auth.JWT({
-    email: key.client_email,
-    key: key.private_key,
-    scopes: ["https://www.googleapis.com/auth/drive"],
-  });
-
-  return google.drive({ version: "v3", auth });
+    const redirectUri = `${appUrl}/api/drive/auth/callback`;
+    const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    return google.drive({ version: "v3", auth: oauth2Client });
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Drive no conectado:")) {
+      throw error;
+    }
+    throw new Error("Drive no conectado: no se pudo cargar la autorización de Google");
+  }
 }

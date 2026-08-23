@@ -462,14 +462,14 @@ Amazon → POST /api/sp-api/webhooks → parseNotificationMessage() → procesar
 
 **Autenticación:**
 ```
-1. OAuth2 por usuario (preferido): busca drive_refresh_token en user_settings
-2. Service account fallback: usa GOOGLE_SERVICE_ACCOUNT_KEY
+1. OAuth2 obligatorio por usuario: busca drive_refresh_token en user_settings
+2. Sin OAuth y refresh token, Drive queda desconectado y la operación falla cerrado.
 ```
 
 **Operaciones:** List, Upload, Download, Delete, Rename, Update, Backup (exporta data a .xlsx)
 
 **Archivos clave:**
-- `lib/drive/client.ts` → getDriveClient() (dual auth)
+- `lib/drive/client.ts` → getDriveClient() (OAuth2 por usuario)
 - `lib/drive/types.ts` → DriveFile, BackupResult
 
 ### 7.3 Web Push Notifications

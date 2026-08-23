@@ -6,10 +6,12 @@ export const maxDuration = 120;
 
 function verifyAuth(req: NextRequest): boolean {
   const automationSecret = req.headers.get("x-automation-secret");
-  if (automationSecret && automationSecret === process.env.AUTOMATION_SECRET) return true;
+  const expectedAutomationSecret = process.env.AUTOMATION_SECRET;
+  if (expectedAutomationSecret && automationSecret === expectedAutomationSecret) return true;
 
   const authHeader = req.headers.get("authorization");
-  if (authHeader === `Bearer ${process.env.CRON_SECRET}`) return true;
+  const expectedCronSecret = process.env.CRON_SECRET;
+  if (expectedCronSecret && authHeader === `Bearer ${expectedCronSecret}`) return true;
 
   return false;
 }
@@ -108,7 +110,7 @@ export async function GET(req: NextRequest) {
         .eq("org_id", orgId)
         .eq("read", false);
 
-      summaries[membership.user_id] = {
+      summaries[`${orgId}:${membership.user_id}`] = {
         revenue_this_month: revenueThisMonth,
         revenue_last_month: revenueLastMonth,
         units_sold: unitsSold,

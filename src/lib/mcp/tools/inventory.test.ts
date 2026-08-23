@@ -5,6 +5,11 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(() => Promise.resolve({})),
 }));
 
+const mockGetForecastSuggestions = vi.fn();
+vi.mock("@/lib/forecasting", () => ({
+  getForecastSuggestions: mockGetForecastSuggestions,
+}));
+
 const mockEq = vi.fn();
 const mockSelect = vi.fn();
 const mockFrom = vi.fn();
@@ -52,5 +57,22 @@ describe("inventory MCP tools", () => {
     expect(parsed.alerts).toHaveLength(1);
     expect(parsed.alerts[0].sku).toBe("SKU-001");
     expect(parsed.alerts[0].urgency).toBe("critical");
+  });
+
+  it("get_reorder_recommendations scopes forecasting to the MCP org", async () => {
+    await import("@/lib/mcp/tools/inventory");
+    mockGetForecastSuggestions.mockResolvedValue([
+      { product_id: "p1", urgency: "warning", days_of_stock: 5 },
+    ]);
+
+    const response = await handleMcpRequest(
+      { method: "tools/call", params: { name: "get_reorder_recommendations", arguments: { limit: 1 } }, id: 2 },
+      ctx
+    );
+    const r = response as { result: { content: { text: string }[] } };
+    const parsed = JSON.parse(r.result.content[0].text);
+
+    expect(mockGetForecastSuggestions).toHaveBeenCalledWith("user-1", "org-1", mockSupabase);
+    expect(parsed.recommendations).toHaveLength(1);
   });
 });

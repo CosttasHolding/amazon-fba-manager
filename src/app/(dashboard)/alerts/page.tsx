@@ -420,7 +420,7 @@ function SchedulesTab({ reports, mutate, locale }: { reports: ScheduledReport[];
     template: "profitability" as ReportTemplate,
     frequency: "weekly" as ReportFrequency,
     time: "08:00",
-    format: "pdf" as ReportFormat,
+    format: "excel" as ReportFormat,
     recipients: [] as string[],
     emailInput: "",
   });
@@ -453,7 +453,7 @@ function SchedulesTab({ reports, mutate, locale }: { reports: ScheduledReport[];
       if (!res.ok) throw new Error("Error");
       toast.success(t("alerts.toast.schedule_created", locale));
       setCreating(false);
-      setForm({ name: "", template: "profitability", frequency: "weekly", time: "08:00", format: "pdf", recipients: [], emailInput: "" });
+      setForm({ name: "", template: "profitability", frequency: "weekly", time: "08:00", format: "excel", recipients: [], emailInput: "" });
       mutate();
     } catch {
       toast.error(t("alerts.toast.create_error", locale));
@@ -541,9 +541,7 @@ function SchedulesTab({ reports, mutate, locale }: { reports: ScheduledReport[];
                 onChange={(e) => setForm({ ...form, format: e.target.value as ReportFormat })}
                 className="w-full h-9 px-3 rounded-lg border border-border bg-popover text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               >
-                <option value="pdf">{t("alerts.format.pdf", locale)}</option>
                 <option value="excel">{t("alerts.format.excel", locale)}</option>
-                <option value="both">{t("alerts.format.both", locale)}</option>
               </select>
             </div>
             <div>

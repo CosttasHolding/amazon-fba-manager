@@ -1,8 +1,36 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createApiHandler, getOrgId } from "@/lib/api-handler";
+import { calculateNextRunAt } from "@/lib/schedules";
+
+const scheduleFieldsSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  template: z.enum(["profitability", "inventory", "sales-summary", "roi-ranking"]),
+  frequency: z.enum(["daily", "weekly", "monthly"]),
+  day_of_week: z.number().int().min(0).max(6).nullable().optional(),
+  day_of_month: z.number().int().min(1).max(31).nullable().optional(),
+  time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/),
+  channel: z.enum(["email", "in_app", "both"]),
+  recipients: z.array(z.string().email()).max(50),
+  format: z.literal("excel"),
+  enabled: z.boolean(),
+}).strict();
+
+const createScheduleSchema = scheduleFieldsSchema.extend({
+  channel: z.enum(["email", "in_app", "both"]).default("email"),
+  time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/).default("08:00"),
+  recipients: z.array(z.string().email()).max(50).default([]),
+  format: z.literal("excel").default("excel"),
+  enabled: z.boolean().default(true),
+});
+
+const updateScheduleSchema = z.object({
+  id: z.string().uuid(),
+  ...scheduleFieldsSchema.partial().shape,
+}).strict();
 
 export const GET = createApiHandler(async ({ supabase, orgId }) => {
   if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
@@ -20,19 +48,26 @@ export const GET = createApiHandler(async ({ supabase, orgId }) => {
 export const POST = createApiHandler(async ({ supabase, user, orgId, req }) => {
   if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
-  const body = await req.json();
-  if (!body.name || !body.type || !body.frequency) {
-    return NextResponse.json({ error: "name, type y frequency son requeridos" }, { status: 400 });
+  const parsed = createScheduleSchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Datos de programación inválidos" }, { status: 400 });
   }
+  const schedule = parsed.data;
 
   const { data, error } = await supabase
     .from("scheduled_reports")
     .insert({
-      name: body.name,
-      type: body.type,
-      frequency: body.frequency,
-      config: body.config || {},
-      recipients: body.recipients || [],
+      name: schedule.name,
+      template: schedule.template,
+      frequency: schedule.frequency,
+      day_of_week: schedule.day_of_week ?? null,
+      day_of_month: schedule.day_of_month ?? null,
+      time: schedule.time,
+      channel: schedule.channel,
+      recipients: schedule.recipients,
+      format: schedule.format,
+      enabled: schedule.enabled,
+      next_run_at: calculateNextRunAt(schedule),
       user_id: user.id,
       org_id: orgId,
     })
@@ -52,15 +87,44 @@ export async function PATCH(req: NextRequest) {
     const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
-    const body = await req.json();
-    const { id, ...rawUpdates } = body;
-    if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
-
-    const ALLOWED_FIELDS = ["name", "type", "frequency", "config", "recipients", "enabled"];
-    const updates: Record<string, unknown> = {};
-    for (const key of ALLOWED_FIELDS) {
-      if (key in rawUpdates) updates[key] = rawUpdates[key];
+    const parsed = updateScheduleSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Datos de actualización inválidos" }, { status: 400 });
     }
+
+    const { id, ...rawUpdates } = parsed.data;
+    const { data: current, error: currentError } = await supabase
+      .from("scheduled_reports")
+      .select("name,template,frequency,day_of_week,day_of_month,time,channel,recipients,format,enabled")
+      .eq("id", id)
+      .eq("org_id", orgId)
+      .maybeSingle();
+
+    if (currentError) return NextResponse.json({ error: currentError.message }, { status: 500 });
+    if (!current) return NextResponse.json({ error: "Reporte programado no encontrado" }, { status: 404 });
+
+    const merged = {
+      name: rawUpdates.name ?? current.name,
+      template: rawUpdates.template ?? current.template,
+      frequency: rawUpdates.frequency ?? current.frequency,
+      day_of_week: "day_of_week" in rawUpdates ? rawUpdates.day_of_week : current.day_of_week,
+      day_of_month: "day_of_month" in rawUpdates ? rawUpdates.day_of_month : current.day_of_month,
+      time: rawUpdates.time ?? current.time,
+      channel: rawUpdates.channel ?? current.channel,
+      recipients: rawUpdates.recipients ?? current.recipients,
+      format: rawUpdates.format ?? current.format,
+      enabled: rawUpdates.enabled ?? current.enabled,
+    };
+    const mergedSchedule = createScheduleSchema.safeParse(merged);
+    if (!mergedSchedule.success) {
+      return NextResponse.json({ error: "El reporte programado existente es inválido" }, { status: 500 });
+    }
+
+    const schedule = mergedSchedule.data;
+    const updates = {
+      ...schedule,
+      next_run_at: calculateNextRunAt(schedule),
+    };
 
     const { data, error } = await supabase
       .from("scheduled_reports")

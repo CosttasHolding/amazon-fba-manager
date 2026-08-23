@@ -53,9 +53,10 @@ export async function POST(req: NextRequest) {
 
     const { data: connection } = await supabase
       .from("sp_api_connections")
-      .select("id, marketplace, refresh_token, seller_id, access_token, token_expires_at")
+      .select("id, org_id, user_id, marketplace, refresh_token, seller_id, access_token, token_expires_at")
       .eq("id", connectionId)
       .eq("org_id", orgId)
+      .eq("user_id", user.id)
       .eq("status", "active")
       .single();
 

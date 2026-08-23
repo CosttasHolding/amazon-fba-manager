@@ -510,7 +510,7 @@ Backup externo es esencial para datos criticos de negocio. Google Drive es la op
 ### Relaciones:
 - Exporta data de: products, sales, orders, inventory, suppliers
 - Api endpoints: GET /api/drive/auth, GET /api/drive/list, POST /api/drive/upload, GET/DELETE /api/drive/download/[id], POST /api/drive/backup
-- Auth: OAuth2 por usuario o service account fallback
+- Auth: OAuth2 obligatorio por usuario; sin refresh token, Drive queda desconectado
 - Components: drive-browser.tsx, drive-toolbar.tsx, drive-file-list.tsx, drive-upload-dialog.tsx, drive-text-editor.tsx, drive-image-viewer.tsx, drive-backup.tsx
 
 ---

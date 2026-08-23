@@ -2,14 +2,15 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getDriveClient, getRootFolderId } from "@/lib/drive";
+import { getDriveClient, getOrgRootFolderId } from "@/lib/drive";
+import { getOrgId } from "@/lib/org-resolver";
 import {
   assertFileWithinRoot,
   FolderOutsideRootError,
 } from "@/lib/drive/folder-guard";
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -17,10 +18,13 @@ export async function DELETE(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!params.id) return NextResponse.json({ error: "Missing file ID" }, { status: 400 });
+    const orgId = await getOrgId(supabase, user.id, req);
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
-    const drive = await getDriveClient();
+    const drive = await getDriveClient(user.id);
+    const rootId = await getOrgRootFolderId(drive, orgId);
     try {
-      await assertFileWithinRoot(drive, params.id, getRootFolderId());
+      await assertFileWithinRoot(drive, params.id, rootId);
     } catch (err) {
       if (err instanceof FolderOutsideRootError) {
         return NextResponse.json({ error: err.message }, { status: 403 });

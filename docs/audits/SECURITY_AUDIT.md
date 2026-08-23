@@ -22,7 +22,7 @@ Fecha: 2026-08-22 | Método: subagente read-only (`security-reviewer`) sobre HEA
 
 ### C2 🔴 Drive IDOR entre tenants
 - `drive/list|upload|folders/route.ts`: `folderId` del cliente sin validar ownership; `drive/client.ts:22-23` cae a service account compartida sin OAuth → listar/descargar/borrar backups financieros de otras orgs.
-- Fix propuesto: derivar carpeta raíz por org y validar que `folderId` pertenezca al árbol permitido; eliminar fallback service-account o restringirlo a cron autenticado.
+- Fix aplicado: las rutas pasan el usuario autenticado a `getDriveClient()`, que solo usa OAuth2 por usuario y falla cerrado sin refresh token; el guard valida la contención del `folderId` dentro del root autorizado.
 
 ### C3 🔴 Webhook SP-API sin firma ni atribución
 - `sp-api/webhooks/route.ts:9-15`: auth condicional (`if (webhookSecret)`); sin HMAC de Amazon; suscripción elegida por `notification_type .limit(1)` global sin seller/connection → notificaciones cruzadas entre orgs.
@@ -56,7 +56,7 @@ Fecha: 2026-08-22 | Método: subagente read-only (`security-reviewer`) sobre HEA
 | Finding | Fix | Verificación |
 |---|---|---|
 | C1 | `supabase/migrations/036_fix_org_invitations_rls.sql`: policy `org_inv_update` restringida a invitado (email) u owner/admin de la org + GRANT por columna (solo `status` actualizable) | Migración creada — **PENDIENTE aplicar en prod** (SQL Editor / Management API) |
-| C2 | `src/lib/drive/folder-guard.ts`: contención por cadena de ancestros hasta el root configurado. Aplicado en list/upload/folders/rename/download/delete/update. Residual: si fallback service-account y sin `GOOGLE_DRIVE_FOLDER_ID`, el root es todo My Drive de la SA (aislación total requiere OAuth por usuario) | `folder-guard.test.ts` 9 tests |
+| C2 | `src/lib/drive/folder-guard.ts`: contención por cadena de ancestros hasta el root configurado y OAuth2 obligatorio por usuario en todas las rutas Drive; sin cuenta global fallback | `folder-guard.test.ts` + `client.test.ts` |
 | C3 | Webhook fail-closed: sin `SP_API_WEBHOOK_SECRET` responde 503; comparación timing-safe; suscripción seleccionada por `amazon_subscription_id` del payload (`notificationMetadata`), no `.limit(1)` global | `webhook-auth.test.ts` 7 tests |
 | H1 | `createApiHandler` verifica membership activa del `x-org-id` (403 si no); `getOrgId` ignora header ajeno y cae al org default | `org-resolver.test.ts` 3 tests |
 | H2 | Sin Upstash o ante error de Upstash: límite en memoria por instancia (ventana fija, tope 10k claves). Ya no es fail-open total. Limitación: memoria no compartida entre lambdas | `rate-limit.test.ts` 2 tests |

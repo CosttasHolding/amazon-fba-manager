@@ -8,6 +8,7 @@ export const maxDuration = 300;
 interface RuleWithUser {
   id: string;
   user_id: string;
+  org_id: string | null;
   name: string;
   description: string | null;
   entity: string;
@@ -22,49 +23,62 @@ interface RuleWithUser {
 export async function GET(req: NextRequest) {
   try {
     const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    const expectedSecret = process.env.CRON_SECRET;
+    if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const supabase = createServiceRoleClient();
     const results: { ruleId: string; name: string; triggered: boolean; error?: string }[] = [];
 
-    const { data: rules } = await supabase
+    const { data: rules, error: rulesError } = await supabase
       .from("alert_rules")
       .select("*, users:user_id(email)")
-      .eq("enabled", true) as { data: RuleWithUser[] | null };
+      .eq("enabled", true)
+      .not("org_id", "is", null) as { data: RuleWithUser[] | null; error: { message: string } | null };
+
+    if (rulesError) return NextResponse.json({ error: "No se pudieron cargar las reglas" }, { status: 500 });
 
     if (!rules || rules.length === 0) {
       return NextResponse.json({ message: "No active rules", triggered: 0 });
     }
 
     const userIds = [...new Set(rules.map((r) => r.user_id))];
-    const { data: allProducts } = await supabase
+    const orgIds = [...new Set(rules.map((r) => r.org_id).filter((id): id is string => Boolean(id)))];
+    const { data: allProducts, error: productsError } = await supabase
       .from("products_with_inventory")
       .select("*")
-      .in("user_id", userIds);
+      .in("user_id", userIds)
+      .in("org_id", orgIds);
+    if (productsError) return NextResponse.json({ error: "No se pudieron cargar los productos" }, { status: 500 });
 
-    const { data: campaigns } = await supabase
+    const { data: campaigns, error: campaignsError } = await supabase
       .from("ppc_campaigns")
       .select("*")
       .eq("status", "enabled")
-      .in("user_id", userIds);
+      .in("user_id", userIds)
+      .in("org_id", orgIds);
+    if (campaignsError) return NextResponse.json({ error: "No se pudieron cargar las campañas" }, { status: 500 });
 
-    const { data: reorderRules } = await supabase
+    const { data: reorderRules, error: reorderRulesError } = await supabase
       .from("reorder_rules")
       .select("*")
       .eq("enabled", true)
-      .in("user_id", userIds);
+      .in("user_id", userIds)
+      .in("org_id", orgIds);
+    if (reorderRulesError) return NextResponse.json({ error: "No se pudieron cargar las reglas de reorden" }, { status: 500 });
 
     // Fetch supplier names for all products that have alerts
     const productIds = (allProducts || []).map((p) => p.id);
     const supplierMap = new Map<string, string>();
     if (productIds.length > 0) {
-      const { data: psLinks } = await supabase
+      const { data: psLinks, error: supplierError } = await supabase
         .from("product_suppliers")
         .select("product_id, suppliers!inner(id, name)")
         .in("product_id", productIds)
+        .in("org_id", orgIds)
         .eq("is_primary", true);
+      if (supplierError) return NextResponse.json({ error: "No se pudieron cargar los proveedores" }, { status: 500 });
       for (const link of psLinks || []) {
         const supplier = (link as Record<string, unknown>).suppliers as { id: string; name: string } | null;
         if (supplier?.name) {
@@ -73,15 +87,37 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const productsByUser: Record<string, NonNullable<typeof allProducts>> = {};
+    const productsByTenant: Record<string, NonNullable<typeof allProducts>> = {};
     for (const p of allProducts || []) {
-      if (!productsByUser[p.user_id]) productsByUser[p.user_id] = [];
-      productsByUser[p.user_id]!.push(p);
+      const key = `${p.org_id}:${p.user_id}`;
+      if (!productsByTenant[key]) productsByTenant[key] = [];
+      productsByTenant[key]!.push(p);
     }
 
+    const criticalErrors: string[] = [];
     for (const rule of rules) {
       try {
-        const userProducts = productsByUser[rule.user_id] || [];
+        if (!rule.org_id) continue;
+
+        const { data: membership, error: membershipError } = await supabase
+          .from("org_members")
+          .select("user_id")
+          .eq("user_id", rule.user_id)
+          .eq("org_id", rule.org_id)
+          .eq("status", "active")
+          .maybeSingle();
+        if (membershipError) {
+          results.push({ ruleId: rule.id, name: rule.name, triggered: false, error: "Membership validation failed" });
+          criticalErrors.push(`alert_rule:${rule.id}`);
+          continue;
+        }
+        if (!membership) {
+          results.push({ ruleId: rule.id, name: rule.name, triggered: false, error: "Inactive organization membership" });
+          continue;
+        }
+
+        const tenantKey = `${rule.org_id}:${rule.user_id}`;
+        const userProducts = productsByTenant[tenantKey] || [];
         let triggered = false;
         let severity: "critical" | "warning" | "info" = "warning";
         let title = "";
@@ -154,7 +190,7 @@ export async function GET(req: NextRequest) {
             break;
           }
           case "ppc_overbudget": {
-            const userCampaigns = (campaigns || []).filter((c) => c.user_id === rule.user_id);
+            const userCampaigns = (campaigns || []).filter((c) => c.user_id === rule.user_id && c.org_id === rule.org_id);
             const budgetThreshold = rule.threshold || 10;
             const overBudget = userCampaigns.filter((c) => (c.daily_budget || 0) > budgetThreshold);
             if (overBudget.length > 0) {
@@ -170,6 +206,7 @@ export async function GET(req: NextRequest) {
         if (triggered) {
           const { error: histErr } = await supabase.from("alert_history").insert({
             user_id: rule.user_id,
+            org_id: rule.org_id,
             rule_id: rule.id,
             rule_name: rule.name,
             entity: rule.entity,
@@ -185,10 +222,16 @@ export async function GET(req: NextRequest) {
             continue;
           }
 
-          await supabase
+          const { error: updateError } = await supabase
             .from("alert_rules")
             .update({ last_triggered_at: new Date().toISOString() })
-            .eq("id", rule.id);
+            .eq("id", rule.id)
+            .eq("org_id", rule.org_id);
+          if (updateError) {
+            results.push({ ruleId: rule.id, name: rule.name, triggered: true, error: "Failed to update alert rule" });
+            criticalErrors.push(`alert_rule_update:${rule.id}`);
+            continue;
+          }
 
           if (rule.channel === "email" || rule.channel === "both") {
             const typedRule = rule as RuleWithUser;
@@ -214,53 +257,96 @@ export async function GET(req: NextRequest) {
     // Auto-reorder evaluation
     if (reorderRules && reorderRules.length > 0) {
       const reorderProductIds = reorderRules.map((rr) => rr.product_id).filter(Boolean);
-      const { data: reorderProducts } = await supabase
+      const { data: reorderProducts, error: reorderProductsError } = await supabase
         .from("products_with_inventory")
-        .select("id, name, sku, stock_available, sales_velocity_30d")
-        .in("id", reorderProductIds);
+        .select("id, org_id, name, sku, unit_cost, stock_available, sales_velocity_30d")
+        .in("id", reorderProductIds)
+        .in("org_id", orgIds);
+      if (reorderProductsError) return NextResponse.json({ error: "No se pudieron cargar los productos de reorden" }, { status: 500 });
 
-      const reorderProductsMap = new Map((reorderProducts || []).map((p) => [p.id, p]));
+      const reorderProductsMap = new Map((reorderProducts || []).map((p) => [`${p.org_id}:${p.id}`, p]));
 
       const reorderResults: { ruleId: string; productName: string; needsReorder: boolean }[] = [];
       for (const rr of reorderRules) {
-        const product = reorderProductsMap.get(rr.product_id) || null;
+        if (!rr.org_id) continue;
 
-        const stock = product?.stock_available || 0;
+        const { data: membership, error: membershipError } = await supabase
+          .from("org_members")
+          .select("user_id")
+          .eq("user_id", rr.user_id)
+          .eq("org_id", rr.org_id)
+          .eq("status", "active")
+          .maybeSingle();
+        if (membershipError) {
+          criticalErrors.push(`reorder_rule_membership:${rr.id}`);
+          continue;
+        }
+        if (!membership) continue;
+
+        const product = reorderProductsMap.get(`${rr.org_id}:${rr.product_id}`) || null;
+        if (!product) {
+          criticalErrors.push(`reorder_rule_product:${rr.id}`);
+          continue;
+        }
+
+        const stock = product.stock_available || 0;
         const needsReorder = stock <= rr.min_stock;
 
-        await supabase
+        const { error: evaluatedError } = await supabase
           .from("reorder_rules")
           .update({ last_evaluated_at: new Date().toISOString() })
-          .eq("id", rr.id);
+          .eq("id", rr.id)
+          .eq("org_id", rr.org_id);
+        if (evaluatedError) {
+          criticalErrors.push(`reorder_rule_update:${rr.id}`);
+          continue;
+        }
 
         if (needsReorder && rr.auto_po) {
           const velocity = product?.sales_velocity_30d || 0;
           const suggestedQty = Math.max(1, Math.ceil((rr.max_stock - stock) / Math.max(velocity / 30, 1)));
 
-          const { count } = await supabase
-            .from("orders")
+          const { count, error: purchaseOrderQueryError } = await supabase
+            .from("purchase_orders")
             .select("*", { count: "exact", head: true })
             .eq("user_id", rr.user_id)
+            .eq("org_id", rr.org_id)
             .eq("product_id", rr.product_id)
             .in("status", ["draft", "sent", "confirmed"]);
+          if (purchaseOrderQueryError) {
+            criticalErrors.push(`purchase_order_lookup:${rr.id}`);
+            continue;
+          }
 
           if (count === 0) {
-            await supabase.from("orders").insert({
+            const { error: purchaseOrderError } = await supabase.from("purchase_orders").insert({
               user_id: rr.user_id,
+              org_id: rr.org_id,
               supplier_id: rr.supplier_id,
               product_id: rr.product_id,
               quantity: suggestedQty,
+              unit_cost: product?.unit_cost || 0,
               status: "draft",
               notes: `Auto-generado por regla de reorden (mín: ${rr.min_stock}, máx: ${rr.max_stock})`,
             });
+            if (purchaseOrderError) {
+              criticalErrors.push(`purchase_order_insert:${rr.id}`);
+              continue;
+            }
 
-            await supabase
+            const { error: poUpdateError } = await supabase
               .from("reorder_rules")
               .update({ last_po_generated_at: new Date().toISOString() })
-              .eq("id", rr.id);
+              .eq("id", rr.id)
+              .eq("org_id", rr.org_id);
+            if (poUpdateError) {
+              criticalErrors.push(`reorder_rule_po_update:${rr.id}`);
+              continue;
+            }
 
-            await supabase.from("alert_history").insert({
+            const { error: historyError } = await supabase.from("alert_history").insert({
               user_id: rr.user_id,
+              org_id: rr.org_id,
               rule_name: `Auto-Reorder: ${product?.name || rr.product_id}`,
               entity: "inventory",
               condition_type: "low_stock",
@@ -269,6 +355,10 @@ export async function GET(req: NextRequest) {
               message: `Se generó un PO de ${suggestedQty} uds (stock actual: ${stock}, mínimo: ${rr.min_stock})`,
               channel_sent: ["in_app"],
             });
+            if (historyError) {
+              criticalErrors.push(`reorder_alert_history:${rr.id}`);
+              continue;
+            }
           }
 
           reorderResults.push({ ruleId: rr.id, productName: product?.name || "", needsReorder: true });
@@ -285,6 +375,7 @@ export async function GET(req: NextRequest) {
       total: results.length,
       results,
       reorderRulesEvaluated: reorderRules?.length || 0,
+      errors: criticalErrors,
     });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });

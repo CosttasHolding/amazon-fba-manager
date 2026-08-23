@@ -18,13 +18,16 @@ Los endpoints se ejecutan automaticamente via **Vercel Cron** segun la configura
 | Endpoint | Metodo | Descripcion |
 |----------|--------|-------------|
 | `/api/automation/notifications` | GET/POST | Genera y persiste notificaciones. Devuelve criticas + warnings |
-| `/api/automation/forecasting` | GET/POST | Devuelve productos en estado critical/warning |
+| `/api/automation/forecasting` | GET/POST | Endpoint interno: devuelve solo conteos critical/warning por `x-org-id` |
 | `/api/automation/weekly-summary` | GET/POST | Resumen semanal: revenue, ROI, alertas, top 5 |
+
+Los reportes programados usan actualmente solo `format: "excel"`, porque el cron genera XLSX. La API rechaza `pdf` y `both` al crear o actualizar un schedule y el cron no procesa schedules legacy con otro formato.
 
 ### Autenticacion
 
 Todos aceptan el header:
 - `Authorization: Bearer <CRON_SECRET>`
+- Forecasting también acepta `x-automation-secret` y exige `x-org-id` UUID; nunca devuelve sugerencias detalladas.
 
 ### Variables de Entorno Requeridas
 

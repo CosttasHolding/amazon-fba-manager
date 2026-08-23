@@ -1,6 +1,6 @@
 ﻿export const dynamic = "force-dynamic";
 
-import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Package, TrendingUp, DollarSign, AlertTriangle, Activity } from "lucide-react";
 import { ReactNode } from "react";
@@ -11,22 +11,25 @@ interface Props {
 }
 
 async function fetchSharedData(token: string) {
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
 
   const { data: link, error: linkError } = await supabase
     .from("shared_links")
     .select("*")
     .eq("token", token)
     .eq("active", true)
+    .not("org_id", "is", null)
     .single();
 
   if (linkError || !link) return null;
+  if (!link.org_id) return null;
   if (link.expires_at && new Date(link.expires_at) < new Date()) return null;
 
   const { data: products } = await supabase
     .from("products_with_inventory")
     .select("*")
-    .eq("user_id", link.user_id);
+    .eq("user_id", link.user_id)
+    .eq("org_id", link.org_id);
 
   const allProducts = products || [];
   const activeProducts = allProducts.filter((p) => p.status === "active");
@@ -50,6 +53,7 @@ async function fetchSharedData(token: string) {
     .from("sales")
     .select("sale_date, revenue, units_sold, product_id")
     .eq("user_id", link.user_id)
+    .eq("org_id", link.org_id)
     .gte("sale_date", lastMonthStart)
     .order("sale_date", { ascending: true });
 

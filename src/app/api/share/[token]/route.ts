@@ -1,21 +1,26 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
     const { token } = await params;
-    const supabase = await createClient();
+    const supabase = createServiceRoleClient();
 
     const { data: link, error: linkError } = await supabase
       .from("shared_links")
       .select("*")
       .eq("token", token)
       .eq("active", true)
+      .not("org_id", "is", null)
       .single();
 
     if (linkError || !link) {
+      return NextResponse.json({ error: "Link no encontrado o expirado" }, { status: 404 });
+    }
+
+    if (!link.org_id) {
       return NextResponse.json({ error: "Link no encontrado o expirado" }, { status: 404 });
     }
 
@@ -23,11 +28,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
       return NextResponse.json({ error: "Link expirado" }, { status: 410 });
     }
 
-    const { data: products } = await supabase
+    let productsQuery = supabase
       .from("products_with_inventory")
       .select("id, name, sku, status, category, stock_available, stock_status, sales_velocity_30d, sale_price")
-      .eq("user_id", link.user_id);
+      .eq("user_id", link.user_id)
+      .eq("org_id", link.org_id);
 
+    const { data: products } = await productsQuery;
     const allProducts = products || [];
     const activeProducts = allProducts.filter((p) => p.status === "active");
 
@@ -42,12 +49,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
     const lastMonthStart = `${lastMonthYear}-${String(lastMonth + 1).padStart(2, "0")}-01`;
     const lastMonthEnd = `${lastMonthYear}-${String(lastMonth + 1).padStart(2, "0")}-${String(new Date(lastMonthYear, lastMonth + 1, 0).getDate()).padStart(2, "0")}`;
 
-    const { data: allSales } = await supabase
+    let salesQuery = supabase
       .from("sales")
       .select("sale_date, revenue, units_sold, product_id")
       .eq("user_id", link.user_id)
-      .gte("sale_date", lastMonthStart)
-      .order("sale_date", { ascending: true });
+      .eq("org_id", link.org_id)
+      .gte("sale_date", lastMonthStart);
+
+    const { data: allSales } = await salesQuery.order("sale_date", { ascending: true });
 
     const sales = allSales || [];
     const currentMonthSales = sales.filter((s) => s.sale_date >= currentMonthStart && s.sale_date <= currentMonthEnd);

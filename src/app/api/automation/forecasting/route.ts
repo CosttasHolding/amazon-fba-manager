@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getForecastSuggestions } from "@/lib/forecasting";
 
@@ -7,10 +8,12 @@ export const maxDuration = 120;
 
 function verifyAuth(req: NextRequest): boolean {
   const automationSecret = req.headers.get("x-automation-secret");
-  if (automationSecret && automationSecret === process.env.AUTOMATION_SECRET) return true;
+  const expectedAutomationSecret = process.env.AUTOMATION_SECRET;
+  if (expectedAutomationSecret && automationSecret === expectedAutomationSecret) return true;
 
   const authHeader = req.headers.get("authorization");
-  if (authHeader === `Bearer ${process.env.CRON_SECRET}`) return true;
+  const expectedCronSecret = process.env.CRON_SECRET;
+  if (expectedCronSecret && authHeader === `Bearer ${expectedCronSecret}`) return true;
 
   return false;
 }
@@ -20,24 +23,31 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const orgId = req.headers.get("x-org-id");
+  if (!orgId || !z.string().uuid().safeParse(orgId).success) {
+    return NextResponse.json({ error: "x-org-id inválido" }, { status: 400 });
+  }
+
   try {
     const supabase = createServiceRoleClient();
 
-    const { data: users } = await supabase.auth.admin.listUsers();
-    const allUsers = users?.users || [];
+    let criticalCount = 0;
+    let warningCount = 0;
+    const { data: memberships, error: membershipsError } = await supabase
+      .from("org_members")
+      .select("user_id")
+      .eq("org_id", orgId)
+      .eq("status", "active");
 
-    const results: Record<string, { critical: unknown[]; warning: unknown[] }> = {};
+    if (membershipsError) throw membershipsError;
 
-    for (const user of allUsers) {
-      const suggestions = await getForecastSuggestions(user.id, supabase);
-      const critical = suggestions.filter((s) => s.urgency === "critical");
-      const warning = suggestions.filter((s) => s.urgency === "warning");
-      if (critical.length > 0 || warning.length > 0) {
-        results[user.id] = { critical, warning };
-      }
+    for (const membership of memberships || []) {
+      const suggestions = await getForecastSuggestions(membership.user_id, orgId, supabase);
+      criticalCount += suggestions.filter((s) => s.urgency === "critical").length;
+      warningCount += suggestions.filter((s) => s.urgency === "warning").length;
     }
 
-    return NextResponse.json(results);
+    return NextResponse.json({ org_id: orgId, criticalCount, warningCount });
   } catch (err) {
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }

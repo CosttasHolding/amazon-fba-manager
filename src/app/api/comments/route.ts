@@ -27,6 +27,7 @@ export const GET = createApiHandler(async ({ supabase, orgId, req }) => {
     .select("*, profiles:user_id(full_name, avatar_url)", { count: "exact" })
     .eq("entity", entity)
     .eq("entity_id", entity_id)
+    .eq("org_id", orgId)
     .order("created_at", { ascending: true })
     .range(from, to);
 

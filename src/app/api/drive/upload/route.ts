@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { Readable } from "stream";
 import { createClient } from "@/lib/supabase/server";
-import { getDriveClient, getRootFolderId } from "@/lib/drive";
+import { getDriveClient, getOrgRootFolderId } from "@/lib/drive";
+import { getOrgId } from "@/lib/org-resolver";
 import {
   assertFolderWithinRoot,
   FolderOutsideRootError,
@@ -14,10 +15,12 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    const orgId = await getOrgId(supabase, user.id, req);
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    const folderId = (formData.get("folderId") as string) || getRootFolderId();
+    const requestedFolderId = (formData.get("folderId") as string) || null;
 
     if (!file) {
       return NextResponse.json({ error: "No se envió ningún archivo" }, { status: 400 });
@@ -28,10 +31,12 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const drive = await getDriveClient();
+    const drive = await getDriveClient(user.id);
+    const rootId = await getOrgRootFolderId(drive, orgId);
+    const folderId = !requestedFolderId || requestedFolderId === "root" ? rootId : requestedFolderId;
 
     try {
-      await assertFolderWithinRoot(drive, folderId, getRootFolderId());
+      await assertFolderWithinRoot(drive, folderId, rootId);
     } catch (err) {
       if (err instanceof FolderOutsideRootError) {
         return NextResponse.json({ error: err.message }, { status: 403 });

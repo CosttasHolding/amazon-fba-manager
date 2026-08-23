@@ -3,12 +3,15 @@ export const dynamic = "force-dynamic";
 import { NextResponse, NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { google } from "googleapis";
+import { getOrgId } from "@/lib/org-resolver";
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const orgId = await getOrgId(supabase, user.id, request);
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
     const origin = request.nextUrl.origin;
     const redirectUri = `${origin}/api/drive/auth/callback`;

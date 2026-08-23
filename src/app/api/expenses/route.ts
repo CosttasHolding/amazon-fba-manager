@@ -49,6 +49,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Datos invalidos", details: result.error.flatten().fieldErrors }, { status: 400 });
     }
 
+    if (result.data.product_id) {
+      const { data: product, error: productError } = await supabase
+        .from("products")
+        .select("id")
+        .eq("id", result.data.product_id)
+        .eq("org_id", orgId)
+        .maybeSingle();
+
+      if (productError) return NextResponse.json({ error: "Error al validar el producto" }, { status: 500 });
+      if (!product) return NextResponse.json({ error: "El producto no pertenece a la organización" }, { status: 400 });
+    }
+
     const clean = { ...result.data, user_id: user.id, org_id: orgId };
     const { data, error } = await supabase.from("expenses").insert(clean).select().single();
     if (error) {

@@ -44,24 +44,33 @@ export async function POST(request: NextRequest) {
         .eq("notification_type", notification.type)
         .eq("status", "active")
         .eq("amazon_subscription_id", amazonSubscriptionId)
+        .not("org_id", "is", null)
         .maybeSingle();
       subscription = data ?? null;
     }
 
     if (!subscription) {
-      const { error: unmatchedLogError } = await supabase
-        .from("sp_api_webhook_logs")
-        .insert({
-          user_id: "00000000-0000-0000-0000-000000000000",
-          org_id: "00000000-0000-0000-0000-000000000000",
-          notification_type: notification.type,
-          amazon_notification_id: notification.amazonNotificationId,
-          payload: notification.data,
-          status: "received",
-        });
-      if (unmatchedLogError) {
-        console.warn("[webhook] notificación sin suscripción no registrada:", unmatchedLogError.message);
-      }
+      return NextResponse.json({ received: true });
+    }
+
+    const [{ data: connection }, { data: membership }] = await Promise.all([
+      supabase
+        .from("sp_api_connections")
+        .select("id")
+        .eq("id", subscription.connection_id)
+        .eq("user_id", subscription.user_id)
+        .eq("org_id", subscription.org_id)
+        .maybeSingle(),
+      supabase
+        .from("org_members")
+        .select("org_id")
+        .eq("org_id", subscription.org_id)
+        .eq("user_id", subscription.user_id)
+        .eq("status", "active")
+        .maybeSingle(),
+    ]);
+
+    if (!connection || !membership) {
       return NextResponse.json({ received: true });
     }
 

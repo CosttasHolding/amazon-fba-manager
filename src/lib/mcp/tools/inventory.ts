@@ -85,7 +85,7 @@ const reorderRecommendationsTool: ToolModule = {
   },
   handler: async (args, ctx) => {
     const limit = Math.max(1, Number(args.limit) || 20);
-    const suggestions = await getForecastSuggestions(ctx.userId, ctx.supabase);
+    const suggestions = await getForecastSuggestions(ctx.userId, ctx.orgId, ctx.supabase);
     return { recommendations: suggestions.slice(0, limit) };
   },
 };

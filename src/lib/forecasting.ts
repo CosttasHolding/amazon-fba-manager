@@ -26,12 +26,14 @@ interface ProductRow {
 
 export async function getForecastSuggestions(
   userId: string,
+  orgId: string,
   supabase: Awaited<ReturnType<typeof createClient>>
 ): Promise<ForecastSuggestion[]> {
   const { data: products, error: productsError } = await supabase
     .from("products_with_inventory")
     .select("*, product_suppliers(lead_time_days, unit_cost, suppliers(name))")
     .eq("user_id", userId)
+    .eq("org_id", orgId)
     .eq("status", "active");
 
   if (productsError) throw productsError;

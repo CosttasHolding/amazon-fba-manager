@@ -273,6 +273,8 @@ type HandlerContext = {
 
 **Sync Types:** products, orders, inventory, fees, returns, payouts
 
+El sync `payouts` conserva las líneas detalladas en `amazon_settlement_lines` y crea gastos solo para transacciones distintas de `Order`. Los gastos importados usan una clave `source_key` determinista por organización, liquidación y línea para permitir reintentos seguros y evitar duplicados concurrentes; mantienen el importe absoluto y la moneda del reporte.
+
 ---
 
 ### 2.15 Google Drive (`/api/drive/`)
@@ -365,10 +367,11 @@ type HandlerContext = {
 | `POST` | `/api/share` | Crear link | `{ title?, expiresAt? }` |
 | `GET` | `/api/share/[token]` | Obtener data de link público | - |
 | `GET` | `/api/analytics/comparison` | Comparación de períodos | `?period=&compareWith=` |
+| `GET` | `/api/analytics/fees` | Resumen de fees de settlement | `?startDate=&endDate=&marketplace=&productId=&feeType=` |
 | `GET` | `/api/forecasting` | Sugerencias de reorden | - |
 | `POST` | `/api/automation/weekly-summary` | Resumen semanal | - |
 | `POST` | `/api/automation/notifications` | Auto-generar notificaciones | - |
-| `POST` | `/api/automation/forecasting` | Auto-forecasting | - |
+| `POST` | `/api/automation/forecasting` | Auto-forecasting interno: conteos por `x-org-id` | `x-org-id` UUID |
 | `GET` | `/api/schedules` | Reportes programados | - |
 | `POST` | `/api/schedules` | Crear reporte programado | `{ name, template, frequency, ... }` |
 | `PUT` | `/api/schedules` | Actualizar reporte | `{ enabled?, ... }` |
@@ -377,6 +380,14 @@ type HandlerContext = {
 | `POST` | `/api/reorder-rules` | Crear regla | `{ product_id, min_stock, ... }` |
 | `PUT` | `/api/reorder-rules` | Actualizar regla | `{ min_stock?, ... }` |
 | `DELETE` | `/api/reorder-rules` | Eliminar regla | `?id=` |
+
+---
+
+### 2.20 Analytics de fees
+
+`GET /api/analytics/fees` lee `amazon_settlement_lines` con el `org_id` resuelto por el contexto autenticado. Si no se envían fechas, limita la lectura a los últimos 90 días; si solo se envía una fecha, completa el otro extremo para mantener el rango acotado. Las filas con `posted_at` nulo quedan fuera de los rangos fechados. `amount` conserva su signo de base de datos, por lo que cargos y ajustes negativos se suman algebraicamente.
+
+La respuesta agrupa las mismas líneas en paralelo por moneda: `summary.currency` contiene el código si solo hay una moneda, `mixed` si hay varias y `null` si no hay líneas; en el caso `mixed`, `summary.totalFees` es `null`. `byFeeType` suma por `fee_type` y `currency`, `byDate` suma por `posted_at` y `currency` en formato ISO, y `byProduct` agrupa por `product_id` y `currency`, solo incluye líneas con `product_id` no nulo y conserva el primer `sku` y `asin` disponibles de cada grupo. Las líneas sin fecha o sin producto no se inventan ni se asignan a un grupo artificial; siguen contando en `summary` y, cuando existe, en `byFeeType`. No se devuelve `feePerUnit` porque `amazon_settlement_lines` no contiene unidades.
 
 ---
 

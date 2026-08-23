@@ -51,6 +51,7 @@
 | 41 | `succession_events` | Governance | Eventos de sucesión (death/transfer/buyout/retirement) |
 | 42 | `rate_limits` | Infra | Rate limiting de endpoints |
 | 43 | `research_groups` | Research | Grupos de research (item + competidores) |
+| 44 | `amazon_settlement_lines` | Finances | Líneas detalladas de liquidaciones de Amazon |
 
 **Vistas:**
 - `products_with_inventory` → JOIN de products + inventory + sales aggregation (security_invoker)
@@ -129,7 +130,7 @@
 | `id` | UUID | PK, DEFAULT gen_random_uuid() | |
 | `user_id` | UUID | NOT NULL, FK → profiles(id) | |
 | `org_id` | UUID | FK → organizations(id) | Añadido en migración 024 |
-| `sku` | TEXT | NULLABLE | Único por user |
+| `sku` | TEXT | NULLABLE | Único por organización |
 | `asin` | TEXT | | Amazon Standard Identification Number |
 | `name` | TEXT | NOT NULL | |
 | `category` | TEXT | | Electronics, Toys, Home, Kitchen, Health, Beauty, Sports, Books, Other |
@@ -156,7 +157,7 @@
 | `updated_at` | TIMESTAMPTZ | | |
 
 **Constraints:**
-- UNIQUE(user_id, sku) → SKU único por usuario
+- UNIQUE(org_id, sku) → SKU único dentro de una organización
 - **4 columnas generadas** → total_cost, total_fees, net_profit, roi se calculan automáticamente
 
 **Trigger:** `trg_auto_inv` → Auto-crear inventory row al crear producto
@@ -266,6 +267,7 @@
 | `product_id` | UUID | NOT NULL, FK → products(id) | |
 | `supplier_id` | UUID | NOT NULL, FK → suppliers(id) | |
 | `user_id` | UUID | NOT NULL, FK → profiles(id) | |
+| `org_id` | UUID | FK → organizations(id) | Migración 039 |
 | `unit_cost` | DECIMAL(10,4) | | Precio de este proveedor |
 | `moq` | INTEGER | | MOQ específico |
 | `lead_time_days` | INTEGER | | Lead time específico |
@@ -390,6 +392,7 @@ idea → validating → approved → in_progress → launched
 | `id` | UUID | PK | |
 | `user_id` | UUID | NOT NULL | |
 | `org_id` | UUID | FK → organizations(id) | Migración 024 |
+| `source_key` | TEXT | Nullable, UNIQUE(`org_id`, `source_key`) | Clave de idempotencia de importaciones externas |
 | `product_id` | UUID | FK → products(id) | Opcional |
 | `category` | TEXT | NOT NULL, CHECK: 11 categorías | ppc/software/va_services/samples/photography/shipping_forwarder/customs/prep_center/storage_3pl/travel/other |
 | `subcategory` | TEXT | | |
@@ -424,6 +427,32 @@ idea → validating → approved → in_progress → launched
 | `marketplace` | TEXT | | |
 | `notes` | TEXT | | |
 | `created_at` | TIMESTAMPTZ | | |
+
+### 4.3 `amazon_settlement_lines`
+
+| Columna | Tipo | Constraints | Notas |
+|---------|------|-------------|-------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | |
+| `org_id` | UUID | NOT NULL, FK → organizations(id) ON DELETE CASCADE | Scope multi-tenant |
+| `user_id` | UUID | NOT NULL, FK → profiles(id) ON DELETE CASCADE | Usuario que importó la línea |
+| `connection_id` | UUID | FK → sp_api_connections(id) ON DELETE SET NULL | Conexión SP-API de origen |
+| `report_id` | TEXT | | ID del reporte de Amazon |
+| `settlement_id` | TEXT | NOT NULL | ID de la liquidación |
+| `line_hash` | TEXT | NOT NULL | Hash de línea para idempotencia |
+| `marketplace` | TEXT | | Marketplace de Amazon |
+| `transaction_type` | TEXT | | Tipo de transacción |
+| `fee_type` | TEXT | | Tipo de fee |
+| `amount` | NUMERIC(14,2) | NOT NULL | Importe de la línea |
+| `currency` | TEXT | NOT NULL, DEFAULT 'USD' | Moneda del importe |
+| `posted_at` | DATE | | Fecha de contabilización |
+| `order_id` | TEXT | | ID de pedido Amazon |
+| `sku` | TEXT | | SKU del merchant |
+| `asin` | TEXT | | ASIN |
+| `product_id` | UUID | | Producto relacionado, si existe |
+| `raw_row` | JSONB | NOT NULL, DEFAULT '{}' | Fila original del reporte |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() | |
+
+**Constraints e índices:** UNIQUE(`org_id`, `settlement_id`, `line_hash`) para idempotencia; índices por (`org_id`, `posted_at`), (`org_id`, `fee_type`) y (`org_id`, `settlement_id`). La tabla es append-only en esta fase, sin `updated_at` ni políticas de UPDATE/DELETE. El trigger `trg_validate_amazon_settlement_line` valida la membresía activa del usuario y la pertenencia tenant de la conexión y el producto antes de insertar.
 
 ---
 
@@ -530,6 +559,7 @@ idea → validating → approved → in_progress → launched
 |---------|------|-------------|-------|
 | `id` | UUID | PK | |
 | `user_id` | UUID | NOT NULL | |
+| `org_id` | UUID | FK → organizations(id) | Migración 039 |
 | `product_id` | UUID | FK → products(id) | |
 | `campaign_name` | TEXT | NOT NULL | |
 | `campaign_id` | TEXT | | ID de campaña en Amazon |
@@ -764,6 +794,7 @@ idea → validating → approved → in_progress → launched
 |---------|------|-------------|-------|
 | `id` | UUID | PK | |
 | `user_id` | UUID | NOT NULL | |
+| `org_id` | UUID | FK → organizations(id) | Migración 044 |
 | `rule_id` | UUID | FK → alert_rules(id) | |
 | `rule_name` | TEXT | NOT NULL | |
 | `entity` | TEXT | NOT NULL | |
@@ -866,6 +897,7 @@ idea → validating → approved → in_progress → launched
 |---------|------|-------------|-------|
 | `id` | UUID | PK | |
 | `user_id` | UUID | NOT NULL | |
+| `org_id` | UUID | FK → organizations(id) | Migración 044 |
 | `token` | TEXT | NOT NULL, UNIQUE, DEFAULT encode(gen_random_bytes(16),'hex') | Token público |
 | `title` | TEXT | DEFAULT 'Dashboard Compartido' | |
 | `active` | BOOLEAN | DEFAULT true | |
@@ -894,7 +926,7 @@ idea → validating → approved → in_progress → launched
 |---------|------|-------------|-------|
 | `id` | UUID | PK | |
 | `user_id` | UUID | NOT NULL | |
-| `org_id` | UUID | FK → organizations(id) | Migración 024 |
+| `org_id` | UUID | FK → organizations(id) | Migración 024/047 |
 | `entity` | TEXT | NOT NULL, CHECK: 7 tipos | product/order/shipment/supplier/task/member/board_decision |
 | `entity_id` | UUID | NOT NULL | |
 | `content` | TEXT | NOT NULL | |
@@ -1072,15 +1104,17 @@ CREATE POLICY "org_delete" ON members FOR DELETE
 - sync_logs, audit_log
 
 **Grupo D - SELECT + INSERT + DELETE (sin UPDATE):**
-- sp_api_webhook_subscriptions
+- sp_api_webhook_subscriptions (migración 046 además exige `org_id`, `user_id = auth.uid()` y `is_org_member(org_id)` para `authenticated`)
+
+**Webhooks:** `sp_api_webhook_logs` solo tiene SELECT para `authenticated` con el mismo scope tenant; el INSERT del endpoint webhook usa service role y bypassa RLS. No existe INSERT `authenticated` con una comprobación incondicional.
 
 ### Tablas con RLS pre-migración 024 (user_id = auth.uid()):
 
 | Tabla | Política | Estado |
 |-------|----------|--------|
 | push_subscriptions | user_id = auth.uid() | Se mantiene (no tiene org_id) |
-| shared_links | user_id = auth.uid() (CRUD) + active=true (SELECT anónimo) | Se mantiene |
-| comments | SELECT: true (todos leen) + INSERT/UPDATE/DELETE: user_id = auth.uid() | Se mantiene |
+| shared_links | user_id + org_id + membership activa; lookup público solo por token mediante service-role | Migración 044 |
+| comments | org_id no nulo + membership activa; mutations además user_id = auth.uid() | Migración 047 |
 | company_members | auth.role() = 'authenticated' | Legacy |
 
 ### Tablas de organizaciones (propias):
@@ -1120,9 +1154,9 @@ UPDATE USING (true)
 
 ---
 
-## 18. Tablas con `org_id` (Migración 024)
+## 18. Tablas con `org_id`
 
-Las siguientes tablas tienen `org_id` añadido en la migración 024:
+Las siguientes tablas están scoped por organización:
 
 1. products
 2. sales
@@ -1146,8 +1180,23 @@ Las siguientes tablas tienen `org_id` añadido en la migración 024:
 20. sync_logs
 21. audit_log
 22. stock_movements
+23. amazon_settlement_lines
+24. alert_history
+25. shared_links
+26. inventory
+27. ppc_campaigns
+28. ppc_daily_metrics
+29. amazon_payouts
+30. saved_calculations
+31. supplier_quotes
+32. product_suppliers
 
-**Total: 22 tablas con `org_id`**
+**Total: 33 tablas con `org_id`**
+
+Las tablas legacy añadidas en la migración 039 mantienen `org_id` nullable para no
+asignar filas históricas ambiguas. La migración 048 habilita RLS y exige
+`org_id IS NOT NULL AND is_org_member(org_id)` en SELECT/INSERT/UPDATE/DELETE;
+las filas sin organización quedan inaccesibles hasta una asignación segura.
 
 ---
 
@@ -1174,6 +1223,20 @@ Las siguientes tablas tienen `org_id` añadido en la migración 024:
 | 024 | **Multi-tenant: org_id en 22 tablas + RLS con is_org_member** |
 | 025 | Fix: products_with_inventory view missing org_id |
 | 040 | Add: products.duty_rate y propagación a métricas generadas |
+| 041 | Add: líneas de liquidaciones de Amazon con idempotencia y RLS |
+| 042 | Fix: scope tenant de unicidad de products por organización |
+| 043 | Add: expenses.source_key con UNIQUE(`org_id`, `source_key`) para idempotencia de payouts |
+| 044 | Scope tenant de alert_history y shared_links sin backfills ambiguos |
+| 045 | Bucket privado de reportes y policies por membership; objetos históricos en paths legacy quedan inaccesibles hasta regenerar reportes, sin acceso público |
+| 046 | Scope RLS de webhooks SP-API por org_id, user_id y membership |
+| 047 | Compatibilidad de schema y scope tenant de `comments`, sin backfill ambiguo |
+| 048 | Scope RLS de las ocho tablas legacy añadidas por 039, sin backfill ambiguo |
+| 049 | Compatibilidad de schema: crea automation tables ausentes (`alert_rules`, `reorder_rules`, `scheduled_reports`) con `org_id` nullable, índices y RLS fail-closed |
+
+Las migraciones 044, 047 y 049 incluyen `CREATE TABLE IF NOT EXISTS` como
+compatibilidad de schema para instalaciones donde las tablas históricas no
+fueron creadas. Las columnas `org_id` se mantienen nullable y no se hace
+backfill de filas existentes sin una asignación tenant inequívoca.
 
 ---
 

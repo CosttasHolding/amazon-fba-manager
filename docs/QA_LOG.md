@@ -196,3 +196,21 @@ WHERE table_name='org_invitations' AND grantee='authenticated';
 ```
 
 Esperado: policy `org_inv_update` con qual que referencie email u org_members (NO `(true)`); privilegios UPDATE solo sobre columna `status`.
+
+## Verificación migraciones 041 y 042 (2026-08-23)
+
+| Migración | Método | Resultado | Verificación |
+|---|---|---|---|
+| 041 `amazon_settlement_lines` | Management API | APLICADA | columnas tenant-scoped, UNIQUE `(org_id, settlement_id, line_hash)`, trigger de integridad, RLS con solo `SELECT`/`INSERT` |
+| 042 products SKU | Management API | APLICADA | UNIQUE `(org_id, sku)` confirmado; constraint histórica por `user_id` eliminada |
+
+## Verificación migraciones 043-050 (2026-08-23)
+
+| Migraciones | Método | Resultado | Verificación |
+|---|---|---|---|
+| 043-049 | Management API | APLICADAS | source key tenant-scoped, schema bootstrap, bucket `reportes` privado, RLS webhook/comments/legacy y tablas de automatización |
+| 050 | Management API | APLICADA | backfill determinista de `inventory.org_id` desde `products.org_id`; sin filas ambiguas modificadas |
+
+El preflight encontró cuatro filas históricas de `inventory` sin `org_id`; todas
+tenían producto con organización inequívoca y fueron backfilleadas por 050.
+Las filas legacy ambiguas de las demás tablas permanecen inaccesibles por RLS.

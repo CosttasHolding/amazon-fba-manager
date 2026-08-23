@@ -2,7 +2,8 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getDriveClient, getRootFolderId } from "@/lib/drive";
+import { getDriveClient, getOrgRootFolderId } from "@/lib/drive";
+import { getOrgId } from "@/lib/org-resolver";
 import {
   assertFolderWithinRoot,
   FolderOutsideRootError,
@@ -13,14 +14,18 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const orgId = await getOrgId(supabase, user.id, req);
+    if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
     const { searchParams } = new URL(req.url);
-    const folderId = searchParams.get("folderId") || getRootFolderId();
+    const requestedFolderId = searchParams.get("folderId");
     const pageToken = searchParams.get("pageToken");
 
-    const drive = await getDriveClient();
+    const drive = await getDriveClient(user.id);
+    const rootId = await getOrgRootFolderId(drive, orgId);
+    const folderId = !requestedFolderId || requestedFolderId === "root" ? rootId : requestedFolderId;
     try {
-      await assertFolderWithinRoot(drive, folderId, getRootFolderId());
+      await assertFolderWithinRoot(drive, folderId, rootId);
     } catch (err) {
       if (err instanceof FolderOutsideRootError) {
         return NextResponse.json({ error: err.message }, { status: 403 });

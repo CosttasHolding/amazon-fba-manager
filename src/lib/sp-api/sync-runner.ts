@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
 import { SpApiClient, SpApiAuthError, refreshAccessToken } from "@/lib/sp-api";
 import {
@@ -21,6 +22,8 @@ export interface SyncResult {
 
 export interface ConnRow {
   id: string;
+  org_id: string | null;
+  user_id: string;
   marketplace: string;
   refresh_token: string;
   seller_id: string | null;
@@ -45,7 +48,9 @@ export async function ensureClient(
         access_token: tokens.access_token,
         token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
       })
-      .eq("id", connection.id);
+        .eq("id", connection.id)
+        .eq("org_id", connection.org_id)
+        .eq("user_id", connection.user_id);
   }
 
   return new SpApiClient({
@@ -68,6 +73,15 @@ export async function runSync(
   userId: string,
   orgId: string
 ): Promise<SyncResult> {
+  if (connection.org_id !== orgId || connection.user_id !== userId) {
+    return {
+      success: false,
+      processed: 0,
+      failed: 0,
+      error: "Connection identity does not match sync context",
+    };
+  }
+
   try {
     const client = await ensureClient(supabase, connection);
     if (!client) return { success: true, processed: 0, failed: 0 };
@@ -79,7 +93,7 @@ export async function runSync(
       case "inventory": return syncInventory(supabase, client, userId, orgId, connection.marketplace);
       case "fees": return syncFees(supabase, client, userId, orgId, connection.marketplace);
       case "returns": return syncReturns(supabase, client, userId, orgId, connection.marketplace);
-      case "payouts": return syncPayouts(supabase, client, userId, orgId, connection.marketplace);
+      case "payouts": return syncPayouts(supabase, client, userId, orgId, connection.marketplace, connection.id);
       default: return { success: true, processed: 0, failed: 0 };
     }
   } catch (error) {
@@ -92,7 +106,7 @@ export async function runSync(
   }
 }
 
-async function syncProducts(
+export async function syncProducts(
   supabase: Awaited<ReturnType<typeof createClient>>,
   client: SpApiClient,
   userId: string,
@@ -106,6 +120,39 @@ async function syncProducts(
     let failed = 0;
 
     for (const item of listings) {
+      const { data: legacyProduct, error: legacyLookupError } = await supabase
+        .from("products")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("sku", item.sku)
+        .is("org_id", null)
+        .maybeSingle();
+
+      if (legacyLookupError) {
+        failed++;
+        continue;
+      }
+
+      if (legacyProduct) {
+        const { error: legacyUpdateError } = await supabase
+          .from("products")
+          .update({
+            org_id: orgId,
+            asin: item.asin,
+            name: item.name,
+            sale_price: item.price || 0,
+            status: mapListingStatus(item.status),
+            marketplace,
+          })
+          .eq("id", legacyProduct.id)
+          .eq("user_id", userId)
+          .is("org_id", null);
+
+        if (legacyUpdateError) failed++;
+        else processed++;
+        continue;
+      }
+
       const { error } = await supabase.from("products").upsert({
         user_id: userId,
         org_id: orgId,
@@ -128,7 +175,7 @@ async function syncProducts(
         net_profit: 0,
         roi: 0,
       }, {
-        onConflict: "user_id, sku",
+        onConflict: "org_id,sku",
         ignoreDuplicates: false,
       }).select("id").single();
 
@@ -382,12 +429,13 @@ async function syncReturns(
   }
 }
 
-async function syncPayouts(
+export async function syncPayouts(
   supabase: Awaited<ReturnType<typeof createClient>>,
   client: SpApiClient,
   userId: string,
   orgId: string,
-  marketplace: string
+  marketplace: string,
+  connectionId: string | null = null
 ): Promise<SyncResult> {
   try {
     const marketplaceId = getMarketplaceId(marketplace);
@@ -400,38 +448,127 @@ async function syncPayouts(
 
     const headers = parseCsvLine(lines[0]);
     const rows = lines.slice(1).map(line => parseCsvLine(line));
-    let processed = 0;
-    let failed = 0;
-
+    const productSkus = new Set<string>();
+    const productAsins = new Set<string>();
     for (const row of rows) {
-      try {
-        const transactionType = getField(row, headers, "transaction-type");
-        if (!transactionType || transactionType === "Order") continue;
+      const sku = getSettlementField(row, headers, ["sku"]);
+      const asin = getSettlementField(row, headers, ["asin"]);
+      if (sku) productSkus.add(sku);
+      if (asin) productAsins.add(asin);
+    }
 
-        const amount = parseFloat(getField(row, headers, "amount") || "0");
-        const description = getField(row, headers, "settlement-id") || getField(row, headers, "description") || "";
-        const date = getField(row, headers, "date-time") || getField(row, headers, "posted-date") || new Date().toISOString().split("T")[0];
+    const productBySku = new Map<string, string>();
+    const productByAsin = new Map<string, string>();
+    if (productSkus.size > 0 || productAsins.size > 0) {
+      let productQuery = supabase
+        .from("products")
+        .select("id, sku, asin")
+        .eq("org_id", orgId);
+      const predicates = [
+        productSkus.size > 0 ? `sku.in.(${Array.from(productSkus).map(quotePostgrestValue).join(",")})` : null,
+        productAsins.size > 0 ? `asin.in.(${Array.from(productAsins).map(quotePostgrestValue).join(",")})` : null,
+      ].filter((predicate): predicate is string => predicate !== null);
+      productQuery = productQuery.or(predicates.join(","));
 
-        const { error } = await supabase.from("expenses").insert({
-          user_id: userId,
-          org_id: orgId,
-          category: "other",
-          description: `SP-API Payout: ${description}`,
-          amount: Math.abs(amount),
-          currency: "USD",
-          expense_date: date.split("T")[0],
-          vendor: "Amazon",
-          notes: `Transaction: ${transactionType}`,
-        });
+      const { data: products, error: productError } = await productQuery;
+      if (productError) {
+        return { success: false, processed: 0, failed: 0, error: productError.message };
+      }
 
-        if (error) failed++;
-        else processed++;
-      } catch {
-        failed++;
+      for (const product of products || []) {
+        if (product.sku && !productBySku.has(product.sku)) productBySku.set(product.sku, product.id);
+        if (product.asin && !productByAsin.has(product.asin)) productByAsin.set(product.asin, product.id);
       }
     }
 
-    return { success: true, processed, failed };
+    const occurrences = new Map<string, number>();
+    const settlementLines = rows.flatMap((row) => {
+      const settlementId = getSettlementField(row, headers, ["settlement-id", "settlement_id"]);
+      const transactionType = getSettlementField(row, headers, ["transaction-type", "transaction_type"]);
+      const amount = parseSettlementAmount(getSettlementField(row, headers, ["amount"]));
+
+      if (!settlementId || !transactionType || amount === null) return [];
+
+      const rowKey = canonicalSettlementLineKey(settlementId, row, headers);
+      const occurrence = occurrences.get(rowKey) || 0;
+      occurrences.set(rowKey, occurrence + 1);
+      const sku = getSettlementField(row, headers, ["sku"]);
+      const asin = getSettlementField(row, headers, ["asin"]);
+
+      return [{
+        org_id: orgId,
+        user_id: userId,
+        connection_id: connectionId,
+        report_id: report.reportId,
+        settlement_id: settlementId,
+        line_hash: hashSettlementLine(settlementId, row, occurrence, headers),
+        marketplace,
+        transaction_type: transactionType,
+        fee_type: normalizeSettlementFeeType(row, headers),
+        amount,
+        currency: getSettlementField(row, headers, ["currency"]) || "USD",
+        posted_at: normalizeSettlementDate(getSettlementField(row, headers, ["date-time", "date_time", "posted-date", "posted_date"])),
+        order_id: getSettlementField(row, headers, ["order-id", "order_id"]) || null,
+        sku: sku || null,
+        asin: asin || null,
+        product_id: productBySku.get(sku) || productByAsin.get(asin) || null,
+        raw_row: toSettlementRawRow(row, headers),
+      }];
+    });
+
+    if (settlementLines.length === 0) return { success: true, processed: 0, failed: 0 };
+
+    try {
+      const { error } = await supabase
+        .from("amazon_settlement_lines")
+        .upsert(settlementLines, {
+          onConflict: "org_id,settlement_id,line_hash",
+          ignoreDuplicates: true,
+        });
+
+      if (error) {
+        return { success: false, processed: 0, failed: 0, error: error.message };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        processed: 0,
+        failed: 0,
+        error: error instanceof Error ? error.message : "Settlement lines sync error",
+      };
+    }
+
+    const expenseRows = settlementLines
+      .filter((line) => line.transaction_type !== "Order")
+      .map((line) => ({
+        user_id: userId,
+        org_id: orgId,
+        source_key: `${orgId}:${line.settlement_id}:${line.line_hash}`,
+        category: "other",
+        description: `SP-API Payout: ${line.settlement_id}`,
+        amount: Math.abs(line.amount),
+        currency: line.currency,
+        expense_date: line.posted_at || new Date().toISOString().split("T")[0],
+        vendor: "Amazon",
+        notes: `Transaction: ${line.transaction_type}`,
+      }));
+
+    if (expenseRows.length === 0) return { success: true, processed: 0, failed: 0 };
+
+    try {
+      const { data: insertedExpenses, error } = await supabase
+        .from("expenses")
+        .upsert(expenseRows, {
+          onConflict: "org_id,source_key",
+          ignoreDuplicates: true,
+        })
+        .select("id");
+
+      if (error) return { success: true, processed: 0, failed: expenseRows.length };
+      return { success: true, processed: insertedExpenses?.length || 0, failed: 0 };
+    } catch {
+      return { success: true, processed: 0, failed: expenseRows.length };
+    }
   } catch (error) {
     return { success: false, processed: 0, failed: 0, error: error instanceof Error ? error.message : "Payouts sync error" };
   }
@@ -472,6 +609,86 @@ function parseCsvLine(line: string): string[] {
 function getField(row: string[], headers: string[], name: string): string {
   const idx = headers.findIndex(h => h.toLowerCase().trim() === name.toLowerCase().trim());
   return idx >= 0 ? (row[idx] || "").trim() : "";
+}
+
+export function getSettlementField(row: string[], headers: string[], aliases: readonly string[]): string {
+  for (const alias of aliases) {
+    const value = getField(row, headers, alias);
+    if (value) return value;
+  }
+  return "";
+}
+
+export function normalizeSettlementFeeType(row: string[], headers: string[]): string | null {
+  return getSettlementField(row, headers, [
+    "fee-type",
+    "fee_type",
+    "amount-description",
+    "amount_description",
+    "description",
+  ]) || null;
+}
+
+export function normalizeSettlementDate(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed ? trimmed.split("T")[0] : null;
+}
+
+export function parseSettlementAmount(value: string): number | null {
+  const normalized = value.trim();
+  if (!/^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(normalized)) return null;
+
+  const amount = Number(normalized);
+  return Number.isFinite(amount) ? amount : null;
+}
+
+export function hashSettlementLine(
+  settlementId: string,
+  row: string[],
+  occurrence: number,
+  headers: string[] = row.map((_, index) => String(index)),
+): string {
+  return createHash("sha256")
+    .update(JSON.stringify({
+      settlementId: normalizeSettlementValue(settlementId),
+      fields: canonicalSettlementFields(row, headers),
+      occurrence,
+    }), "utf8")
+    .digest("hex");
+}
+
+function canonicalSettlementLineKey(settlementId: string, row: string[], headers: string[]): string {
+  return JSON.stringify({
+    settlementId: normalizeSettlementValue(settlementId),
+    fields: canonicalSettlementFields(row, headers),
+  });
+}
+
+function canonicalSettlementFields(row: string[], headers: string[]): Array<[string, string]> {
+  return headers
+    .map((header, index) => [
+      normalizeSettlementHeader(header),
+      normalizeSettlementValue(row[index] || ""),
+    ] as [string, string])
+    .sort(([leftHeader, leftValue], [rightHeader, rightValue]) =>
+      leftHeader.localeCompare(rightHeader) || leftValue.localeCompare(rightValue),
+    );
+}
+
+function normalizeSettlementHeader(value: string): string {
+  return value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+}
+
+function normalizeSettlementValue(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function quotePostgrestValue(value: string): string {
+  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
+function toSettlementRawRow(row: string[], headers: string[]): Record<string, string> {
+  return Object.fromEntries(headers.map((header, index) => [header.trim(), row[index] || ""]));
 }
 
 function mapListingStatus(status: string): "active" | "paused" | "discontinued" {

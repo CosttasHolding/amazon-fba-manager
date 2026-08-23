@@ -4,12 +4,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createApiHandler, getOrgId } from "@/lib/api-handler";
 
-export const GET = createApiHandler(async ({ supabase, orgId }) => {
+export const GET = createApiHandler(async ({ supabase, user, orgId }) => {
   if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
   const { data, error } = await supabase
     .from("shared_links")
     .select("*")
+    .eq("user_id", user.id)
     .eq("org_id", orgId)
     .order("created_at", { ascending: false });
 
@@ -50,6 +51,7 @@ export async function DELETE(req: NextRequest) {
       .from("shared_links")
       .update({ active: false })
       .eq("token", token)
+      .eq("user_id", user.id)
       .eq("org_id", orgId);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

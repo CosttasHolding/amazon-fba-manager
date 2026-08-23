@@ -17,12 +17,14 @@ interface ProductRow {
 
 export async function generateNotifications(
   userId: string,
+  orgId: string,
   supabase: Awaited<ReturnType<typeof createClient>>
 ): Promise<{ created: number; notifications: Notification[] }> {
   const { data: products } = await supabase
     .from("products_with_inventory")
     .select("*")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .eq("org_id", orgId);
 
   const allProducts = (products || []) as ProductRow[];
 
@@ -44,6 +46,8 @@ export async function generateNotifications(
       .from("product_suppliers")
       .select("product_id, suppliers!inner(id, name)")
       .in("product_id", alertProductIds)
+      .eq("org_id", orgId)
+      .eq("suppliers.org_id", orgId)
       .eq("is_primary", true);
 
     for (const link of psLinks || []) {
@@ -175,6 +179,7 @@ export async function generateNotifications(
       .from("notifications")
       .select("type")
       .eq("user_id", userId)
+      .eq("org_id", orgId)
       .eq("read", false)
       .gte("created_at", cutoff)
       .in("type", types);
@@ -185,6 +190,7 @@ export async function generateNotifications(
       .filter((n) => !existingTypes.has(n.type))
       .map((n) => ({
         user_id: userId,
+        org_id: orgId,
         type: n.type,
         priority: n.priority,
         title: n.title,

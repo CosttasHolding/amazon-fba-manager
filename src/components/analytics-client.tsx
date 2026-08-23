@@ -3,11 +3,12 @@
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableWrapper } from "@/components/ui/data-table-wrapper";
+import { FeesAnalytics } from "@/components/fees-analytics";
 import { ProfitabilityHeatmap } from "@/components/charts/profitability-heatmap";
 import { RevenueProjection } from "@/components/charts/revenue-projection";
 import { ReportGenerator } from "@/components/charts/report-generator";
 import { useProducts, useSales } from "@/hooks/use-data";
-import { BarChart3, TrendingUp, FileText, Link2, Calendar } from "lucide-react";
+import { BarChart3, TrendingUp, FileText, Link2, Calendar, Receipt } from "lucide-react";
 import { ShareDashboard } from "@/components/share-dashboard";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import dynamic from "next/dynamic";
@@ -22,7 +23,7 @@ const ComparisonChart = dynamic(() => import("@/components/charts/comparison-cha
   loading: () => <div className="h-[280px] rounded-xl bg-muted/30 animate-pulse" />,
 });
 
-type Tab = "heatmap" | "comparison" | "projections" | "reports";
+type Tab = "heatmap" | "comparison" | "projections" | "reports" | "fees";
 
 const PERIOD_OPTIONS = [
   { value: "7d", key: "analytics.period_7d" },
@@ -56,6 +57,7 @@ export function AnalyticsClient() {
     { id: "comparison", key: "analytics.comparison", icon: TrendingUp },
     { id: "projections", key: "analytics.projections", icon: TrendingUp },
     { id: "reports", key: "analytics.reports", icon: FileText },
+    { id: "fees", key: "analytics.fees", icon: Receipt },
   ];
 
   const activeProducts = useMemo(
@@ -76,7 +78,7 @@ export function AnalyticsClient() {
         breadcrumbs={[{ label: "Analytics" }]}
       />
 
-      <div className="flex items-center gap-1 mb-6 p-1 rounded-xl bg-muted/50 w-fit">
+      <div className="flex flex-wrap items-center gap-1 mb-6 p-1 rounded-xl bg-muted/50 w-fit max-w-full">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -169,6 +171,8 @@ export function AnalyticsClient() {
           </DataTableWrapper>
         </div>
       )}
+
+      {activeTab === "fees" && <FeesAnalytics />}
 
       <div className="mt-8">
         <DataTableWrapper title={t("share.title", locale)} icon={Link2}>
