@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getOrgId } from "@/lib/api-handler";
+import { isValidUuid } from "@/lib/api-utils";
 import { orderSchema } from "@/validations/order";
 
 interface RouteParams {
@@ -18,6 +19,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+    if (!isValidUuid(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
     const { data, error } = await supabase
       .from("purchase_orders")
@@ -40,6 +42,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+    if (!isValidUuid(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
     const body = await req.json();
     const result = orderSchema.partial().safeParse(body);
@@ -61,6 +64,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+    if (!isValidUuid(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
     const { error } = await supabase.from("purchase_orders").delete().eq("id", id).eq("org_id", orgId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

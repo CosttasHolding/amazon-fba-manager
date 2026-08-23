@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+﻿import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET, POST } from "@/app/api/research/groups/route";
 import { PUT, DELETE } from "@/app/api/research/groups/[id]/route";
 import { POST as RESTORE_POST } from "@/app/api/research/groups/restore/route";
@@ -89,7 +89,7 @@ beforeEach(() => {
 });
 
 describe("GET /api/research/groups", () => {
-  it("devuelve 401 sin autenticación", async () => {
+  it("devuelve 401 sin autenticaciÃ³n", async () => {
     authFail();
     setupDb();
 
@@ -140,7 +140,7 @@ describe("GET /api/research/groups", () => {
 });
 
 describe("POST /api/research/groups", () => {
-  it("crea un grupo scoped por organización y devuelve envelope data", async () => {
+  it("crea un grupo scoped por organizaciÃ³n y devuelve envelope data", async () => {
     authOk();
     setupDb({
       research_groups: {
@@ -167,7 +167,7 @@ describe("POST /api/research/groups", () => {
     });
   });
 
-  it("rechaza un body inválido con 400 sin insertar", async () => {
+  it("rechaza un body invÃ¡lido con 400 sin insertar", async () => {
     authOk();
     setupDb();
 
@@ -182,7 +182,7 @@ describe("POST /api/research/groups", () => {
 });
 
 describe("PUT /api/research/groups/[id]", () => {
-  it("actualiza el grupo scoped por organización", async () => {
+  it("actualiza el grupo scoped por organizaciÃ³n", async () => {
     authOk();
     setupDb({
       research_groups: { data: { id: "group-1", name: "Nombre Nuevo" }, error: null },
@@ -192,14 +192,14 @@ describe("PUT /api/research/groups/[id]", () => {
       method: "PUT",
       body: JSON.stringify({ name: "Nombre Nuevo" }),
     }) as never;
-    const res = await PUT(req, { params: Promise.resolve({ id: "group-1" }) });
+    const res = await PUT(req, { params: Promise.resolve({ id: "11111111-1111-4111-8111-111111111111" }) });
     expect(res.status).toBe(200);
 
     const updates = callsOf("research_groups", "update");
     expect(updates).toHaveLength(1);
     expect(updates[0].args[0]).toEqual({ name: "Nombre Nuevo" });
     const eqs = callsOf("research_groups", "eq");
-    expect(eqs.some((c) => c.args[0] === "id" && c.args[1] === "group-1")).toBe(true);
+    expect(eqs.some((c) => c.args[0] === "id" && c.args[1] === "11111111-1111-4111-8111-111111111111")).toBe(true);
     expect(eqs.some((c) => c.args[0] === "org_id" && c.args[1] === "org-1")).toBe(true);
   });
 
@@ -211,7 +211,7 @@ describe("PUT /api/research/groups/[id]", () => {
       method: "PUT",
       body: JSON.stringify({ name: "X" }),
     }) as never;
-    const res = await PUT(req, { params: Promise.resolve({ id: "group-404" }) });
+    const res = await PUT(req, { params: Promise.resolve({ id: "44444444-4444-4444-8444-444444444444" }) });
     expect(res.status).toBe(404);
     expect(callsOf("research_groups", "update")).toHaveLength(0);
   });
@@ -227,7 +227,7 @@ describe("DELETE /api/research/groups/[id]", () => {
     const req = createMockRequest("http://localhost/api/research/groups/group-1", {
       method: "DELETE",
     }) as never;
-    const res = await DELETE(req, { params: Promise.resolve({ id: "group-1" }) });
+    const res = await DELETE(req, { params: Promise.resolve({ id: "11111111-1111-4111-8111-111111111111" }) });
     expect(res.status).toBe(200);
 
     const groupUpdates = callsOf("research_groups", "update");
@@ -239,7 +239,7 @@ describe("DELETE /api/research/groups/[id]", () => {
     expect((productUpdates[0].args[0] as { deleted_at?: string }).deleted_at).toBeTruthy();
 
     expect(callsOf("product_research", "eq")).toContainEqual(
-      expect.objectContaining({ args: ["group_id", "group-1"] })
+      expect.objectContaining({ args: ["group_id", "11111111-1111-4111-8111-111111111111"] })
     );
     expect(callsOf("product_research", "is")).toContainEqual(
       expect.objectContaining({ args: ["deleted_at", null] })
@@ -257,16 +257,16 @@ describe("DELETE /api/research/groups/[id]", () => {
     const req = createMockRequest("http://localhost/api/research/groups/group-1?permanent=true", {
       method: "DELETE",
     }) as never;
-    const res = await DELETE(req, { params: Promise.resolve({ id: "group-1" }) });
+    const res = await DELETE(req, { params: Promise.resolve({ id: "11111111-1111-4111-8111-111111111111" }) });
     expect(res.status).toBe(200);
 
     expect(callsOf("product_research", "delete")).toHaveLength(1);
     expect(callsOf("product_research", "eq")).toContainEqual(
-      expect.objectContaining({ args: ["group_id", "group-1"] })
+      expect.objectContaining({ args: ["group_id", "11111111-1111-4111-8111-111111111111"] })
     );
     expect(callsOf("research_groups", "delete")).toHaveLength(1);
     expect(callsOf("research_groups", "eq")).toContainEqual(
-      expect.objectContaining({ args: ["id", "group-1"] })
+      expect.objectContaining({ args: ["id", "11111111-1111-4111-8111-111111111111"] })
     );
     expect(callsOf("research_groups", "update")).toHaveLength(0);
     expect(callsOf("product_research", "update")).toHaveLength(0);
@@ -279,7 +279,7 @@ describe("DELETE /api/research/groups/[id]", () => {
     const req = createMockRequest("http://localhost/api/research/groups/group-404", {
       method: "DELETE",
     }) as never;
-    const res = await DELETE(req, { params: Promise.resolve({ id: "group-404" }) });
+    const res = await DELETE(req, { params: Promise.resolve({ id: "44444444-4444-4444-8444-444444444444" }) });
     expect(res.status).toBe(404);
     expect(callsOf("product_research", "delete")).toHaveLength(0);
     expect(callsOf("research_groups", "delete")).toHaveLength(0);
@@ -287,7 +287,7 @@ describe("DELETE /api/research/groups/[id]", () => {
 });
 
 describe("POST /api/research/groups/restore", () => {
-  it("restaura el grupo y solo los productos borrados junto a él", async () => {
+  it("restaura el grupo y solo los productos borrados junto a Ã©l", async () => {
     authOk();
     setupDb({
       research_groups: {
@@ -322,7 +322,7 @@ describe("POST /api/research/groups/restore", () => {
     expect(gtes[0].args).toEqual(["deleted_at", "2026-08-20T12:00:00.000Z"]);
   });
 
-  it("no toca productos si el grupo no está en papelera", async () => {
+  it("no toca productos si el grupo no estÃ¡ en papelera", async () => {
     authOk();
     setupDb({
       research_groups: {

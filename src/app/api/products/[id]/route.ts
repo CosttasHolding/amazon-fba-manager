@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getOrgId } from "@/lib/api-handler";
 import { z } from "zod";
-import { apiErrorResponse } from "@/lib/api-utils";
+import { apiErrorResponse, isValidUuid } from "@/lib/api-utils";
 import { PRODUCT_STATUS_VALUES } from "@/lib/constants";
 
 const productUpdateSchema = z.object({
@@ -38,6 +38,7 @@ export async function GET(
 
     const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+    if (!isValidUuid(params.id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
     const { data, error } = await supabase
       .from("products_with_inventory")
@@ -108,6 +109,7 @@ export async function PUT(
 
     const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+    if (!isValidUuid(params.id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
     const body = await req.json();
     const parse = productUpdateSchema.safeParse(body);
@@ -168,6 +170,7 @@ export async function DELETE(
 
     const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+    if (!isValidUuid(params.id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
     const { error } = await supabase
       .from("products")

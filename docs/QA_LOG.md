@@ -137,6 +137,22 @@ Rutas afectadas (patrón `.from("profiles").select("org_id")`): `amazon-payouts`
 1. **Migración 039 aplicada en prod** vía Management API en 3 lotes (ALTER ×8, índices ×8). Verificado con `information_schema`: las 8 tablas tienen `org_id`. Re-corrida de batería completa post-migración: **24 PASS / 0 FAIL** (QA9b/QA9c ahora verdes).
 2. **Refactor Opción B aplicado** (commit `0ddefc9`): las rutas `amazon-payouts` (GET/POST), `research/analyze`, `sp-api/sync` (GET/POST), `sp-api/webhooks/subscribe` (POST/DELETE/GET), `sp-api/webhooks` (GET logs), `sp-api/connections` (+[id] DELETE), `sp-api/auth/callback` ahora usan `getOrgId(supabase, user.id, req)`. Caso especial `automation/weekly-summary` (cron service-role): itera `org_members` activos en vez de usuarios+profiles; shape de respuesta intacta (clave=user_id). Cero referencias restantes a `profiles.org_id`. Verificación: typecheck OK · lint sin warnings nuevos · **53 archivos / 425 tests OK** · build de producción OK. Pendiente: verificar en vivo tras deploy (las rutas SP-API requieren conexión real del owner).
 
+### Parte D — invalid data + orders/expenses/returns + probes post-refactor (2026-08-23)
+
+Batería extendida a 39 checks. Resultado pre-deploy: **38 PASS / 1 FAIL** (el FAIL se corrige con el deploy de este mismo ciclo).
+
+| Grupo | Checks | Resultado |
+|---|---|---|
+| QA10 rutas refactorizadas getOrgId en vivo | sp-api/connections 200 [], amazon-payouts 200 | PASS ×2 |
+| QA11 datos inválidos | sin nombre→4xx · costo negativo→4xx · units_sold=0→4xx · id malformado→(500→**fix**) · x-org-id garbage→controlado · expense inválido→4xx | PASS ×5, FAIL×1→FIX |
+| QA12 orders/expenses/returns CRUD + org_id DB | POST+GET+persistencia org_id ×3 módulos | PASS ×7 |
+
+#### Hallazgo #4: ninguna ruta dinámica validaba formato UUID del param `id` (13 rutas)
+
+`GET /api/products/esto-no-es-uuid` → 500 (PostgREST 22P02 sin control). Auditadas las 14 rutas `[id]`: cero guards previos; Drive excluido (usa IDs de Google). Fix: helper `isValidUuid()` en `src/lib/api-utils.ts` + guard 400 temprano en products/[id] (GET/PUT/DELETE), suppliers/[id] (×3), orders/[id] (×3), tasks/[id], members/[id] (×3), fba-shipments/[id] (×3), board-decisions/[id], research/groups/[id], research/[id]/group, sp-api/connections/[id]. Tests existentes actualizados a UUIDs válidos donde mockeaban params (semántica intacta).
+
+Nota QA11b: primer intento usaba clave inexistente (`costo_unitario`) — zod la strippeó y creó producto (falso positivo del script, no bug); el schema real valida camelCase `unitCost.min(0)` correctamente.
+
 ## Pendientes manuales (requieren sesión del owner en prod)
 
 | Ítem | Estado | Nota |

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-utils";
 import { getOrgId } from "@/lib/api-handler";
+import { isValidUuid } from "@/lib/api-utils";
 
 const moveSchema = z.object({
   group_id: z.string().min(1).nullable(),
@@ -13,6 +14,7 @@ const moveSchema = z.object({
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    if (!isValidUuid(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });

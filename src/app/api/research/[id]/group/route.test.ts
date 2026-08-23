@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+﻿import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/research/[id]/group/route";
 import { createMockRequest } from "@/lib/test-utils/mock-request";
 
@@ -83,7 +83,7 @@ beforeEach(() => {
 });
 
 describe("POST /api/research/[id]/group", () => {
-  it("mueve el producto al grupo válido y devuelve envelope data", async () => {
+  it("mueve el producto al grupo vÃ¡lido y devuelve envelope data", async () => {
     authOk();
     setupDb({
       research_groups: { data: { id: "group-2" }, error: null },
@@ -94,7 +94,7 @@ describe("POST /api/research/[id]/group", () => {
       method: "POST",
       body: JSON.stringify({ group_id: "group-2" }),
     }) as never;
-    const res = await POST(req, { params: Promise.resolve({ id: "p1" }) });
+    const res = await POST(req, { params: Promise.resolve({ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" }) });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.id).toBe("p1");
@@ -111,7 +111,7 @@ describe("POST /api/research/[id]/group", () => {
     expect(updates).toHaveLength(1);
     expect(updates[0].args[0]).toEqual({ group_id: "group-2" });
     const eqs = callsOf("product_research", "eq");
-    expect(eqs.some((c) => c.args[0] === "id" && c.args[1] === "p1")).toBe(true);
+    expect(eqs.some((c) => c.args[0] === "id" && c.args[1] === "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")).toBe(true);
     expect(eqs.some((c) => c.args[0] === "org_id" && c.args[1] === "org-1")).toBe(true);
   });
 
@@ -125,7 +125,7 @@ describe("POST /api/research/[id]/group", () => {
       method: "POST",
       body: JSON.stringify({ group_id: null }),
     }) as never;
-    const res = await POST(req, { params: Promise.resolve({ id: "p1" }) });
+    const res = await POST(req, { params: Promise.resolve({ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" }) });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.group_id).toBeNull();
@@ -136,7 +136,7 @@ describe("POST /api/research/[id]/group", () => {
     expect(updates[0].args[0]).toEqual({ group_id: null });
   });
 
-  it("devuelve 404 si el producto no existe en la organización", async () => {
+  it("devuelve 404 si el producto no existe en la organizaciÃ³n", async () => {
     authOk();
     setupDb({
       research_groups: { data: { id: "group-2" }, error: null },
@@ -147,11 +147,11 @@ describe("POST /api/research/[id]/group", () => {
       method: "POST",
       body: JSON.stringify({ group_id: "group-2" }),
     }) as never;
-    const res = await POST(req, { params: Promise.resolve({ id: "p-404" }) });
+    const res = await POST(req, { params: Promise.resolve({ id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" }) });
     expect(res.status).toBe(404);
   });
 
-  it("devuelve 404 si el grupo no existe o pertenece a otra organización", async () => {
+  it("devuelve 404 si el grupo no existe o pertenece a otra organizaciÃ³n", async () => {
     authOk();
     setupDb({ research_groups: { data: null, error: null } });
 
@@ -159,12 +159,12 @@ describe("POST /api/research/[id]/group", () => {
       method: "POST",
       body: JSON.stringify({ group_id: "group-ajeno" }),
     }) as never;
-    const res = await POST(req, { params: Promise.resolve({ id: "p1" }) });
+    const res = await POST(req, { params: Promise.resolve({ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" }) });
     expect(res.status).toBe(404);
     expect(callsOf("product_research", "update")).toHaveLength(0);
   });
 
-  it("devuelve 404 si el producto está en papelera", async () => {
+  it("devuelve 404 si el producto estÃ¡ en papelera", async () => {
     authOk();
     setupDb({
       research_groups: { data: { id: "group-2" }, error: null },
@@ -175,14 +175,14 @@ describe("POST /api/research/[id]/group", () => {
       method: "POST",
       body: JSON.stringify({ group_id: "group-2" }),
     }) as never;
-    const res = await POST(req, { params: Promise.resolve({ id: "p-trashed" }) });
+    const res = await POST(req, { params: Promise.resolve({ id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc" }) });
     expect(res.status).toBe(404);
 
     expect(callsOf("product_research", "is")).toContainEqual(
       expect.objectContaining({ args: ["deleted_at", null] })
     );
     const eqs = callsOf("product_research", "eq");
-    expect(eqs.some((c) => c.args[0] === "id" && c.args[1] === "p-trashed")).toBe(true);
+    expect(eqs.some((c) => c.args[0] === "id" && c.args[1] === "cccccccc-cccc-4ccc-8ccc-cccccccccccc")).toBe(true);
     expect(eqs.some((c) => c.args[0] === "org_id" && c.args[1] === "org-1")).toBe(true);
   });
 });

@@ -166,15 +166,77 @@ function out(s) { lines.push(s); console.log(s); }
     }
   }
 
+  // QA10 rutas refactorizadas a getOrgId (antes leian profiles.org_id inexistente)
+  r = await api("/api/sp-api/connections");
+  check("QA10a GET /api/sp-api/connections -> 200 (refactor vivo)", r.status === 200 && Array.isArray(r.body?.data), `(status ${r.status} ${JSON.stringify(r.body).slice(0, 120)})`);
+  r = await api("/api/amazon-payouts");
+  check("QA10b GET /api/amazon-payouts -> 200 (refactor + 039)", r.status === 200, `(status ${r.status} ${JSON.stringify(r.body).slice(0, 150)})`);
+
+  // QA11 datos inválidos -> error controlado (nunca 500)
+  r = await api("/api/products", { method: "POST", body: { name: "" } });
+  check("QA11a producto sin nombre -> 4xx", r.status >= 400 && r.status < 500, `(status ${r.status})`);
+  r = await api("/api/products", { method: "POST", body: { name: `QA-NEG-${stamp}`, unitCost: -5 } });
+  check("QA11b costo negativo -> 4xx", r.status >= 400 && r.status < 500, `(status ${r.status})`);
+  if (salePid) {
+    r = await api("/api/sales", { method: "POST", body: { product_id: salePid, sale_date: new Date().toISOString().slice(0, 10), units_sold: 0, revenue: 1 } });
+    check("QA11c units_sold=0 -> 4xx", r.status >= 400 && r.status < 500, `(status ${r.status})`);
+  }
+  r = await api("/api/products/esto-no-es-uuid");
+  check("QA11d id malformed -> controlado (no 500)", r.status < 500, `(status ${r.status})`);
+  const junk = await page.evaluate(async () => {
+    const res = await fetch("/api/products", { headers: { "x-org-id": "garbage" } });
+    return { status: res.status };
+  });
+  check("QA11e x-org-id garbage -> controlado (no 500)", junk.status < 500, `(status ${junk.status})`);
+  r = await api("/api/expenses", { method: "POST", body: { category: "software", description: "", amount: -1 } });
+  check("QA11f expense inválido -> 4xx", r.status >= 400 && r.status < 500, `(status ${r.status})`);
+
+  // QA12 orders + expenses + returns CRUD
+  r = await api("/api/orders", { method: "POST", body: { quantity: 10, unit_cost: 2.5, po_number: `QA-PO-${stamp}` } });
+  const ord = r.body || {};
+  const oid = ord?.order?.id || ord?.data?.id || ord?.id;
+  check("QA12a POST /api/orders crea", r.status >= 200 && r.status < 300 && !!oid, `(status ${r.status} ${JSON.stringify(ord).slice(0, 250)})`);
+  if (oid) {
+    const { data: ordRow } = await admin.from("purchase_orders").select("org_id").eq("id", oid).single();
+    check("QA12b orden con org_id correcto", ordRow && ordRow.org_id === ORG_A, JSON.stringify(ordRow || {}));
+  }
+  r = await api("/api/orders");
+  check("QA12c GET /api/orders -> 200", r.status === 200, `(status ${r.status})`);
+
+  r = await api("/api/expenses", { method: "POST", body: { category: "software", description: `QA expense ${stamp}`, amount: 9.99, vendor: "qa-battery" } });
+  const exp = r.body || {};
+  const eid = exp?.expense?.id || exp?.data?.id || exp?.id;
+  check("QA12d POST /api/expenses crea", r.status >= 200 && r.status < 300 && !!eid, `(status ${r.status} ${JSON.stringify(exp).slice(0, 250)})`);
+  if (eid) {
+    const { data: expRow } = await admin.from("expenses").select("org_id").eq("id", eid).single();
+    check("QA12e gasto con org_id correcto", expRow && expRow.org_id === ORG_A, JSON.stringify(expRow || {}));
+  }
+
+  let retId = null;
+  if (salePid) {
+    r = await api("/api/returns", { method: "POST", body: { product_id: salePid, quantity: 1, return_reason: "defective", return_date: new Date().toISOString().slice(0, 10), amazon_return_id: `QA-RET-${stamp}` } });
+    const ret = r.body || {};
+    retId = ret?.return?.id || ret?.data?.id || ret?.id;
+    check("QA12f POST /api/returns crea", r.status >= 200 && r.status < 300 && !!retId, `(status ${r.status} ${JSON.stringify(ret).slice(0, 250)})`);
+    if (retId) {
+      const { data: retRow } = await admin.from("returns").select("org_id").eq("id", retId).single();
+      check("QA12g devolución con org_id correcto", retRow && retRow.org_id === ORG_A, JSON.stringify(retRow || {}));
+    }
+  }
+
   await browser.close();
 
   // ===== LIMPIEZA =====
   out("--- LIMPIEZA ---");
+  if (retId) { await admin.from("returns").delete().eq("id", retId); }
+  if (eid) { await admin.from("expenses").delete().eq("id", eid); }
+  if (oid) { await admin.from("purchase_orders").delete().eq("id", oid); }
   if (saleId) { await admin.from("sales").delete().eq("id", saleId); }
   await admin.from("stock_movements").delete().eq("reference", "qa-battery");
   if (salePid && salePid !== pidForCleanup) { await admin.from("products").delete().eq("id", salePid); }
   if (pidForCleanup) { await admin.from("products").delete().eq("id", pidForCleanup); }
   await admin.from("product_research").delete().eq("asin_reference", "B0QATEMP001");
+  await admin.from("products").delete().like("name", `QA-NEG-${stamp}%`);
   if (orgB) { await admin.from("organizations").delete().eq("id", orgB.id); }
   out(`Limpieza OK. RESUMEN: ${pass} PASS / ${fail} FAIL`);
   finish();

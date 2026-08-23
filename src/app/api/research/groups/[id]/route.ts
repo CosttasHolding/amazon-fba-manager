@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-utils";
+import { apiErrorResponse, isValidUuid } from "@/lib/api-utils";
 import { getOrgId } from "@/lib/api-handler";
 
 const groupUpdateSchema = z.object({
@@ -16,6 +16,7 @@ const groupUpdateSchema = z.object({
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    if (!isValidUuid(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -57,6 +58,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    if (!isValidUuid(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isValidUuid } from "@/lib/api-utils";
 import { getOrgId } from "@/lib/org-resolver";
 
 export async function DELETE(
@@ -15,6 +16,7 @@ export async function DELETE(
 
     const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
+    if (!isValidUuid(params.id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
     const { error } = await supabase
       .from("sp_api_connections")
