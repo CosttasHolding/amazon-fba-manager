@@ -132,6 +132,11 @@ Rutas afectadas (patrón `.from("profiles").select("org_id")`): `amazon-payouts`
 - **Opción A**: agregar `profiles.org_id` + trigger de sync desde `org_members` (revive 9 rutas sin tocar código; duplica fuente de verdad).
 - **Opción B (recomendada)**: refactor de las 9 rutas al resolvedor estándar `getOrgId` de `src/lib/api-handler.ts`.
 
+### Resolución hallazgos #2 y #3 (2026-08-23, aprobación explícita del owner)
+
+1. **Migración 039 aplicada en prod** vía Management API en 3 lotes (ALTER ×8, índices ×8). Verificado con `information_schema`: las 8 tablas tienen `org_id`. Re-corrida de batería completa post-migración: **24 PASS / 0 FAIL** (QA9b/QA9c ahora verdes).
+2. **Refactor Opción B aplicado** (commit `0ddefc9`): las rutas `amazon-payouts` (GET/POST), `research/analyze`, `sp-api/sync` (GET/POST), `sp-api/webhooks/subscribe` (POST/DELETE/GET), `sp-api/webhooks` (GET logs), `sp-api/connections` (+[id] DELETE), `sp-api/auth/callback` ahora usan `getOrgId(supabase, user.id, req)`. Caso especial `automation/weekly-summary` (cron service-role): itera `org_members` activos en vez de usuarios+profiles; shape de respuesta intacta (clave=user_id). Cero referencias restantes a `profiles.org_id`. Verificación: typecheck OK · lint sin warnings nuevos · **53 archivos / 425 tests OK** · build de producción OK. Pendiente: verificar en vivo tras deploy (las rutas SP-API requieren conexión real del owner).
+
 ## Pendientes manuales (requieren sesión del owner en prod)
 
 | Ítem | Estado | Nota |
