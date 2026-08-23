@@ -5,8 +5,7 @@
 - **TypeScript strict mode**: NO usar `any`, siempre tipar
 - **Nomenclatura**: `snake_case` en DB y API routes, `camelCase` en frontend (componentes, hooks, utils)
 - **CSS**: NUNCA usar `bg-white`, `bg-gray-*`, `text-gray-*`. SIEMPRE usar CSS variables (`bg-background`, `bg-card`, `text-foreground`, `text-muted-foreground`)
-- **calculations.ts es INMUTABLE**: no modificar `calcRefFee`, `calcFBAFee`, `calcMetrics`
-- **Max 2 archivos por respuesta** (para mantener contexto limpio)
+- **Código financiero crítico**: `calculations.ts`, `dashboard/metrics.ts`, `research/scoring.ts`, `research/recompute.ts` no se modifican sin motivo explícito + regression test + review (detalle en invariantes de `AGENTS.md`)
 - **Sin comentarios en el código** a menos que el usuario los pida
 - **Validación**: todos los forms usan Zod schemas en `src/validations/*.ts`
 - **Toast**: siempre usar sonner (`toast.success` / `toast.error`), nunca alerts nativos
@@ -138,9 +137,10 @@ t("module.key", locale);
 
 ## 13. Deploy Workflow
 
-1. `npm run lint` (ESLint `next/core-web-vitals`)
-2. `npm run test:run` (Vitest)
-3. `npm run build` (Next.js production)
-4. Auto-deploy a Vercel en build exitoso
+1. `npm run typecheck` (TypeScript)
+2. `npm run lint` (ESLint `next/core-web-vitals`)
+3. `npm run test:run` (Vitest)
+4. `npm run build` (Next.js production)
+5. Auto-deploy a Vercel en build exitoso
 
 - **Production URL**: `https://amazon-fba-manager-virid.vercel.app`

@@ -1,131 +1,65 @@
-# AGENTS.md - Superpowers para Amazon FBA Manager
+# AGENTS.md — Amazon FBA Manager
 
-## Protocolo de Sesion (Segundo Cerebro)
+## Identidad
 
-Este proyecto usa un vault de Obsidian como memoria persistente entre sesiones. Todo agente debe seguir este protocolo:
+SaaS multi-tenant para gestión de Amazon FBA. Next.js 14 (App Router) + Supabase (RLS) + TypeScript strict + Tailwind/shadcn + Vitest + Playwright. Idioma del agente: **español**.
 
-### Al iniciar sesion
+Estructura: `src/app/(dashboard)/` páginas · `src/app/api/` routes · `src/components/` · `src/hooks/` · `src/lib/` · `src/types/` · `src/validations/`.
 
-1. Leer `App State.md` — snapshot del proyecto (version, branch, build, features)
-2. Leer `PROMPT_NEXT_SESSION.md` — checkpoint de la sesion anterior
-3. Leer `Daily Notes/YYYY-MM-DD.md` (la mas reciente) — resumen de lo que se hizo
-4. Leer `00 - Dashboard.md` — entry point del vault
-5. Leer `Bugs Conocidos.md` — bugs activos
+## Invariantes absolutas
 
-### Al finalizar sesion
+1. **Multi-tenant**: toda query, mutation, API route o código server-side debe estar scoped por `org_id` con autenticación y membership verificadas. Service role NO está protegido por RLS: si el código usa service role, la autorización es responsabilidad del código.
+2. **Código financiero crítico**: `src/lib/calculations.ts`, `src/lib/dashboard/metrics.ts`, `src/lib/research/scoring.ts`, `src/lib/research/recompute.ts`. Cambios solo con motivo explícito, regression test con valores esperados y review independiente.
+3. **Secrets**: SOLO en `.env.local` (gitignored). Nunca en código, docs ni commits. Pre-commit `scripts/check-secrets.js`; jamás `--no-verify`. Si un secreto se expone en chat o repo: rotarlo inmediatamente y avisar.
+4. **Producción**: no modificar datos, RLS, credenciales ni configuración productiva irreversible sin aprobación explícita.
 
-1. Crear `Daily Notes/YYYY-MM-DD.md` con resumen estructurado:
-   - Que se hizo (features, bugs, refactors, docs)
-   - Decisiones tomadas
-   - Archivos modificados
-   - Pr�ximos pasos
-2. Actualizar `PROMPT_NEXT_SESSION.md` con checkpoint actualizado
-3. Actualizar `App State.md` con estado actual (version, branch, features en progreso)
-4. Actualizar `Bugs Conocidos.md` si se encontraron/arreglaron bugs
-5. Actualizar `Learning Log.md` si se descubrieron patrones o lecciones
+## Convenciones de código
 
-### Formato de Daily Notes
+Fuente única: **CONVENTIONS.md** (TS strict sin `any`, Zod para validación, sonner para toasts, `bg-background` nunca `bg-white`, snake_case en DB/API / camelCase en frontend, sin comentarios). Términos y métricas de la app: `GLOSARIO.md`.
 
-```markdown
----
-fecha: YYYY-MM-DD
-tipo: daily-note
-tags: [diario, desarrollo]
----
+## Carga de contexto (lazy)
 
-# YYYY-MM-DD - [titulo corto]
+No leer documentación completa al iniciar sesión. Cargar solo lo relevante al dominio de la tarea:
 
-## Que se hizo
-- [feature/bug/refactor/docs] descripcion
+| Dominio | Documentos |
+|---|---|
+| UI | `DESIGN_SYSTEM.md`, `UI-PATTERNS.md` |
+| DB | `DATABASE.md` + `supabase/migrations/` |
+| API | `API.md` |
+| Módulos/features | `MODULES.md` |
+| Arquitectura | `ARCHITECTURE.md` |
+| Decisiones pasadas | `Decisiones Tecnicas.md`, `docs/superpowers/specs/` |
 
-## Decisiones
-- [que y por que]
+Git, código, tests y configs son la fuente de verdad sobre branch, versión, cantidad de tests y estado. Handoff entre sesiones: leer únicamente la Daily Note más reciente si contiene contexto activo; al cerrar sesión escribir una Daily Note mínima (pendientes críticos, decisiones, próximo paso) — nunca información derivable de git.
 
-## Archivos modificados
-- ruta/al/archivo — motivo
+## Clasificación y verificación proporcional
 
-## Proximos pasos
-- [ ]
+Clasificar cada tarea antes de ejecutarla. El proceso escala con el riesgo, no con el tamaño:
 
-## Notas
-```
+- **SIMPLE** (copy, estilos, iconos): cambio directo → typecheck/lint targeted.
+- **STANDARD** (componente, hook, endpoint): plan corto → implementar → tests relacionados → revisar diff.
+- **COMPLEX** (feature multi-módulo, integración): exploración → spec breve → plan en fases verificables → implementar → review.
+- **CRITICAL** (RLS, org_id, auth, service role, migraciones destructivas, cálculos financieros, seguridad tenant): análisis de impacto → plan explícito → aprobación del usuario → implementación con regression/security tests → review independiente → verificación completa.
 
-## Metodologia
+Checklist tenant antes de tocar DB/API/server: autenticación ✓ organización ✓ membership ✓ rol ✓ `org_id` ✓ impacto RLS ✓ bypass service-role ✓ fuga cross-tenant ✓.
 
-Este proyecto usa **Superpowers** para desarrollo de software. El agente debe seguir este flujo:
+Verificación completa (`npx tsc --noEmit`, `npm run lint`, `npm run test:run`, `npm run build`) solo pre-commit/pre-merge o tras cambios COMPLEX/CRITICAL. Nunca declarar algo terminado sin evidencia del check correspondiente; usar UNVERIFIED si falta probar.
 
-### 1. Brainstorming (antes de codear)
-- Antes de escribir codigo, entender que queres realmente
-- Hacer preguntas para clarificar requisitos
-- Explorar alternativas
-- Presentar el diseno por partes para validacion
+## Acciones que requieren aprobación explícita
 
-### 2. Writing Plans (despues de aprobar diseno)
-- Romper el trabajo en tareas chicas (2-5 min cada una)
-- Cada tarea con: archivos exactos, codigo completo, pasos de verificacion
-- Seguir TDD: test primero, despues codigo
+push / force-push / merge / borrar branches remotas · migraciones destructivas o cambios de RLS en producción · borrado masivo de documentación · major upgrade de dependencias · cambio financiero con comportamiento esperado ambiguo · cualquier acción irreversible. Commits locales permitidos con working tree controlado y pre-commit en verde.
 
-### 3. Executing Plans (ejecucion)
-- Ejecutar tareas en orden
-- Verificar cada tarea antes de seguir
-- Si algo falla, detenerse y arreglar
+## Superpowers y subagentes
 
-### 4. Code Review (entre tareas)
-- Revisar contra el plan
-- Reportar problemas por severidad
-- Problemas criticos bloquean el progreso
+Superpowers es **toolbox**, no ceremony obligatoria: systematic-debugging ante bugs difíciles, verification-before-completion antes de declarar terminado, planning para COMPLEX/CRITICAL. Subagentes solo cuando aporten valor real (exploración read-only, revisión independiente, verificación de áreas críticas), nunca por costumbre.
 
-### 5. Finishing (cuando termina)
-- Verificar que todos los tests pasen
-- Presentar opciones: merge, PR, keep, discard
-- Limpiar worktree
-
-## Comportamiento del Agente (SIEMPRE)
-
-- **Skills/Superpowers siempre**: Antes de CUALQUIER accion, chequear si aplica una skill e invocarla. Brainstorming antes de crear features/modificar comportamiento; systematic-debugging ante cualquier bug o comportamiento inesperado; test-driven-development al implementar; verification-before-completion antes de declarar algo terminado/OK. Nunca racionalizar saltearlas ("es simple", "despues lo miro").
-- **Orquestador de subagentes (SDD)**: El agente principal actua como cerebro orquestador de subagentes. Flujo por tarea: escribir brief en `.superpowers/sdd/briefs/task-N-brief.md` → despachar implementador (subagente `general`) → generar review package (`git diff -U2 BASE HEAD | Out-File .superpowers/sdd/review-packages/taskN.diff`) → despachar revisor (subagente) → registrar resultado en el ledger `.superpowers/sdd/progress.md`. NUNCA re-despachar tareas ya marcadas done en el ledger.
-- **Skills faltantes → skills.sh**: Si falta una skill para la tarea actual, buscarla e instalarla con el CLI de skills.sh: `npx skills find <termino>` (buscar), `npx skills add <repo-o-package>` (instalar), `npx skills list` (ver instaladas). Las skills instaladas deben usarse igual que las de superpowers.
-
-## Reglas del Proyecto
-
-- **Idioma**: Siempre responder y comunicarse en **español**. Mensajes al usuario siempre en español.
-- **Markdown**: Todo código, texto técnico y mensajes usar formato Markdown.
-- **TypeScript strict**: Nunca usar `any`
-- **CSS variables**: Siempre `bg-background`, nunca `bg-white`
-- **snake_case** en DB/API, **camelCase** en frontend
-- **Zod** para toda validacion
-- **sonner** para toast, nunca alerts nativos
-- **calculations.ts** es inmutable
-- **Sin comentarios** en el codigo a menos que se pidan
-- **Dividir el trabajo en fases**: Siempre dividir el trabajo en fases chicas (2-5 min cada una). Nunca encarar el trabajo completo de una sola vez.
-- **Verificar cada fase**: Al terminar cada fase, correr la verificacion completa — `npx tsc --noEmit`, `npm run lint`, `npm run test:run`, `npm run build` — para asegurar que no haya bugs ni nada roto antes de seguir.
-- **Seguridad > todo**: Nunca escribir API keys, tokens, secrets o passwords en archivos del repo (ni en codigo, ni en docs, ni en commit messages). Las keys van SOLO en `.env.local` (gitignored). Si un secreto se expone en chat o repo, rotarlo inmediatamente y avisar al usuario.
-- **Nunca commitear sin verificar**: el pre-commit hook `scripts/check-secrets.js` bloquea commits con patrones de keys. No usar `--no-verify` salvo orden explicita.
-- **No compartir secrets en el chat**: si el usuario pega una key en el chat, recordarle que quedo expuesta y debe rotarla.
-
-## Comandos Utiles
+## Comandos
 
 ```bash
 npm run dev          # Desarrollo local
-npm run build        # Build de produccion
+npm run typecheck    # Verificación de tipos
 npm run lint         # Linting
-npm run typecheck    # Verificar tipos
+npm run test:run     # Tests unitarios
+npm run build        # Build de producción
+npm run e2e          # Playwright E2E
 ```
-
-## Estructura del Proyecto
-
-```
-src/
-  app/(dashboard)/    # Paginas (Server Components)
-  app/api/            # API routes
-  components/         # Componentes React
-  hooks/              # Custom hooks (useSWR)
-  lib/                # Utilidades, validaciones, acciones server
-  types/              # Tipos TypeScript
-  validations/        # Schemas Zod
-```
-
-## Glosario
-
-- `GLOSARIO.md` — referencia completa de términos y campos de la app (generado desde `src/lib/help-content.ts` con `npm run build:glossary`)
-- Leer antes de trabajar: `GLOSARIO.md` (o su fuente `src/lib/help-content.ts`) para entender cada término, campo y métrica de la app

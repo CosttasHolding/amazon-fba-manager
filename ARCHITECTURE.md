@@ -651,16 +651,30 @@ localStorage("fba-locale") → "es" | "en" | "ar"
 
 ### Pipeline:
 ```
-npm run lint (ESLint next/core-web-vitals)
-  → npm run test:run (Vitest 168 tests)
-    → npm run build (Next.js production)
-      → npx vercel deploy --prod (auto-deploy)
+npm run typecheck (TypeScript strict)
+  → npm run lint (ESLint next/core-web-vitals)
+    → npm run test:run (Vitest)
+      → npm run build (Next.js production)
+        → npx vercel deploy --prod (auto-deploy)
 ```
 
 ### Plataforma: Vercel
 - Project: `prj_EqQ7T1o3mk6qCFNs7PNWnU3jAsmo`
 - Production: `https://amazon-fba-manager-virid.vercel.app`
 - Cron jobs configurados en `vercel.json`
+
+---
+
+## Reglas Anti-Deuda (para código NUEVO)
+
+Auditoría 2026-08-22: `use-data.ts` (17 hooks, 7 dominios), `types/index.ts` (724 líneas, ~16 dominios) y 43 de 96 API routes con auth manual sin handler. Código nuevo sigue estas reglas; el viejo se migra solo cuando una feature lo toque:
+
+1. **Types**: interfaces nuevas van a `src/lib/<dominio>/types.ts` o `src/types/<dominio>.ts`. `src/types/index.ts` congelado salvo tipos genuinamente cross-dominio.
+2. **Hooks**: hooks de datos nuevos en `src/hooks/use-<dominio>.ts` (patrón `use-governance.ts`). `use-data.ts` cerrado a adiciones.
+3. **API routes**: toda route con auth de usuario usa `createApiHandler` (rate-limit + org uniformes). Route manual que se toca → se migra al handler (boy-scout).
+4. **Páginas**: al superar ~500 líneas, extraer client component a `src/components/<dominio>/`.
+5. **Tests**: código nuevo en `src/lib/` requiere `*.test.ts` co-ubicado.
+6. **Helpers compartidos**: antes de crear otro builder de querystring/hook duplicado, extraer a `src/lib/`.
 
 ---
 

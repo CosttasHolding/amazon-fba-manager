@@ -1,6 +1,6 @@
 # DATABASE.md - Esquema Completo de Base de Datos
 
-> Base de datos: **Supabase (PostgreSQL)** con 29 tablas + 1 vista + 21 migraciones. Todas las tablas core tienen `org_id` para multi-tenancy.
+> Base de datos: **Supabase (PostgreSQL)** multi-tenant. Todas las tablas core tienen `org_id`. La fuente de verdad del esquema es `supabase/migrations/`; este índice documenta las tablas existentes.
 
 ---
 
@@ -48,6 +48,9 @@
 | 38 | `audit_log` | Collaboration | Registro de auditoría |
 | 39 | `comments` | Collaboration | Comentarios en entidades |
 | 40 | `user_settings` | Settings | Configuración de usuario |
+| 41 | `succession_events` | Governance | Eventos de sucesión (death/transfer/buyout/retirement) |
+| 42 | `rate_limits` | Infra | Rate limiting de endpoints |
+| 43 | `research_groups` | Research | Grupos de research (item + competidores) |
 
 **Vistas:**
 - `products_with_inventory` → JOIN de products + inventory + sales aggregation (security_invoker)

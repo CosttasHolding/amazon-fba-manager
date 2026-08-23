@@ -59,7 +59,7 @@ Plataforma con **25+ modulos** integrados:
 
 ### Requisitos
 
-- Node.js 18+
+- Node.js 20.19+ (o 22.12+) — requerido por Vitest 4
 - Cuenta [Supabase](https://supabase.com)
 
 ### Instalacion

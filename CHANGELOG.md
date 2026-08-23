@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.2.0] - 2026-07-26
+
+### Changed — UI Optimization (detalle completo en `docs/archive/CHANGELOG-UI-OPTIMIZATION.md`)
+- Navegación por categorías en sidebar y sheet móvil (`src/lib/navigation.ts` refactor)
+- Búsqueda global y notificaciones accesibles en móvil
+- KPI grids en 2 columnas mobile
+- Padding estándar `px-4 py-3` en todas las tablas
+- Page transitions con Framer Motion (dashboard layout)
+
 ## [2.1.0] - 2026-07-07
 
 ### Added
