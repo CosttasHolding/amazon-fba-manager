@@ -1,0 +1,30 @@
+Org A del usuario QA: ec3fdb65-b592-4a7f-bf11-4a5ce2418237
+PASS QA0 login por UI -> dashboard
+PASS QA1 GET /api/products autenticado -> 200
+PASS QA2 H1 x-org-id falso -> 403
+PASS QA3 org sin membership -> 403
+INFO QA4 GET /api/drive/list?folderId=root -> 403 (esperable) {"error":"Carpeta fuera del espacio autorizado"}
+PASS QA5a POST capture -> 2xx
+PASS QA5b captura persistida con org_id correcto
+PASS QA5c GET /api/research -> 200
+PASS QA6a POST /api/products crea
+PASS QA6b org_id correcto en DB
+PASS QA6c PUT actualiza
+PASS QA6d GET por id -> 200
+PASS QA6e DELETE ok
+INFO QA6f post-DELETE: eliminado fisico
+PASS QA7a POST /api/suppliers crea
+PASS QA7b org_id correcto en DB
+PASS QA7c PUT actualiza
+PASS QA7d GET /api/suppliers -> 200
+PASS QA7e DELETE ok
+PASS QA8-0 producto efímero creado
+PASS QA8a POST /api/sales crea
+PASS QA8b org_id correcto en DB
+PASS QA8c GET /api/sales -> 200
+INFO QA8d GET /api/sales/summary -> 200 {"totalRevenue":49.98,"totalUnits":2,"totalFees":0,"totalProfit":49.98}
+PASS QA9a GET /api/inventory -> 200
+PASS QA9b POST movement adjustment -> 2xx
+PASS QA9c movimiento con org_id correcto
+--- LIMPIEZA ---
+Limpieza OK. RESUMEN: 24 PASS / 0 FAIL

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { exchangeAuthCode } from "@/lib/sp-api";
+import { getOrgId } from "@/lib/org-resolver";
 
 export async function GET(req: NextRequest) {
   try {
@@ -26,8 +27,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    const { data: profile } = await supabase.from("profiles").select("org_id").eq("id", user.id).single();
-    const orgId = profile?.org_id;
+    const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.redirect(new URL("/sp-api?error=no_org", req.url));
 
     const origin = req.nextUrl.origin;

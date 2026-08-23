@@ -33,9 +33,6 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = createServiceRoleClient();
 
-    const { data: users } = await supabase.auth.admin.listUsers();
-    const allUsers = users?.users || [];
-
     const summaries: Record<string, {
       revenue_this_month: number;
       revenue_last_month: number;
@@ -46,9 +43,13 @@ export async function GET(req: NextRequest) {
       active_alerts: number;
     }> = {};
 
-    for (const user of allUsers) {
-      const { data: userProfile } = await supabase.from("profiles").select("org_id").eq("id", user.id).single();
-      const orgId = userProfile?.org_id;
+    const { data: memberships } = await supabase
+      .from("org_members")
+      .select("user_id, org_id")
+      .eq("status", "active");
+
+    for (const membership of memberships || []) {
+      const orgId = membership.org_id;
       if (!orgId) continue;
 
       const now = new Date();
@@ -107,7 +108,7 @@ export async function GET(req: NextRequest) {
         .eq("org_id", orgId)
         .eq("read", false);
 
-      summaries[user.id] = {
+      summaries[membership.user_id] = {
         revenue_this_month: revenueThisMonth,
         revenue_last_month: revenueLastMonth,
         units_sold: unitsSold,

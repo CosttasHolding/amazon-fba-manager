@@ -1,16 +1,16 @@
 export const dynamic = "force-dynamic";
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getOrgId } from "@/lib/org-resolver";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: profile } = await supabase.from("profiles").select("org_id").eq("id", user.id).single();
-    const orgId = profile?.org_id;
+    const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
     const { data, error } = await supabase

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { payoutSchema } from "@/validations/payout";
+import { getOrgId } from "@/lib/org-resolver";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,8 +11,7 @@ export async function GET(req: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-    const { data: profile } = await supabase.from("profiles").select("org_id").eq("id", user.id).single();
-    const orgId = profile?.org_id;
+    const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
     const { searchParams } = new URL(req.url);
@@ -38,8 +38,7 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-    const { data: profile } = await supabase.from("profiles").select("org_id").eq("id", user.id).single();
-    const orgId = profile?.org_id;
+    const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
     const body = await req.json();

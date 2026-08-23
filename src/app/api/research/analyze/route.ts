@@ -7,6 +7,7 @@ import { getXAIClient } from "@/lib/ai/client";
 import { buildAnalyzeProductPrompt } from "@/lib/ai/prompts";
 import type { AnalyzeProductResponse } from "@/lib/ai/types";
 import { apiErrorResponse } from "@/lib/api-utils";
+import { getOrgId } from "@/lib/org-resolver";
 
 const ASIN_REGEX = /^[A-Z0-9]{10}$/;
 
@@ -23,8 +24,7 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-    const { data: profile } = await supabase.from("profiles").select("org_id").eq("id", user.id).single();
-    const orgId = profile?.org_id;
+    const orgId = await getOrgId(supabase, user.id, req);
     if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
     const { input } = await req.json();

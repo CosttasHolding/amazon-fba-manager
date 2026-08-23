@@ -7,6 +7,7 @@ import {
   extractAmazonSubscriptionId,
   isAuthorizedWebhook,
 } from "@/lib/sp-api/webhook-auth";
+import { getOrgId } from "@/lib/org-resolver";
 
 export async function POST(request: NextRequest) {
   try {
@@ -128,8 +129,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: profile } = await supabase.from("profiles").select("org_id").eq("id", user.id).single();
-  const orgId = profile?.org_id;
+  const orgId = await getOrgId(supabase, user.id, request);
   if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
   const url = new URL(request.url);

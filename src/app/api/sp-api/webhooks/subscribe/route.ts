@@ -11,6 +11,7 @@ import {
 } from "@/lib/sp-api/notifications";
 import { SpApiClient } from "@/lib/sp-api/client";
 import { getSpEndpoint } from "@/lib/sp-api/types";
+import { getOrgId } from "@/lib/org-resolver";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -20,8 +21,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: profile } = await supabase.from("profiles").select("org_id").eq("id", user.id).single();
-  const orgId = profile?.org_id;
+  const orgId = await getOrgId(supabase, user.id, request);
   if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
   const body = await request.json();
@@ -151,8 +151,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: profile } = await supabase.from("profiles").select("org_id").eq("id", user.id).single();
-  const orgId = profile?.org_id;
+  const orgId = await getOrgId(supabase, user.id, request);
   if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
   const url = new URL(request.url);
@@ -210,8 +209,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: profile } = await supabase.from("profiles").select("org_id").eq("id", user.id).single();
-  const orgId = profile?.org_id;
+  const orgId = await getOrgId(supabase, user.id, request);
   if (!orgId) return NextResponse.json({ error: "No hay organización activa" }, { status: 400 });
 
   const { data: subscriptions, error } = await supabase
