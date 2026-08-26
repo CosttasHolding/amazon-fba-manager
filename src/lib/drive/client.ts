@@ -1,121 +1,114 @@
 import { google, drive_v3 } from "googleapis";
+import { getDriveRefreshTokenForConnection } from "@/lib/drive/connection-secrets";
+import { assertDriveRootIsolated } from "@/lib/drive/root-isolation";
 import { createClient } from "@/lib/supabase/server";
 import { getDriveRedirectUri } from "@/lib/drive/oauth";
+import type { DriveConnectionMetadata } from "@/lib/drive/types";
 
-export function getRootFolderId(): string {
-  return process.env.GOOGLE_DRIVE_FOLDER_ID || "root";
-}
+type UserScopedSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
-const ORG_ROOT_PREFIX = "Amazon FBA Manager - ";
+const DRIVE_CONNECTION_SELECT =
+  "id, org_id, provider, label, google_account_email, root_folder_id, status, created_at, updated_at";
 
-export function getSharedDriveOrgIds(): string[] {
-  return (process.env.GOOGLE_DRIVE_SHARED_ORG_IDS || "")
-    .split(/[\s,]+/)
-    .map((id) => id.trim())
-    .filter(Boolean);
+function toDriveConnectionMetadata(row: {
+  id: string;
+  org_id: string;
+  provider: "google_drive";
+  label: string;
+  google_account_email: string | null;
+  root_folder_id: string;
+  status: "active" | "revoked" | "error";
+  created_at: string;
+  updated_at: string;
+}): DriveConnectionMetadata {
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    provider: row.provider,
+    label: row.label,
+    googleAccountEmail: row.google_account_email,
+    rootFolderId: row.root_folder_id,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 export function isDriveOrgAllowed(orgId: string): boolean {
-  const sharedOrgIds = getSharedDriveOrgIds();
-  return sharedOrgIds.length === 0 || sharedOrgIds.includes(orgId);
+  const configuredOrgIds = (process.env.GOOGLE_DRIVE_SHARED_ORG_IDS || "")
+    .split(/[\s,]+/)
+    .map((id) => id.trim())
+    .filter(Boolean);
+  return configuredOrgIds.length === 0 || configuredOrgIds.includes(orgId);
 }
 
-function escapeDriveQueryValue(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-}
+export async function getDriveConnection(
+  supabase: UserScopedSupabaseClient,
+  orgId: string,
+  connectionId?: string,
+): Promise<DriveConnectionMetadata | null> {
+  try {
+    let query = supabase.from("drive_connections").select(DRIVE_CONNECTION_SELECT);
 
-export async function getOrgRootFolderId(
-  drive: drive_v3.Drive,
-  orgId: string
-): Promise<string> {
-  const configuredRootId = getRootFolderId();
-  const folderName = `${ORG_ROOT_PREFIX}${orgId}`;
-  const existing = await drive.files.list({
-    q: `'${escapeDriveQueryValue(configuredRootId)}' in parents and name = '${escapeDriveQueryValue(folderName)}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-    fields: "files(id)",
-    pageSize: 1,
-    spaces: "drive",
-  });
+    if (connectionId) {
+      query = query.eq("id", connectionId);
+    }
 
-  const existingFolder = existing.data.files?.[0]?.id;
-  if (existingFolder) return existingFolder;
+    query = query.eq("org_id", orgId).eq("status", "active");
 
-  const folder = await drive.files.create({
-    requestBody: {
-      name: folderName,
-      mimeType: "application/vnd.google-apps.folder",
-      parents: [configuredRootId],
-    },
-    fields: "id",
-  });
+    if (!connectionId) {
+      query = query.order("created_at", { ascending: true }).limit(1);
+    }
 
-  if (!folder.data.id) {
-    throw new Error("Drive no conectado: no se pudo crear la carpeta de organización");
+    const { data, error } = await query.maybeSingle();
+    if (error || !data || data.org_id !== orgId || data.status !== "active") return null;
+
+    return toDriveConnectionMetadata(data);
+  } catch {
+    return null;
   }
-  return folder.data.id;
 }
 
-export async function getDriveRootFolderId(
-  drive: drive_v3.Drive,
-  orgId: string
-): Promise<string | null> {
-  if (!isDriveOrgAllowed(orgId)) return null;
-
-  if (getSharedDriveOrgIds().length > 0) {
-    return getRootFolderId();
-  }
-
-  return getOrgRootFolderId(drive, orgId);
-}
-
-export async function getDriveClient(userId?: string): Promise<drive_v3.Drive> {
+export async function getDriveClientForConnection(
+  supabase: UserScopedSupabaseClient,
+  userId: string,
+  orgId: string,
+  connectionId?: string,
+): Promise<{ drive: drive_v3.Drive; connection: DriveConnectionMetadata }> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
   const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
     throw new Error("Drive no conectado: OAuth de Google no configurado");
   }
-
-  async function getRefreshToken(): Promise<string | null> {
-    if (userId) {
-      const svcKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      if (!svcKey) return null;
-      const { createClient: createAdmin } = await import("@supabase/supabase-js");
-      const admin = createAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!, svcKey);
-      const { data } = await admin
-        .from("user_settings")
-        .select("drive_refresh_token")
-        .eq("user_id", userId)
-        .single();
-      return data?.drive_refresh_token ?? null;
-    }
-    try {
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.id) return null;
-      const { data: settings } = await supabase
-        .from("user_settings")
-        .select("drive_refresh_token")
-        .eq("user_id", user.id)
-        .single();
-      return settings?.drive_refresh_token ?? null;
-    } catch {
-      return null;
-    }
+  if (!isDriveOrgAllowed(orgId)) {
+    throw new Error("Drive no conectado: organización no habilitada");
   }
 
   try {
-    const refreshToken = await getRefreshToken();
-    if (!refreshToken) {
-      throw new Error("Drive no conectado: conecta tu cuenta de Google Drive");
+    const connection = await getDriveConnection(supabase, orgId, connectionId);
+    if (!connection) {
+      throw new Error("Drive no conectado: conexión no encontrada");
     }
 
+    const refreshToken = await getDriveRefreshTokenForConnection(
+      supabase,
+      userId,
+      orgId,
+      connection,
+    );
     const redirectUri = getDriveRedirectUri(appUrl);
     const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
     oauth2Client.setCredentials({ refresh_token: refreshToken });
-    return google.drive({ version: "v3", auth: oauth2Client });
+
+    const drive = google.drive({ version: "v3", auth: oauth2Client });
+    await assertDriveRootIsolated(drive, supabase, userId, orgId, connection.rootFolderId);
+
+    return {
+      drive,
+      connection,
+    };
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("Drive no conectado:")) {
       throw error;

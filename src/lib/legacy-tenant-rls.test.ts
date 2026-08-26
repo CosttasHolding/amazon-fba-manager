@@ -54,8 +54,9 @@ describe("legacy tenant isolation", () => {
     expect(migration).not.toContain("get_org_role");
   });
 
-  it("uses the resolved organization for every backup query and Drive root", () => {
-    expect(backupRoute).toContain("getDriveRootFolderId(drive, orgId)");
+  it("uses the resolved organization for every backup query and Drive connection", () => {
+    expect(backupRoute).toMatch(/getDriveClientForConnection\(\s*supabase,\s*user\.id,\s*orgId/);
+    expect(backupRoute).not.toContain("getDriveRootFolderId");
     expect(backupRoute).not.toContain('.eq("user_id", userId)');
     expect(backupRoute.match(/\.eq\("org_id", orgId\)/g)?.length).toBeGreaterThanOrEqual(5);
   });

@@ -45,7 +45,7 @@ Plataforma con **25+ modulos** integrados:
 | **Analytics** | Period comparison, projections y sales heatmap |
 | **Alerts** | Configurable rules con cron evaluation automatica |
 | **Team** | Members management, Tasks Kanban, Board Decisions |
-| **Google Drive** | OAuth browser flow, backup automtico |
+| **Google Drive** | Conexión OAuth por organización y navegador read-only |
 | **SP-API** | Amazon integration, sync programatico, webhooks |
 | **Multi-tenant** | Organizations, RLS por tenant, invitation system |
 | **i18n** | Spanish, English, Arabic (RTL support completo) |
@@ -92,7 +92,7 @@ La app estara disponible en `http://localhost:3000`.
 | Variable | Descripcion |
 |----------|-------------|
 | `SP_API_*` | Amazon Selling Partner API credentials |
-| `GOOGLE_OAUTH_*` | Google Drive OAuth credentials |
+| `GOOGLE_OAUTH_*` | Google Drive OAuth credentials and callback URI |
 | `VAPID_*` | Web Push notifications keys |
 | `RESEND_API_KEY` | Email service via Resend |
 | `CRON_SECRET` | Secret para Vercel Cron endpoints |
@@ -168,7 +168,7 @@ Docs tecnicos nucleo en la raiz; historicos en `docs/archive/`; auditorias y QA 
 
 ## Testing
 
-- **168 unit tests** (Vitest + @testing-library/react)
+- **543 unit tests** (Vitest + @testing-library/react)
 - **E2E tests** (Playwright: Chromium + Mobile Chrome)
 
 ```bash

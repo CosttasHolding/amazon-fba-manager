@@ -155,17 +155,17 @@ export const HELP_GLOSSARY: { term: string; definition: string }[] = [
   {
     term: "Google Drive Integration",
     definition:
-      "Módulo de almacenamiento cloud con OAuth2 por usuario. Permite navegar carpetas, subir/descargar/renombrar/eliminar archivos, editar texto inline, ver imágenes, y hacer backup automático de datos de la app a Drive.",
+      "Conexión única de Google Drive asociada a la organización. Los miembros autorizados pueden navegar carpetas y archivos en modo lectura y abrirlos mediante el webViewLink proporcionado por Google. La app no sube, edita, renombra, elimina ni descarga archivos, y no realiza backups automáticos.",
   },
   {
     term: "OAuth2 (Drive)",
     definition:
-      "Autenticación de Google mediante OAuth 2.0. Cada usuario conecta su propia cuenta de Google Drive. El refresh token se almacena en user_settings para acceso sin reconexión.",
+      "Autenticación de Google mediante OAuth 2.0 para una conexión de la organización. La conexión se administra con autorización de owner/admin; el refresh token se cifra y se guarda server-side en el secreto de la conexión, no en user_settings ni como almacenamiento por usuario.",
   },
   {
     term: "Backup Automático",
     definition:
-      "Exportación de datos de la app (productos, ventas, pedidos, inventario, proveedores) a Google Drive como archivos .xlsx. Se almacenan en carpeta 'Backups' para resguardo periódico.",
+      "No forma parte de la integración actual: la app no exporta datos ni crea backups automáticos en Google Drive.",
   },
   {
     term: "Notificaciones (Notifications)",
@@ -1819,7 +1819,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     title: "Google Drive",
     route: "/drive",
     description:
-      "Integración con Google Drive para almacenamiento y gestión de documentos del negocio. Cada socio conecta su propia cuenta de Google. Incluye navegador de archivos, CRUD completo, visualización de imágenes, edición de texto, y backup automático de datos de la app.",
+      "Navegador read-only de Google Drive con una conexión asociada a la organización. Los miembros activos pueden consultar metadata y navegar carpetas bajo la raíz de esa conexión; owner/admin autorizan la conexión y su revocación. Los archivos se abren en Google Drive mediante el webViewLink proporcionado por Google.",
     tables: [
       {
         label: "Lista de Archivos",
@@ -1828,26 +1828,25 @@ export const HELP_SECTIONS: HelpSection[] = [
           { name: "Tipo", description: "Extensión del archivo" },
           { name: "Tamaño", description: "Peso del archivo formateado" },
           { name: "Modificado", description: "Fecha de última modificación" },
-          { name: "Acciones", description: "Abrir en Drive / Descargar / Editar / Renombrar / Eliminar" },
+          { name: "Acciones", description: "Abrir en Google Drive mediante webViewLink" },
         ],
       },
     ],
     actions: [
-      { label: "Conectar Google Drive", description: "OAuth flow para autorizar acceso" },
-      { label: "Desconectar", description: "Revoca el acceso a Drive" },
-      { label: "Subir Archivo", description: "Drag & drop o selector de archivos" },
-      { label: "Nueva Carpeta", description: "Crear carpeta en el directorio actual" },
-      { label: "Abrir en Drive", description: "Abre el archivo en Google Drive web para edición nativa" },
+      { label: "Conectar Google Drive", description: "Inicia OAuth2 para autorizar la conexión de la organización; la autorización de alta corresponde a owner/admin." },
+      { label: "Revocar conexión", description: "Revoca la conexión de la organización; requiere autorización de owner/admin." },
+      { label: "Abrir en Google Drive", description: "Abre el archivo en Google Drive usando únicamente el webViewLink entregado por Google." },
     ],
     glossary: [
-      { term: "OAuth2", definition: "Cada usuario conecta su propia cuenta de Google Drive. El refresh token se guarda en user_settings para acceso persistente." },
-      { term: "Backups", definition: "Los backups se almacenan en carpeta 'Backups' de Drive en formato .xlsx. Módulos: productos, ventas, pedidos, inventario, proveedores." },
+      { term: "Conexión org-scoped", definition: "Conexión de Google Drive asociada a una organización; no se crea una conexión ni se almacena un refresh token por usuario." },
+      { term: "webViewLink", definition: "Enlace proporcionado por Google para abrir un archivo en Drive. La app no actúa como proxy de descarga ni modifica el contenido." },
+      { term: "Modo read-only", definition: "La app permite listar metadata y navegar carpetas, pero no subir, editar, renombrar, eliminar, descargar mediante proxy ni crear backups automáticos." },
     ],
     tips: [
-      "Cada socio debe conectar su propia cuenta de Google Drive.",
-      "Los documentos nativos de Google (Docs, Sheets) se abren directamente en Drive para edición.",
-      "Hacé backup periódico de cada módulo desde la sección de backups.",
-      "Podés navegar carpetas y organizar documentos como en Drive nativo.",
+      "La organización usa una conexión de Drive compartida por sus miembros autorizados.",
+      "Abrí los archivos en Google Drive desde su webViewLink para gestionar su contenido allí.",
+      "La app no ofrece upload, edición, renombrado, eliminación, descarga proxy ni backup automático.",
+      "Podés navegar únicamente dentro de la raíz de la conexión seleccionada.",
     ],
   },
 

@@ -2,10 +2,12 @@ require("dotenv").config({ path: ".env.local" });
 require("dotenv").config({ path: ".env" });
 const { createClient } = require("@supabase/supabase-js");
 const { chromium } = require("@playwright/test");
+const { canRunDriveCrud } = require("./qa-drive-guard");
 
 const BASE = process.env.QA_BASE_URL || "https://amazon-fba-manager-virid.vercel.app";
 const EMAIL = process.env.QA_EMAIL;
 const PASSWORD = process.env.QA_PASSWORD;
+const driveCrudAllowed = canRunDriveCrud(BASE, process.env);
 
 if (!EMAIL || !PASSWORD) {
   console.error("Faltan QA_EMAIL y QA_PASSWORD en .env.local (usuario de prueba dedicado).");
@@ -238,7 +240,7 @@ function out(s) { lines.push(s); console.log(s); }
     const { data: finalOrder } = await admin.from("purchase_orders").select("org_id, status, quantity, unit_cost, total_cost, shipping_cost, customs_cost, prep_center_cost").eq("id", oid).single();
     check("QA13b orden final scoped y consistente", finalOrder && finalOrder.org_id === ORG_A && finalOrder.status === "delivered" && Number(finalOrder.total_cost) === Number(finalOrder.quantity) * Number(finalOrder.unit_cost) && Number(finalOrder.total_cost) + Number(finalOrder.shipping_cost || 0) + Number(finalOrder.customs_cost || 0) + Number(finalOrder.prep_center_cost || 0) === expectedLandedTotal, JSON.stringify(finalOrder || {}));
   }
-  out("INFO QA13c Flow B: returns crea estado requested y refund_amount consistente; no existe /api/returns/[id] para avanzar estados vía API (gap documentado)");
+  out("INFO QA13c Flow B: returns crea estado requested y refund_amount consistente; el avance de estados requiere repetir el flujo completo en producción");
 
   // QA14 aislamiento multi-org: membership real + API + UI con Org B
   let orgBMembership = false, orgBProductId = null;
@@ -266,34 +268,44 @@ function out(s) { lines.push(s); console.log(s); }
     }
   }
 
-  // QA15 Drive E2E: upload -> list + metadata -> delete
-  let driveFileId = null;
-  const driveName = `qa-battery-${stamp}.txt`;
-  const driveUpload = await page.evaluate(async (name) => {
-    const form = new FormData();
-    form.append("file", new File(["qa-battery"], name, { type: "text/plain" }));
-    const response = await fetch("/api/drive/upload", { method: "POST", body: form });
-    let body = null;
-    try { body = await response.json(); } catch {}
-    return { status: response.status, body };
-  }, driveName);
-  driveFileId = driveUpload.body?.data?.id || null;
-  const driveAvailable = driveUpload.status >= 200 && driveUpload.status < 300 && !!driveFileId;
-  if (!driveAvailable && driveUpload.status === 500 && JSON.stringify(driveUpload.body).includes("storage quota")) {
-    out("INFO QA15 Drive NOT CONFIGURED: service account sin cuota; requiere Shared Drive u OAuth del owner");
+  // QA15 Drive E2E: upload -> list + metadata -> delete. Never run it against production by default.
+  if (!driveCrudAllowed) {
+    out("INFO QA15 Drive CRUD omitido: requiere QA_DRIVE_CRUD_ALLOW=I_UNDERSTAND_NON_PRODUCTION y hostname exacto en QA_DRIVE_ALLOWED_HOSTS");
   } else {
-    check("QA15a Drive upload crea archivo", driveAvailable, `(status ${driveUpload.status} ${JSON.stringify(driveUpload.body).slice(0, 180)})`);
-  }
-  if (driveFileId) {
-    r = await api("/api/drive/list");
-    const driveFiles = r.body?.data?.files || [];
-    const listedDriveFile = driveFiles.find((file) => file.id === driveFileId);
-    check("QA15b Drive list incluye archivo", r.status === 200 && !!listedDriveFile, `(status ${r.status})`);
-    check("QA15c metadata Drive correcta", listedDriveFile?.name === driveName && listedDriveFile?.mimeType === "text/plain" && Number(listedDriveFile?.size) === 10, JSON.stringify(listedDriveFile || {}));
-    r = await api(`/api/drive/delete/${driveFileId}`, { method: "DELETE" });
-    check("QA15d Drive delete ok", r.status >= 200 && r.status < 300, `(status ${r.status})`);
-    r = await api("/api/drive/list");
-    check("QA15e Drive list ya no incluye archivo", r.status === 200 && !(r.body?.data?.files || []).some((file) => file.id === driveFileId), `(status ${r.status})`);
+    let driveFileId = null;
+    const driveName = `qa-battery-${stamp}.txt`;
+    const driveUpload = await page.evaluate(async (name) => {
+      const form = new FormData();
+      form.append("file", new File(["qa-battery"], name, { type: "text/plain" }));
+      const response = await fetch("/api/drive/upload", { method: "POST", body: form });
+      let body = null;
+      try { body = await response.json(); } catch {}
+      return { status: response.status, body };
+    }, driveName);
+    driveFileId = driveUpload.body?.data?.id || null;
+    const driveAvailable = driveUpload.status >= 200 && driveUpload.status < 300 && !!driveFileId;
+    if (!driveAvailable && driveUpload.status === 500 && JSON.stringify(driveUpload.body).includes("quota")) {
+      out("INFO QA15 Drive NOT CONFIGURED: la cuenta OAuth no tiene cuota disponible");
+    } else {
+      check("QA15a Drive upload crea archivo", driveAvailable, `(status ${driveUpload.status} ${JSON.stringify(driveUpload.body).slice(0, 180)})`);
+    }
+    if (driveFileId) {
+      r = await api("/api/drive/list");
+      const driveFiles = r.body?.data?.files || [];
+      const listedDriveFile = driveFiles.find((file) => file.id === driveFileId);
+      check("QA15b Drive list incluye archivo", r.status === 200 && !!listedDriveFile, `(status ${r.status})`);
+      check("QA15c metadata Drive correcta", listedDriveFile?.name === driveName && listedDriveFile?.mimeType === "text/plain" && Number(listedDriveFile?.size) === 10, JSON.stringify(listedDriveFile || {}));
+      const renamedDriveName = `qa-renamed-${stamp}.txt`;
+      r = await api(`/api/drive/rename/${driveFileId}`, { method: "PATCH", body: { name: renamedDriveName } });
+      check("QA15d Drive rename ok", r.status >= 200 && r.status < 300 && r.body?.data?.name === renamedDriveName, `(status ${r.status})`);
+      r = await api("/api/drive/list");
+      const renamedDriveFile = (r.body?.data?.files || []).find((file) => file.id === driveFileId);
+      check("QA15e Drive list refleja rename", r.status === 200 && renamedDriveFile?.name === renamedDriveName, `(status ${r.status})`);
+      r = await api(`/api/drive/delete/${driveFileId}`, { method: "DELETE" });
+      check("QA15f Drive delete ok", r.status >= 200 && r.status < 300, `(status ${r.status})`);
+      r = await api("/api/drive/list");
+      check("QA15g Drive list ya no incluye archivo", r.status === 200 && !(r.body?.data?.files || []).some((file) => file.id === driveFileId), `(status ${r.status})`);
+    }
   }
 
   await browser.close();

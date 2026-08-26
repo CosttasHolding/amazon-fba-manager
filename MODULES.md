@@ -381,7 +381,7 @@ Configuracion de usuario. Perfil, defaults de FBA, configuracion de CSV, tiers d
 - FBA Defaults: default_marketplace, default_fba_fee, default_referral_fee, default_shipping_cost, default_storage_cost
 - Financial: target_roi, currency, tax_rate
 - System: language (es/en/ar), theme
-- Integrations: drive_refresh_token, push subscriptions
+- Integrations: conexión Drive por organización, push subscriptions
 
 ### Por que existe:
 Cada usuario tiene configuracion personalizada (marketplace, idioma, defaults de costos). Settings permite personalizar la experiencia sinhardcodear valores.
@@ -498,19 +498,20 @@ Para LLCs y equipos, la gobernanza es critica. Quienes son socios, que tareas es
 ## 19. Drive (/drive)
 
 ### Que hace:
-Navegador de Google Drive integrado. Permite subir, descargar, renombrar, eliminar archivos, y hacer backups de la data de la app.
+Navegador read-only de Google Drive integrado. Lista metadata, permite navegar carpetas bajo la raíz de la conexión de la organización y abre archivos mediante el `webViewLink` de Google.
 
 ### Datos que maneja:
 - Files: id, name, mimeType, size, modifiedTime, webViewLink
 - Backup types: products, sales, orders, inventory, suppliers
 
 ### Por que existe:
-Backup externo es esencial para datos criticos de negocio. Google Drive es la opcion mas accesible para usuarios no tecnicos.
+Permite que los miembros autorizados consulten el workspace compartido sin replicar contenido ni exponer refresh tokens al navegador.
 
 ### Relaciones:
-- Exporta data de: products, sales, orders, inventory, suppliers
-- Api endpoints: GET /api/drive/auth, GET /api/drive/list, POST /api/drive/upload, GET/DELETE /api/drive/download/[id], POST /api/drive/backup
-- Auth: OAuth2 obligatorio por usuario; sin refresh token, Drive queda desconectado
+- Conexion: `drive_connections` y `drive_connection_secrets`, scoped por `org_id`
+- API endpoints: GET /api/drive/auth, GET /api/drive/connections, DELETE /api/drive/connections/[id], GET /api/drive/list
+- Rutas CRUD legacy: upload, folders, download, rename, update, delete y backup quedan fuera de la primera UI read-only
+- Auth: OAuth2 por organización; sin conexión activa, Drive queda desconectado
 - Components: drive-browser.tsx, drive-toolbar.tsx, drive-file-list.tsx, drive-upload-dialog.tsx, drive-text-editor.tsx, drive-image-viewer.tsx, drive-backup.tsx
 
 ---

@@ -287,14 +287,18 @@ El sync `reimbursements` conserva los eventos de `GET_FBA_REIMBURSEMENTS_DATA` e
 |--------|------|-----------|-------------|
 | `GET` | `/api/drive/auth` | Iniciar OAuth | - |
 | `GET` | `/api/drive/auth/callback` | Callback OAuth | `?code=` |
-| `GET` | `/api/drive/list` | Listar archivos | `?folderId=` |
-| `GET` | `/api/drive/folders` | Listar carpetas | - |
-| `POST` | `/api/drive/upload` | Subir archivo | FormData |
-| `GET` | `/api/drive/download/[id]` | Descargar archivo | - |
-| `DELETE` | `/api/drive/delete/[id]` | Eliminar archivo | - |
-| `POST` | `/api/drive/rename/[id]` | Renombrar archivo | `{ name }` |
-| `PUT` | `/api/drive/update/[id]` | Actualizar contenido | `{ content }` |
-| `POST` | `/api/drive/backup` | Backup de data | `{ type }` |
+| `GET` | `/api/drive/connections` | Listar metadata de conexiones org-scoped | - |
+| `DELETE` | `/api/drive/connections/[id]` | Revocar una conexión | - |
+| `GET` | `/api/drive/list` | Listar metadata y enlaces | `?connectionId=&folderId=&pageToken=` |
+| `POST` | `/api/drive/folders` | Crear carpeta (legacy protegido) | `{ name, parentId? }` |
+| `POST` | `/api/drive/upload` | Subir archivo (legacy protegido) | FormData |
+| `GET` | `/api/drive/download/[id]` | Descargar archivo (legacy protegido) | - |
+| `DELETE` | `/api/drive/delete/[id]` | Eliminar archivo (legacy protegido) | - |
+| `PATCH` | `/api/drive/rename/[id]` | Renombrar archivo (legacy protegido) | `{ name }` |
+| `PUT` | `/api/drive/update/[id]` | Actualizar contenido (legacy protegido) | `{ content }` |
+| `POST` | `/api/drive/backup` | Backup de data (legacy protegido) | `{ type }` |
+
+El endpoint `list` devuelve `{ connection, files, nextPageToken }`. La conexión contiene solo `id`, `label`, `google_account_email` y `status`; nunca devuelve tokens. El acceso usa la conexión activa de la organización y valida cada carpeta/archivo bajo `root_folder_id`.
 
 ---
 

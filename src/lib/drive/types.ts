@@ -17,6 +17,12 @@ export interface DriveFolder {
 }
 
 export interface DriveListResponse {
+  connection: {
+    id: string;
+    label: string;
+    google_account_email: string | null;
+    status: DriveConnectionStatus;
+  };
   files: DriveFile[];
   nextPageToken: string | null;
 }
@@ -29,3 +35,17 @@ export interface BackupResult {
 }
 
 export type BackupType = "products" | "sales" | "orders" | "inventory" | "suppliers";
+
+export type DriveConnectionStatus = "active" | "revoked" | "error";
+
+export interface DriveConnectionMetadata {
+  id: string;
+  orgId: string;
+  provider: "google_drive";
+  label: string;
+  googleAccountEmail: string | null;
+  rootFolderId: string;
+  status: DriveConnectionStatus;
+  createdAt: string;
+  updatedAt: string;
+}

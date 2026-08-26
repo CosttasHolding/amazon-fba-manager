@@ -3,15 +3,24 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { Readable } from "stream";
 import { createClient } from "@/lib/supabase/server";
-import { getDriveClient, getDriveRootFolderId } from "@/lib/drive";
+import { getDriveClientForConnection } from "@/lib/drive";
 import { getOrgId } from "@/lib/org-resolver";
 import { hasOrgRole } from "@/lib/api-handler";
+import { enforceDriveRateLimit } from "@/lib/drive/rate-limit";
+import { getDriveRouteError } from "@/lib/drive/route-errors";
 import type { BackupType } from "@/lib/drive";
+import {
+  assertFolderWithinRoot,
+  FolderOutsideRootError,
+} from "@/lib/drive/folder-guard";
 import * as XLSX from "xlsx";
 
 const BACKUP_FOLDER_NAME = "Backups";
 
-async function ensureBackupFolder(drive: Awaited<ReturnType<typeof getDriveClient>>, rootId: string): Promise<string> {
+async function ensureBackupFolder(
+  drive: Awaited<ReturnType<typeof getDriveClientForConnection>>["drive"],
+  rootId: string,
+): Promise<string> {
   const existing = await drive.files.list({
     q: `'${rootId}' in parents and name = '${BACKUP_FOLDER_NAME}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
     fields: "files(id)",
@@ -19,7 +28,10 @@ async function ensureBackupFolder(drive: Awaited<ReturnType<typeof getDriveClien
   });
 
   if (existing.data.files && existing.data.files.length > 0) {
-    return existing.data.files[0].id!;
+    const folderId = existing.data.files[0].id;
+    if (!folderId) throw new Error("No se pudo resolver la carpeta de backups");
+    await assertFolderWithinRoot(drive, folderId, rootId);
+    return folderId;
   }
 
   const folder = await drive.files.create({
@@ -31,7 +43,9 @@ async function ensureBackupFolder(drive: Awaited<ReturnType<typeof getDriveClien
     fields: "id",
   });
 
-  return folder.data.id!;
+  if (!folder.data.id) throw new Error("No se pudo crear la carpeta de backups");
+  await assertFolderWithinRoot(drive, folder.data.id, rootId);
+  return folder.data.id;
 }
 
 async function fetchData(
@@ -79,6 +93,9 @@ async function fetchData(
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimitResponse = await enforceDriveRateLimit(req);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -95,7 +112,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Permisos insuficientes" }, { status: 403 });
     }
 
-    const { type } = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+    }
+    const type = body && typeof body === "object" && "type" in body ? body.type : undefined;
     if (typeof type !== "string" || !["products", "sales", "orders", "inventory", "suppliers"].includes(type)) {
       return NextResponse.json({ error: "Tipo de backup requerido" }, { status: 400 });
     }
@@ -111,10 +134,15 @@ export async function POST(req: NextRequest) {
     const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}${String(now.getSeconds()).padStart(2, "0")}`;
     const fileName = `${type}_${timestamp}.xlsx`;
 
-    const drive = await getDriveClient(user.id);
-    const rootId = await getDriveRootFolderId(drive, orgId);
-    if (!rootId) return NextResponse.json({ error: "Drive no habilitado para esta organización" }, { status: 403 });
+    const { drive, connection } = await getDriveClientForConnection(
+      supabase,
+      user.id,
+      orgId,
+      undefined,
+    );
+    const rootId = connection.rootFolderId;
     const backupFolderId = await ensureBackupFolder(drive, rootId);
+    await assertFolderWithinRoot(drive, backupFolderId, rootId);
 
     const file = await drive.files.create({
       requestBody: {
@@ -137,7 +165,10 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Error al hacer backup";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    if (error instanceof FolderOutsideRootError) {
+      return NextResponse.json({ error: "Carpeta fuera del espacio autorizado" }, { status: 403 });
+    }
+    const result = getDriveRouteError(error, "Error al hacer backup");
+    return NextResponse.json({ error: result.message }, { status: result.status });
   }
 }

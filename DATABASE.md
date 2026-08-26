@@ -52,6 +52,9 @@
 | 42 | `rate_limits` | Infra | Rate limiting de endpoints |
 | 43 | `research_groups` | Research | Grupos de research (item + competidores) |
 | 44 | `amazon_settlement_lines` | Finances | Líneas detalladas de liquidaciones de Amazon |
+| 45 | `drive_connections` | Google Drive | Metadatos de conexiones Drive por organización |
+| 46 | `drive_connection_secrets` | Google Drive | Refresh token cifrado de cada conexión |
+| 47 | `drive_oauth_states` | Google Drive | Estados OAuth hashados, ligados a usuario, organización y raíz |
 
 **Vistas:**
 - `products_with_inventory` → JOIN de products + inventory + sales aggregation (security_invoker)
@@ -741,6 +744,66 @@ modifica movimientos y tiene validación tenant/producto mediante trigger.
 | `processing_time_ms` | INTEGER | | Tiempo de procesamiento |
 | `created_at` | TIMESTAMPTZ | | |
 
+### 9.5 `drive_connections`
+
+| Columna | Tipo | Constraints | Notas |
+|---------|------|-------------|-------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | |
+| `org_id` | UUID | NOT NULL, FK → organizations(id) ON DELETE CASCADE | Scope multi-tenant |
+| `provider` | TEXT | NOT NULL, DEFAULT 'google_drive', CHECK('google_drive') | |
+| `label` | TEXT | NOT NULL | Nombre visible de la conexión |
+| `google_account_email` | TEXT | | Cuenta Google asociada |
+| `root_folder_id` | TEXT | NOT NULL, UNIQUE | Carpeta raíz de Drive |
+| `status` | TEXT | NOT NULL, DEFAULT 'active', CHECK('active','revoked','error') | |
+| `created_by` | UUID | FK → profiles(id) | Usuario que creó la conexión |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() | |
+| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Trigger de actualización automática |
+
+**Índices:** `idx_drive_connections_org_status` en (`org_id`, `status`).
+
+**RLS:** los miembros activos pueden consultar metadatos; owner/admin pueden insertar, actualizar y eliminar. No contiene tokens.
+
+### 9.6 `drive_connection_secrets`
+
+| Columna | Tipo | Constraints | Notas |
+|---------|------|-------------|-------|
+| `connection_id` | UUID | PK, FK → drive_connections(id) ON DELETE CASCADE | Relación 1:1 |
+| `org_id` | UUID | NOT NULL, FK → organizations(id) ON DELETE CASCADE | Scope multi-tenant |
+| `refresh_token_encrypted` | TEXT | NOT NULL | Token cifrado; nunca se expone a clientes autenticados |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() | |
+| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Trigger de actualización automática |
+
+**Constraints e índices:** FK compuesto (`connection_id`, `org_id`) hacia `drive_connections` para impedir cruces tenant; `idx_drive_connection_secrets_org_connection` en (`org_id`, `connection_id`).
+
+**RLS:** policy explícita deny-by-default para `authenticated` (`USING (false)` y `WITH CHECK (false)`). El runtime server-side usa service role únicamente después de validar membership, organización y conexión.
+
+### 9.7 `drive_oauth_states`
+
+| Columna | Tipo | Constraints | Notas |
+|---------|------|-------------|-------|
+| `state_hash` | TEXT | PK | SHA-256 del estado OAuth; nunca se almacena el valor plano |
+| `user_id` | UUID | NOT NULL, FK → auth.users(id) ON DELETE CASCADE | Usuario que inició OAuth |
+| `org_id` | UUID | NOT NULL, FK → organizations(id) ON DELETE CASCADE | Scope multi-tenant |
+| `root_folder_id` | TEXT | NOT NULL | Snapshot de la raíz configurada para la organización |
+| `expires_at` | TIMESTAMPTZ | NOT NULL | El estado solo puede consumirse antes de esta fecha |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | |
+
+**Índices:** `idx_drive_oauth_states_org_expires` en (`org_id`, `expires_at`).
+
+**RLS y consumo:** RLS habilitada con deny explícito para `authenticated`; tabla y función de consumo quedan disponibles solo para `service_role`. `consume_drive_oauth_state` elimina atómicamente un estado cuyo hash coincide y no ha expirado, por lo que un estado consumido o expirado no puede reutilizarse.
+
+### 9.8 Funciones y aplicación de la migración Drive
+
+| Función | Firma final | Requisitos de autorización |
+|---------|-------------|-----------------------------|
+| `upsert_drive_connection` | `(UUID, TEXT, TEXT, TEXT, UUID, UUID, TEXT, UUID)` | `p_actor_id` debe ser un miembro activo `owner`/`admin` de `p_org_id`; `p_created_by` identifica al creador persistido |
+| `revoke_drive_connection` | `(UUID, UUID, UUID)` | `p_actor_id` debe ser un miembro activo `owner`/`admin` de `p_org_id` |
+| `consume_drive_oauth_state` | `(TEXT)` | Solo `service_role`; consume atómicamente un estado hashado no expirado |
+
+Las funciones son `SECURITY DEFINER`, eliminan las firmas antiguas cuando corresponde y solo tienen `EXECUTE` para `service_role`. El trigger `drive_connections_root_folder_immutable` rechaza cambios de `root_folder_id` salvo cuando `auth.role() = 'service_role'`, sin alterar las policies existentes de metadata.
+
+**Aplicación owner-only:** la migración 058 (`058_harden_drive_tenant_boundaries.sql`) no está aplicada. Su aplicación en staging o producción requiere una acción explícita y controlada del owner, después de validar el plan y los checks de tenant.
+
 ---
 
 ## 10. Tablas de Governance
@@ -1005,7 +1068,7 @@ modifica movimientos y tiene validación tenant/producto mediante trigger.
 | `tax_rate` | DECIMAL(5,2) | | Tasa de impuesto |
 | `theme` | TEXT | DEFAULT 'dark' | |
 | `language` | TEXT | DEFAULT 'es', CHECK('es','en','ar') | |
-| `drive_refresh_token` | TEXT | | Token de Google Drive |
+| `drive_refresh_token` | TEXT | | Legacy histórico; el flujo actual usa `drive_connection_secrets` y no selecciona ni devuelve esta columna |
 | `created_at` | TIMESTAMPTZ | | |
 | `updated_at` | TIMESTAMPTZ | | |
 
@@ -1237,8 +1300,12 @@ Las siguientes tablas están scoped por organización:
 30. saved_calculations
 31. supplier_quotes
 32. product_suppliers
+33. fba_shipment_items
+34. drive_connections
+35. drive_connection_secrets
+36. drive_oauth_states
 
-**Total: 33 tablas con `org_id`**
+**Total: 36 tablas con `org_id`**
 
 Las tablas legacy añadidas en la migración 039 mantienen `org_id` nullable para no
 asignar filas históricas ambiguas. La migración 048 habilita RLS y exige
@@ -1281,6 +1348,8 @@ las filas sin organización quedan inaccesibles hasta una asignación segura.
 | 049 | Compatibilidad de schema: crea automation tables ausentes (`alert_rules`, `reorder_rules`, `scheduled_reports`) con `org_id` nullable, índices y RLS fail-closed |
 | 050 | Backfill determinista de `inventory.org_id` desde `products.org_id` |
 | 051 | Detección de reembolsos Amazon, matches de movimientos, RLS, triggers tenant y RPC atómica |
+| 057 | Conexiones Google Drive por organización y secrets con token cifrado y RLS deny-by-default |
+| 058 | Límites tenant de Drive, estado OAuth hashado y autorización por actor en RPCs |
 
 Las migraciones 044, 047 y 049 incluyen `CREATE TABLE IF NOT EXISTS` como
 compatibilidad de schema para instalaciones donde las tablas históricas no

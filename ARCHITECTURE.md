@@ -172,8 +172,9 @@ src/
 │   │   ├── endpoints.ts        # API endpoint functions
 │   │   ├── notifications.ts    # Webhook management
 │   │   └── types.ts            # SP-API types and constants
-│   ├── drive/                  # Google Drive integration
-│   │   ├── client.ts           # getDriveClient() (OAuth2 + service account)
+│   ├── drive/                  # Google Drive integration org-scoped
+│   │   ├── client.ts           # getDriveClientForConnection()
+│   │   ├── connection-secrets.ts # Secretos cifrados server-only
 │   │   ├── types.ts            # Drive types
 │   │   └── index.ts            # Barrel export
 │   ├── actions/                # Server actions (7 files)
@@ -462,14 +463,16 @@ Amazon → POST /api/sp-api/webhooks → parseNotificationMessage() → procesar
 
 **Autenticación:**
 ```
-1. OAuth2 obligatorio por usuario: busca drive_refresh_token en user_settings
-2. Sin OAuth y refresh token, Drive queda desconectado y la operación falla cerrado.
+1. OAuth2 crea una conexión cifrada asociada a la organización activa.
+2. El refresh token solo vive cifrado en `drive_connection_secrets` y se lee server-side.
+3. Sin conexión activa, autorización o containment bajo su raíz, la operación falla cerrado.
 ```
 
-**Operaciones:** List, Upload, Download, Delete, Rename, Update, Backup (exporta data a .xlsx)
+**Superficie actual:** la UI es read-only: lista metadata, navega carpetas y abre `webViewLink`. Las rutas CRUD legacy permanecen protegidas para compatibilidad, pero no se exponen en la UI.
 
 **Archivos clave:**
-- `lib/drive/client.ts` → getDriveClient() (OAuth2 por usuario)
+- `lib/drive/client.ts` → getDriveClientForConnection() (conexión org-scoped)
+- `lib/drive/connection-secrets.ts` → lectura server-only de secretos cifrados
 - `lib/drive/types.ts` → DriveFile, BackupResult
 
 ### 7.3 Web Push Notifications

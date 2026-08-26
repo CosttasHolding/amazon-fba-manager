@@ -3,29 +3,50 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { DriveBrowser } from "@/components/drive/drive-browser";
-import { createClient } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { t } from "@/lib/i18n/translations";
 import { useLocale } from "@/lib/i18n/locale-context";
+import { useOrg } from "@/hooks/use-org";
 
 export default function DrivePage() {
   const { locale } = useLocale();
+  const { org } = useOrg();
   const [checkingAuth, setCheckingAuth] = useState(false);
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+  const [browserVersion, setBrowserVersion] = useState(0);
 
   const handleConnect = async () => {
-    window.location.href = "/api/drive/auth";
+    const query = org?.id ? `?orgId=${encodeURIComponent(org.id)}` : "";
+    window.location.href = `/api/drive/auth${query}`;
   };
 
   const handleDisconnect = async () => {
     setCheckingAuth(true);
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.id) {
-        await supabase.from("user_settings").update({ drive_refresh_token: null }).eq("user_id", user.id);
-        toast.success(t("drives.disconnected", locale));
+      const headers = org?.id ? { "x-org-id": org.id } : undefined;
+      const response = await fetch("/api/drive/connections", { headers });
+      if (!response.ok) throw new Error("No se pudieron cargar las conexiones");
+
+      const { data: connections } = await response.json();
+      const activeConnection = connections?.find(
+        (connection: { id?: string; status?: string }) => connection.status === "active"
+      );
+      if (!activeConnection?.id) {
+        toast.error(t("drives.error_disconnect", locale));
+        return;
       }
+
+      const connectionId = selectedConnectionId || activeConnection.id;
+      const deleteResponse = await fetch(`/api/drive/connections/${connectionId}`, {
+        method: "DELETE",
+        headers,
+      });
+      if (!deleteResponse.ok) throw new Error("No se pudo revocar la conexión");
+
+      setSelectedConnectionId(null);
+      setBrowserVersion((version) => version + 1);
+      toast.success(t("drives.disconnected", locale));
     } catch {
       toast.error(t("drives.error_disconnect", locale));
     } finally {
@@ -58,7 +79,7 @@ export default function DrivePage() {
           </button>
         </div>
       </PageHeader>
-      <DriveBrowser />
+      <DriveBrowser key={browserVersion} onConnectionChange={setSelectedConnectionId} />
     </div>
   );
 }

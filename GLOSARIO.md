@@ -73,9 +73,9 @@ npm run build:glossary
 | Tablero Kanban (Tasks) | Sistema de gestión de tareas con columnas Pendiente → En Progreso → Completada. Soporta drag & drop, prioridades (Baja/Alta/Urgente), asignación a miembros, fechas de vencimiento y módulos (Documentos, FBA, General). |
 | Valuación (Art. 11.2) | Cálculo del valor de empresa para determinar precio de transferencia de participación. Fórmula: (Ingreso Neto Promedio 36 meses × Múltiplo 3x-5x) + Activos Netos Ajustados. Precio de Transferencia = Valor Empresa × (% Participación / 100). |
 | DEC (Board Decision) | Decisión del Directorio. Documento formal que registra resoluciones directivas con estado (borrador/aprobado/rechazado/ejecutado), referencia a documento, votos y fecha de decisión. |
-| Google Drive Integration | Módulo de almacenamiento cloud con OAuth2 por usuario. Permite navegar carpetas, subir/descargar/renombrar/eliminar archivos, editar texto inline, ver imágenes, y hacer backup automático de datos de la app a Drive. |
-| OAuth2 (Drive) | Autenticación de Google mediante OAuth 2.0. Cada usuario conecta su propia cuenta de Google Drive. El refresh token se almacena en user_settings para acceso sin reconexión. |
-| Backup Automático | Exportación de datos de la app (productos, ventas, pedidos, inventario, proveedores) a Google Drive como archivos .xlsx. Se almacenan en carpeta 'Backups' para resguardo periódico. |
+| Google Drive Integration | Conexión única de Google Drive asociada a la organización. Los miembros autorizados pueden navegar carpetas y archivos en modo lectura y abrirlos mediante el webViewLink proporcionado por Google. La app no sube, edita, renombra, elimina ni descarga archivos, y no realiza backups automáticos. |
+| OAuth2 (Drive) | Autenticación de Google mediante OAuth 2.0 para una conexión de la organización. La conexión se administra con autorización de owner/admin; el refresh token se cifra y se guarda server-side en el secreto de la conexión, no en user_settings ni como almacenamiento por usuario. |
+| Backup Automático | No forma parte de la integración actual: la app no exporta datos ni crea backups automáticos en Google Drive. |
 | Notificaciones (Notifications) | Sistema de alertas in-app con prioridades (baja/media/alta/crítica). Notifica sobre stock bajo, tareas vencidas, eventos de sucesión y cambios en decisiones directivas. Indicador de notificaciones no leídas en el header. |
 | Búsqueda Global (Cmd+K) | Paleta de comandos 'Command K' para búsqueda en toda la app. Accesible con Cmd+K (Mac) o Ctrl+K (Windows). Busca productos, proveedores, pedidos y módulos, con acceso directo a resultados y teclas de atajo. |
 | Onboarding | Guía de inicio para nuevos usuarios. Checklist interactivo con pasos: crear perfil, configurar defaults, agregar primer producto, registrar proveedor, importar ventas. Se muestra automáticamente hasta completar todos los pasos. |
@@ -1750,17 +1750,15 @@ Ruta: [/drive](/drive)
 
 ### Descripción
 
-Integración con Google Drive para almacenamiento y gestión de documentos del negocio. Cada socio conecta su propia cuenta de Google. Incluye navegador de archivos, CRUD completo, visualización de imágenes, edición de texto, y backup automático de datos de la app.
+Navegador read-only de Google Drive con una conexión asociada a la organización. Los miembros activos pueden consultar metadata y navegar carpetas bajo la raíz de esa conexión; owner/admin autorizan la conexión y su revocación. Los archivos se abren en Google Drive mediante el webViewLink proporcionado por Google.
 
 ### Acciones
 
 | Acción | Descripción |
 | --- | --- |
-| Conectar Google Drive | OAuth flow para autorizar acceso |
-| Desconectar | Revoca el acceso a Drive |
-| Subir Archivo | Drag & drop o selector de archivos |
-| Nueva Carpeta | Crear carpeta en el directorio actual |
-| Abrir en Drive | Abre el archivo en Google Drive web para edición nativa |
+| Conectar Google Drive | Inicia OAuth2 para autorizar la conexión de la organización; la autorización de alta corresponde a owner/admin. |
+| Revocar conexión | Revoca la conexión de la organización; requiere autorización de owner/admin. |
+| Abrir en Google Drive | Abre el archivo en Google Drive usando únicamente el webViewLink entregado por Google. |
 
 ### Tablas
 
@@ -1772,21 +1770,22 @@ Integración con Google Drive para almacenamiento y gestión de documentos del n
 | Tipo | Extensión del archivo |
 | Tamaño | Peso del archivo formateado |
 | Modificado | Fecha de última modificación |
-| Acciones | Abrir en Drive / Descargar / Editar / Renombrar / Eliminar |
+| Acciones | Abrir en Google Drive mediante webViewLink |
 
 ### Glosario de sección
 
 | Término | Definición |
 | --- | --- |
-| OAuth2 | Cada usuario conecta su propia cuenta de Google Drive. El refresh token se guarda en user_settings para acceso persistente. |
-| Backups | Los backups se almacenan en carpeta 'Backups' de Drive en formato .xlsx. Módulos: productos, ventas, pedidos, inventario, proveedores. |
+| Conexión org-scoped | Conexión de Google Drive asociada a una organización; no se crea una conexión ni se almacena un refresh token por usuario. |
+| webViewLink | Enlace proporcionado por Google para abrir un archivo en Drive. La app no actúa como proxy de descarga ni modifica el contenido. |
+| Modo read-only | La app permite listar metadata y navegar carpetas, pero no subir, editar, renombrar, eliminar, descargar mediante proxy ni crear backups automáticos. |
 
 ### Tips
 
-- Cada socio debe conectar su propia cuenta de Google Drive.
-- Los documentos nativos de Google (Docs, Sheets) se abren directamente en Drive para edición.
-- Hacé backup periódico de cada módulo desde la sección de backups.
-- Podés navegar carpetas y organizar documentos como en Drive nativo.
+- La organización usa una conexión de Drive compartida por sus miembros autorizados.
+- Abrí los archivos en Google Drive desde su webViewLink para gestionar su contenido allí.
+- La app no ofrece upload, edición, renombrado, eliminación, descarga proxy ni backup automático.
+- Podés navegar únicamente dentro de la raíz de la conexión seleccionada.
 
 ## notifications — Notificaciones
 

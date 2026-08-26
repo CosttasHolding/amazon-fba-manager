@@ -55,6 +55,62 @@ describe("getOrgId (H1)", () => {
     expect(createServiceRoleClientMock).not.toHaveBeenCalled();
   });
 
+  it("acepta orgId de la URL solo cuando el usuario es miembro activo", async () => {
+    const supabase = {
+      from: () => {
+        let requestedOrgId: string | null = null;
+        const query = {
+          select: () => query,
+          eq: (column: string, value: string) => {
+            if (column === "org_id") requestedOrgId = value;
+            return query;
+          },
+          order: () => query,
+          limit: () => query,
+          maybeSingle: () => Promise.resolve({ data: { org_id: requestedOrgId || "org-otra" } }),
+          single: () => Promise.resolve({ data: { org_id: requestedOrgId || "org-otra" } }),
+        };
+        return query;
+      },
+    } as unknown as SupabaseClient;
+    const req = {
+      url: "http://localhost/api/drive/auth?orgId=org-propia",
+      headers: { get: () => null },
+    };
+
+    const { getOrgId } = await importModule();
+    const result = await getOrgId(supabase, USER_ID, req);
+
+    expect(result).toBe("org-propia");
+  });
+
+  it("falla cerrado cuando el orgId de la URL no pertenece al usuario", async () => {
+    const supabase = {
+      from: () => {
+        let requestedOrgId: string | null = null;
+        const query = {
+          select: () => query,
+          eq: (column: string, value: string) => {
+            if (column === "org_id") requestedOrgId = value;
+            return query;
+          },
+          order: () => query,
+          limit: () => query,
+          maybeSingle: () => Promise.resolve({ data: requestedOrgId === "org-propia" ? { org_id: requestedOrgId } : null }),
+          single: () => Promise.resolve({ data: { org_id: "org-propia" } }),
+        };
+        return query;
+      },
+    } as unknown as SupabaseClient;
+    const req = {
+      url: "http://localhost/api/drive/auth?orgId=org-ajena",
+      headers: { get: () => null },
+    };
+
+    const { getOrgId } = await importModule();
+    await expect(getOrgId(supabase, USER_ID, req)).resolves.toBeNull();
+  });
+
   it("ignora x-org-id ajeno y no auto-provisiona desde el resolver", async () => {
     const supabase = stubSupabaseByTable({
       org_members: { data: null },

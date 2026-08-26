@@ -21,11 +21,12 @@ ultima_actualizacion: 2026-08-07
 
 ### Drive OAuth pendiente
 - **Fecha**: 2026-08-23
-- **Estado**: OAUTH Y VERCEL VERIFICADOS EN PRODUCCIÓN; CRUD DE ARCHIVOS PENDIENTE
-- **Motivo**: la configuración actual fail-closed requiere OAuth por usuario; la service account no tiene cuota de almacenamiento para upload en producción.
-- **Progreso**: Vercel tiene `NEXT_PUBLIC_APP_URL`, redirect URI de producción y secret actualizado; deploy publicado.
-- **Progreso**: conexión autorizada y carpeta `backup` visible en la app de producción.
-- **Próximo paso**: verificar upload/list/metadata/delete y eliminar el secret OAuth antiguo en Google Cloud.
+- **Estado**: migración local org-scoped pendiente de verificación y checkpoint externo
+- **Motivo histórico**: la configuración legacy con service account no tenía cuota de almacenamiento. El flujo actual usa una conexión OAuth cifrada por organización.
+- **Progreso**: código local con `drive_connections`, estado OAuth hashado, containment por raíz y UI read-only.
+- **Verificado localmente**: suite Drive, typecheck, lint sin errores, tests globales, build y reviews independientes.
+- **Pendiente de verificación**: integración tenant real en staging, que requiere credenciales y opt-in explícito.
+- **Pendiente owner**: aplicar migraciones 057/058 en staging o producción, configurar roots por organización y ejecutar E2E con las cuentas autorizadas.
 - **Regla**: nunca pegar client secrets, refresh tokens ni credenciales en el chat; deben permanecer en `.env.local` o el gestor de secretos de producción.
 
 ### Deep dive falla por falta de creditos/licencias en xAI (BLOQUEADO)

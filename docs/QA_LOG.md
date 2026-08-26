@@ -169,7 +169,7 @@ Batería ampliada a **54 PASS / 0 FAIL**, con dos límites funcionales documenta
 | Multi-org API | PASS: membership real QA en Org B (`editor`), Org B no recibe productos de Org A, producto B queda con `org_id` B y Org A no lo lista |
 | Multi-org UI | PASS: página `/products` autenticada en contexto Org A no muestra el producto creado en Org B |
 | Drive OAuth conexión | PASS producción: cuenta autorizada y carpeta `backup` visible en la app |
-| Drive upload/list/metadata/delete | PENDIENTE: ejecutar CRUD de un archivo de prueba y eliminar el secret OAuth antiguo |
+| Drive upload/list/metadata/rename/delete | PENDIENTE EXTERNO: ejecutar CRUD manual o QA15 con `QA_DRIVE_CRUD_ALLOW=I_UNDERSTAND_NON_PRODUCTION` y hostname exacto en `QA_DRIVE_ALLOWED_HOSTS`, solo en entorno no productivo; eliminar el secret OAuth antiguo tras E2E |
 
 La prueba multi-org UI valida aislamiento desde la vista Org A; el cambio visual explícito de organización queda pendiente de una sesión visual del owner. Seller Central/SP-API queda deliberadamente fuera de esta fase.
 
@@ -180,7 +180,7 @@ La prueba multi-org UI valida aislamiento desde la vista Org A; el cambio visual
 | Migraciones 052-056 en producción | PASS: `fba_shipments` 0/1 filas sin `org_id`, `fba_shipment_items` 0/0; RLS activa; policies con roles/relaciones tenant, triggers product/supplier, RPC restringida e índices presentes |
 | OAuth Drive | PASS producción: redirect URI, state CSRF, Vercel y autorización de cuenta verificados; falta CRUD de archivo |
 | Roles de mutación | PASS local: órdenes, reorder rules, shipments y supplier quotes rechazan `viewer` |
-| Verificación local | PASS: 524 tests, typecheck, build y E2E 16/16; lint solo conserva warnings preexistentes |
+| Verificación local | PASS: 543 tests, typecheck, build y E2E 16/16; lint solo conserva warnings preexistentes |
 
 ## Pendientes manuales (requieren sesión del owner en prod)
 
@@ -188,7 +188,7 @@ La prueba multi-org UI valida aislamiento desde la vista Org A; el cambio visual
 |---|---|---|
 | Extensión con ASINs reales variados (comparar asin/title/price/BSR/reviews/rating/category/brand vs página) | BLOCKED | requiere navegador del owner; verificar los 2 FAILs arriba en datos reales |
 | Research capture → API → Supabase → UI → reload | PARCIAL | persistencia API→DB verificada por agente (QA5b); falta verificación visual de UI |
-| Drive upload → list → metadata → delete | PENDIENTE EXTERNO | Código OAuth listo con state CSRF; requiere configuración Google/Vercel y autorización del owner |
+| Drive upload → list → metadata → rename → delete | PENDIENTE EXTERNO | Código OAuth, validaciones y batería QA15 listas; requiere autorización del owner |
 | SP-API vs Seller Central / Keepa | NOT CONFIGURED (si sin conexión activa) | no forzar |
 | Multi-org: Org A jamás ve Org B (UI + API + manipulación de identifiers) | PARCIAL | Parte E/F cubre membership real, API y UI Org A; falta cambiar explícitamente de org desde el selector visual |
 | CRUD por módulo (20 módulos candidatos) | PARCIAL | Products + Suppliers + Sales CRUD completo verificado (QA6/QA7/QA8); Inventory GET/movements y Returns detail cubiertos localmente; falta prueba live de Returns |
@@ -236,7 +236,7 @@ Las filas legacy ambiguas de las demás tablas permanecen inaccesibles por RLS.
 | Matching inventory | VERIFICADO | Candidatos `damaged`/`removal` dentro de ventana de 30 días; no modifica stock |
 | Idempotencia | VERIFICADO LOCAL | `UNIQUE(org_id, source_key)` y reemplazo atómico de matches mediante RPC |
 | Seguridad tenant | VERIFICADO LOCAL | RLS, triggers de tenant, role gates y pruebas independientes |
-| Checks | VERIFICADO LOCAL | 80 archivos, 517 tests, typecheck, build y lint sin errores nuevos |
+| Checks | VERIFICADO LOCAL | 86 archivos, 543 tests, typecheck, build y lint sin errores nuevos |
 | Migración 051 | APLICADA Y VERIFICADA | Tablas, 4 policies y RPC confirmados en producción el 2026-08-23 |
 | Returns detail | VERIFICADO LOCAL | GET/PUT `[id]`, UUID guard, org scope, editor+ role gate y product ownership en POST |
 

@@ -18,7 +18,7 @@ Fuente: auditoría 2026-08-22. Principio: **el check más barato que prueba el c
 
 ## Estado actual (baseline)
 
-- Unit: Vitest — 47 archivos / 391 tests, todos verdes (~6s).
+- Unit: Vitest — 86 archivos / 543 tests, todos verdes.
 - E2E: Playwright — solo smoke (auth render, navegación, 404). **No cubre contenido ni CRUD.**
 - Tenant isolation: **sin tests dedicados** (gap crítico, ver SECURITY_AUDIT).
 - CI: inexistente.

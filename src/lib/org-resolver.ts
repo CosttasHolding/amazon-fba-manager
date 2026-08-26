@@ -4,19 +4,21 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 export async function getOrgId(
   supabase: SupabaseClient,
   userId: string,
-  req?: { headers: { get: (name: string) => string | null } }
+  req?: { headers: { get: (name: string) => string | null }; url?: string }
 ): Promise<string | null> {
   if (req) {
     const headerOrgId = req.headers.get("x-org-id") || null;
-    if (headerOrgId) {
+    const queryOrgId = req.url ? new URL(req.url).searchParams.get("orgId") : null;
+    const requestedOrgId = headerOrgId || queryOrgId;
+    if (requestedOrgId) {
       const { data: membership } = await supabase
         .from("org_members")
         .select("org_id")
         .eq("user_id", userId)
-        .eq("org_id", headerOrgId)
+        .eq("org_id", requestedOrgId)
         .eq("status", "active")
         .maybeSingle();
-      if (membership) return headerOrgId;
+      return membership ? requestedOrgId : null;
     }
   }
   return resolveOrgId(supabase, userId);

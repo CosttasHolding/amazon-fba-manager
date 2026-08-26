@@ -9,52 +9,53 @@ export class FolderOutsideRootError extends Error {
 
 const MAX_ANCESTOR_DEPTH = 25;
 
+type FolderMeta = { parents: string[]; trashed: boolean };
+type MetadataCache = Map<string, Promise<FolderMeta>>;
+
 async function getFolderMeta(
   drive: drive_v3.Drive,
-  fileId: string
-): Promise<{ parents: string[]; trashed: boolean }> {
-  const res = await drive.files.get({
-    fileId,
-    fields: "id,parents,trashed",
-  });
-  return {
-    parents: res.data.parents || [],
-    trashed: Boolean(res.data.trashed),
-  };
-}
+  fileId: string,
+  cache: MetadataCache
+): Promise<FolderMeta> {
+  const cached = cache.get(fileId);
+  if (cached) return cached;
 
-export async function assertFolderWithinRoot(
-  drive: drive_v3.Drive,
-  folderId: string,
-  rootId: string
-): Promise<void> {
-  let current = folderId;
-
-  for (let depth = 0; depth < MAX_ANCESTOR_DEPTH; depth++) {
-    if (current === rootId) return;
-
-    const meta = await getFolderMeta(drive, current);
-    if (meta.trashed) throw new FolderOutsideRootError();
-
-    if (meta.parents.includes(rootId)) return;
-
-    if (meta.parents.length === 0) {
-      if (rootId === "root") return;
+  const request = (async () => {
+    try {
+      const res = await drive.files.get({
+        fileId,
+        fields: "id,parents,trashed",
+      });
+      if (!res.data) throw new Error("Drive metadata missing");
+      return {
+        parents: res.data.parents || [],
+        trashed: Boolean(res.data.trashed),
+      };
+    } catch {
       throw new FolderOutsideRootError();
     }
+  })();
 
-    current = meta.parents[0];
-  }
-
-  throw new FolderOutsideRootError();
+  cache.set(fileId, request);
+  return request;
 }
 
-export async function assertFileWithinRoot(
+async function assertNodeWithinRoot(
   drive: drive_v3.Drive,
-  fileId: string,
-  rootId: string
+  nodeId: string,
+  rootId: string,
+  cache: MetadataCache,
+  visited: Set<string>,
+  depth: number
 ): Promise<void> {
-  const meta = await getFolderMeta(drive, fileId);
+  if (nodeId === rootId) return;
+  if (depth >= MAX_ANCESTOR_DEPTH || visited.has(nodeId)) {
+    throw new FolderOutsideRootError();
+  }
+
+  const branch = new Set(visited);
+  branch.add(nodeId);
+  const meta = await getFolderMeta(drive, nodeId, cache);
   if (meta.trashed) throw new FolderOutsideRootError();
 
   if (meta.parents.length === 0) {
@@ -62,5 +63,58 @@ export async function assertFileWithinRoot(
     throw new FolderOutsideRootError();
   }
 
-  await assertFolderWithinRoot(drive, meta.parents[0], rootId);
+  for (const parentId of meta.parents) {
+    await assertNodeWithinRoot(
+      drive,
+      parentId,
+      rootId,
+      cache,
+      branch,
+      depth + 1
+    );
+  }
+}
+
+export async function assertFolderWithinRoot(
+  drive: drive_v3.Drive,
+  folderId: string,
+  rootId: string
+): Promise<void> {
+  if (folderId === rootId) return;
+
+  await assertNodeWithinRoot(
+    drive,
+    folderId,
+    rootId,
+    new Map(),
+    new Set(),
+    0
+  );
+}
+
+export async function assertFileWithinRoot(
+  drive: drive_v3.Drive,
+  fileId: string,
+  rootId: string
+): Promise<void> {
+  const cache = new Map<string, Promise<FolderMeta>>();
+  const meta = await getFolderMeta(drive, fileId, cache);
+  if (meta.trashed) throw new FolderOutsideRootError();
+
+  if (meta.parents.length === 0) {
+    if (rootId === "root") return;
+    throw new FolderOutsideRootError();
+  }
+
+  const visited = new Set([fileId]);
+  for (const parentId of meta.parents) {
+    await assertNodeWithinRoot(
+      drive,
+      parentId,
+      rootId,
+      cache,
+      visited,
+      1
+    );
+  }
 }

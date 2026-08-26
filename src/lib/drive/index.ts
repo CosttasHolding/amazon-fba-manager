@@ -1,9 +1,14 @@
 export {
-  getDriveClient,
-  getDriveRootFolderId,
-  getOrgRootFolderId,
-  getRootFolderId,
-  getSharedDriveOrgIds,
+  getDriveClientForConnection,
+  getDriveConnection,
   isDriveOrgAllowed,
 } from "./client";
-export type { DriveFile, DriveFolder, DriveListResponse, BackupResult, BackupType } from "./types";
+export type {
+  BackupResult,
+  BackupType,
+  DriveConnectionMetadata,
+  DriveConnectionStatus,
+  DriveFile,
+  DriveFolder,
+  DriveListResponse,
+} from "./types";

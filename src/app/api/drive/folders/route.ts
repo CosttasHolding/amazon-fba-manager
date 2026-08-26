@@ -2,9 +2,12 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getDriveClient, getDriveRootFolderId } from "@/lib/drive";
+import { getDriveClientForConnection } from "@/lib/drive";
 import { getOrgId } from "@/lib/org-resolver";
 import { hasOrgRole } from "@/lib/api-handler";
+import { enforceDriveRateLimit } from "@/lib/drive/rate-limit";
+import { getDriveRouteError } from "@/lib/drive/route-errors";
+import { driveNameSchema } from "@/validations/drive";
 import {
   assertFolderWithinRoot,
   FolderOutsideRootError,
@@ -12,6 +15,9 @@ import {
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimitResponse = await enforceDriveRateLimit(req);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -21,14 +27,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Permisos insuficientes" }, { status: 403 });
     }
 
-    const { name, parentId } = await req.json();
-    if (!name || typeof name !== "string") {
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+    }
+    const nameResult = driveNameSchema.safeParse(
+      body && typeof body === "object" && "name" in body ? body.name : undefined,
+    );
+    if (!nameResult.success) {
       return NextResponse.json({ error: "Nombre requerido" }, { status: 400 });
     }
+    const parentId = body && typeof body === "object" && "parentId" in body && typeof body.parentId === "string"
+      ? body.parentId
+      : undefined;
+    const connectionId = body && typeof body === "object" && "connectionId" in body && typeof body.connectionId === "string"
+      ? body.connectionId
+      : undefined;
 
-    const drive = await getDriveClient(user.id);
-    const rootId = await getDriveRootFolderId(drive, orgId);
-    if (!rootId) return NextResponse.json({ error: "Drive no habilitado para esta organización" }, { status: 403 });
+    const { drive, connection } = await getDriveClientForConnection(
+      supabase,
+      user.id,
+      orgId,
+      connectionId,
+    );
+    const rootId = connection.rootFolderId;
     const targetParent = parentId || rootId;
     try {
       await assertFolderWithinRoot(drive, targetParent, rootId);
@@ -40,7 +64,7 @@ export async function POST(req: NextRequest) {
     }
     const res = await drive.files.create({
       requestBody: {
-        name,
+        name: nameResult.data,
         mimeType: "application/vnd.google-apps.folder",
         parents: [targetParent],
       },
@@ -56,7 +80,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Error al crear carpeta";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const result = getDriveRouteError(error, "Error al crear carpeta");
+    return NextResponse.json({ error: result.message }, { status: result.status });
   }
 }
